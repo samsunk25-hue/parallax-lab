@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(node -e ' *)",
-      "Bash(node sec_report.js)"
+      "Bash(node sec_report.js)",
+      "Bash(cp 연주시차_학습앱.html index.html)",
+      "Bash(node --check _check.js)",
+      "Bash(rm -f _check.js)",
+      "Bash(git add *)"
     ]
   }
 }
