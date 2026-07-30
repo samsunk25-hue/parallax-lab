@@ -143,6 +143,16 @@ canvas.sim{width:100%;height:auto;display:block;background:#04060f;border:1px so
 #vizTip{position:fixed;pointer-events:none;z-index:80;display:none;max-width:240px;
   background:#0b1226;border:1px solid var(--line);border-radius:9px;padding:7px 10px;
   font-size:.8rem;box-shadow:var(--shadow);color:var(--text)}
+/* 교사 콘솔 접이식 카드 — 필요한 것만 펼쳐 보도록 */
+details.fold>summary{
+  cursor:pointer;list-style:none;font-size:1.05rem;font-weight:700;color:var(--accent);
+  display:flex;align-items:center;gap:8px;padding:2px 0;
+}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:'▸';font-size:.9rem;color:var(--muted);transition:.15s}
+details.fold[open]>summary::before{content:'▾';color:var(--accent)}
+details.fold>summary:hover{filter:brightness(1.15)}
+details.fold[open]>summary{margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:8px}
 details.tableview{margin-top:12px}
 details.tableview summary{cursor:pointer;color:var(--accent);font-size:.85rem}
 .tab-num{font-variant-numeric:tabular-nums}
@@ -677,6 +687,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
         </div>
         <div class="kpis" id="vizKpis"></div>
         <div class="grid g2" id="vizCharts"></div>
+        <details class="fold" id="vizMoreWrap" style="margin-top:12px">
+          <summary>그래프 더 보기 (정답률 분포 · 오개념 · 문항 시간 · 완주 시간 · 서술 등급)</summary>
+          <div class="grid g2" id="vizChartsMore" style="margin-top:10px"></div>
+        </details>
         <details class="tableview" id="vizTables">
           <summary>그래프 대신 표로 보기 (읽기 도구·인쇄용)</summary>
           <div id="vizTableBody"></div>
@@ -698,18 +712,18 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           </tr></thead><tbody></tbody></table></div>
       </div>
 
-      <div class="card">
-        <h3 style="margin-top:0">학급 통계 · 어디서 많이 틀렸나</h3>
+      <details class="card fold">
+        <summary>학급 통계 · 어디서 많이 틀렸나</summary>
         <p class="sub">정답률이 낮은 유형이 재지도 우선순위입니다.</p>
         <div class="scrollx"><table id="tTypeTable">
           <thead><tr><th class="left">문제 유형</th><th>시도</th><th>정답률</th><th class="left">막대</th><th class="left">연결 개념</th></tr></thead>
           <tbody></tbody></table></div>
         <h3>오개념 빈도</h3>
         <div id="tMiscon"></div>
-      </div>
+      </details>
 
-      <div class="card">
-        <h3 style="margin-top:0">📝 과세특(과목별 세부능력 및 특기사항) 초안</h3>
+      <details class="card fold">
+        <summary>📝 과세특(과목별 세부능력 및 특기사항) 초안</summary>
         <p class="sub">학생의 단계 통과·정답률·오개념 극복·서술형 답안을 근거로 초안을 만듭니다.
           <b>초안은 반드시 교사가 확인·수정</b>한 뒤 사용하세요. 문장은 이 기기 안에서 규칙 기반으로 조합됩니다.</p>
         <div class="grid g4">
@@ -732,10 +746,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <span class="pill">글자 <b id="ntCount">0</b></span>
         </div>
         <textarea id="ntOut" rows="9" placeholder="초안이 여기에 생성됩니다."></textarea>
-      </div>
+      </details>
 
-      <div class="card">
-        <h3 style="margin-top:0">💬 학생별 피드백 생성</h3>
+      <details class="card fold">
+        <summary>💬 학생별 피드백 생성</summary>
         <p class="sub">학생에게 그대로 전달할 수 있는 피드백입니다. <b>앱에 전달</b>을 누르면 해당 학생의 학습 허브에 표시됩니다.</p>
         <div class="row" style="margin-bottom:10px">
           <select id="fbStu" style="width:auto;min-width:180px"></select>
@@ -749,10 +763,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <button class="btn small ghost" id="btnFbCopy">복사</button>
         </div>
         <textarea id="fbOut" rows="8" placeholder="피드백이 여기에 생성됩니다."></textarea>
-      </div>
+      </details>
 
-      <div class="card">
-        <h3 style="margin-top:0">📊 구글 시트 연동</h3>
+      <details class="card fold">
+        <summary>📊 구글 시트 연동</summary>
         <p class="sub">세 가지 방법 중 학교 환경에 맞는 것을 쓰세요. 학생 기기에서 외부 서비스로 자동 전송되는 것은 없습니다(③만 선생님이 직접 켤 때 동작).</p>
         <div class="grid g2">
           <div class="qbox"><b>① CSV → 시트 업로드</b><br><span class="mini">
@@ -771,10 +785,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <button class="btn small" id="btnSheetParse">붙여넣은 표로 과세특 일괄 생성</button>
           <span class="mini" id="sheetMsg"></span>
         </div>
-      </div>
+      </details>
 
-      <div class="card">
-        <h3 style="margin-top:0">수업 설정</h3>
+      <details class="card fold">
+        <summary>수업 설정</summary>
         <div class="grid g4">
           <label class="fld"><b>방탈출 문제 수</b><input id="cfgQuizCount" type="number" min="3" max="15" value="6"></label>
           <label class="fld"><b>힌트 허용</b><select id="cfgHints"><option value="1">허용</option><option value="0">금지</option></select></label>
@@ -793,7 +807,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <button class="btn small ghost" id="btnWipe">모든 학생 기록 삭제</button>
         </div>
         <div class="fb" id="cfgFb"></div>
-      </div>
+      </details>
     </div>
   </section>
 
@@ -3152,6 +3166,8 @@ function paintViz(list,allList){
   });
 
   const host=$('#vizCharts'); host.innerHTML='';
+  const more=$('#vizChartsMore'); if(more) more.innerHTML='';
+  const put=b=>{ (host.children.length<3?host:(more||host)).append(b); };
 
   // ① 학급별 단계 통과율 (그룹 막대 · 항상 전체 학급)
   const kNames=Object.keys(vizAggregate(allList).byKlass).sort();
@@ -3159,7 +3175,7 @@ function paintViz(list,allList){
   const series=[{name:'기초',color:VIZ.cat[0]},{name:'발전',color:VIZ.cat[1]},
                 {name:'심화',color:VIZ.cat[2]},{name:'방탈출',color:VIZ.cat[3]}];
   const b1=chartBox('학급별 단계 통과율','학급 사이 진도 차이를 확인합니다. 막대에 마우스를 올리면 값이 보입니다.');
-  host.append(b1._mount(legendEl(series)));
+  put(b1._mount(legendEl(series)));
   chartGrouped(b1._cv,kNames.map(k=>{
     const v=allA.byKlass[k];
     return {label:k,sub:`${v.n}명`,values:v.pass.map(p=>p/v.n*100),note:`학생 ${v.n}명`};
@@ -3167,7 +3183,7 @@ function paintViz(list,allList){
 
   // ② 단계 통과 퍼널
   const b2=chartBox('학습 흐름에서 어디서 멈추나','단계별 통과 인원 — 급격히 줄어드는 구간이 병목입니다.');
-  host.append(b2._mount());
+  put(b2._mount());
   const stageLabs=['기초 통과','발전 통과','심화 통과','방탈출 성공'];
   chartBarsH(b2._cv,A.stagePass.map((v,i)=>({
     label:stageLabs[i],value:v,color:VIZ.ord[i],
@@ -3185,13 +3201,13 @@ function paintViz(list,allList){
       note:statusWord(pct)};
   }).sort((a,b)=>a.value-b.value);
   const b3=chartBox('문제 유형별 정답률','아래쪽이 재지도 우선순위입니다. 60% 미만 = 재지도, 60~79% = 점검.');
-  host.append(b3._mount(legendEl([{name:'재지도(<60%)',color:VIZ.status.bad},
+  put(b3._mount(legendEl([{name:'재지도(<60%)',color:VIZ.status.bad},
     {name:'점검(60~79%)',color:VIZ.status.warn},{name:'안정(≥80%)',color:VIZ.status.good}])));
   chartBarsH(b3._cv,tRows.length?tRows:[{label:'기록 없음',value:0,disp:'—'}],{max:100,rowH:24});
 
   // ④ 정답률 분포
   const b4=chartBox('학생 정답률 분포','한쪽으로 몰려 있는지, 격차가 큰지 확인합니다.');
-  host.append(b4._mount());
+  put(b4._mount());
   chartBarsV(b4._cv,histo(A.rates,[
     {label:'0~39%',lo:0,hi:40},{label:'40~59%',lo:40,hi:60},{label:'60~79%',lo:60,hi:80},
     {label:'80~89%',lo:80,hi:90},{label:'90~100%',lo:90,hi:101}
@@ -3204,7 +3220,7 @@ function paintViz(list,allList){
     .map(([k,v])=>({label:MIS_LABEL[k]||k,value:v,color:VIZ.accent2,disp:v+'회',
       tip:`<b>${MIS_LABEL[k]||k}</b><br>${v}회 발생`}));
   const b5=chartBox('오개념 발생 빈도','오답에서 추정한 오개념입니다. 가장 위쪽부터 다뤄 주세요.');
-  host.append(b5._mount());
+  put(b5._mount());
   chartBarsH(b5._cv,misRows.length?misRows:[{label:'집계 없음',value:0,disp:'—'}],{rowH:24});
 
   // ⑥ 방탈출 문항 유형별 평균 해결 시간
@@ -3214,12 +3230,12 @@ function paintViz(list,allList){
     tip:`<b>${k}</b><br>평균 ${fmtTime(v.sum/v.n*1000)} · ${v.n}회 출제<br>누적 오답 ${v.wrong}회`
   })).sort((a,b)=>b.value-a.value);
   const b6=chartBox('방탈출 문항별 평균 해결 시간','오래 걸린 유형 = 절차가 아직 자동화되지 않은 개념입니다.');
-  host.append(b6._mount());
+  put(b6._mount());
   chartBarsH(b6._cv,itRows.length?itRows:[{label:'완주 기록 없음',value:0,disp:'—'}],{rowH:24});
 
   // ⑦ 완주 소요 시간 분포
   const b7=chartBox('방탈출 완주 소요 시간 분포','학습 페이스를 봅니다. 오래 걸린 학생은 개별 지원이 필요합니다.');
-  host.append(b7._mount());
+  put(b7._mount());
   chartBarsV(b7._cv,histo(A.quizSecs,[
     {label:'<3분',lo:0,hi:180},{label:'3~6분',lo:180,hi:360},{label:'6~10분',lo:360,hi:600},
     {label:'10~15분',lo:600,hi:900},{label:'15분+',lo:900,hi:1e9}
@@ -3231,7 +3247,7 @@ function paintViz(list,allList){
                 {label:'B 충실',value:A.essay.B,color:VIZ.cat[0]},
                 {label:'C 보완 필요',value:A.essay.C,color:VIZ.cat[3]},
                 {label:'미제출',value:A.essay.none,color:'#5b6b96'}];
-  host.append(b8._mount(legendEl(dParts.map(p=>({name:p.label,color:p.color})))));
+  put(b8._mount(legendEl(dParts.map(p=>({name:p.label,color:p.color})))));
   chartDonut(b8._cv,dParts,{center:A.n+'명',centerLab:'전체'});
 
   // 표로 보기 (접근성 · 인쇄)
@@ -4053,6 +4069,7 @@ function boot(){
   $('#btnTeacherOut').addEventListener('click',()=>{ tUnlocked=false; show(ME?'home':'login'); });
   $('#tKlassFilter').addEventListener('change',paintTeacher);
   $('#vizPriv').addEventListener('change',paintTeacher);
+  $('#vizMoreWrap').addEventListener('toggle',()=>{ if($('#vizMoreWrap').open) paintTeacher(); });
   $('#btnClassReport').addEventListener('click',classReport);
   $('#btnClassCopy').addEventListener('click',async()=>{
     const t=$('#classReportOut').value; if(!t){ toast('먼저 리포트를 생성하세요.',true); return; }

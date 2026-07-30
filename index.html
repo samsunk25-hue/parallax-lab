@@ -1,0 +1,4152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>연주시차 탐구소 · 별까지의 거리</title>
+<style>
+:root{
+  --bg:#070a18; --bg2:#0c1226;
+  --panel:rgba(18,26,50,.88); --panel2:rgba(28,38,68,.7);
+  --line:rgba(120,180,220,.22);
+  --accent:#5eead4; --accent2:#a78bfa; --warn:#fbbf24;
+  --bad:#f87171; --good:#4ade80;
+  --text:#e8eefb; --muted:#93a3c4;
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic","맑은 고딕",sans-serif;
+  background:radial-gradient(1200px 700px at 20% -10%,#132048 0%,transparent 60%),
+             radial-gradient(900px 600px at 90% 10%,#241a4d 0%,transparent 55%),var(--bg);
+  color:var(--text); min-height:100vh; line-height:1.6; -webkit-text-size-adjust:100%;
+}
+#stars{position:fixed;inset:0;z-index:-1}
+.wrap{max-width:1160px;margin:0 auto;padding:16px 16px 80px}
+.hidden{display:none !important}
+
+/* ---------- 공통 부품 ---------- */
+header.top{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 16px;margin:8px 0 18px;border:1px solid var(--line);
+  border-radius:14px;background:var(--panel);backdrop-filter:blur(8px);box-shadow:var(--shadow);
+}
+.brand{font-weight:800;font-size:1.05rem;letter-spacing:.5px}
+.brand span{color:var(--accent)}
+.who{margin-left:auto;font-size:.86rem;color:var(--muted)}
+.card{
+  border:1px solid var(--line);border-radius:16px;background:var(--panel);
+  padding:18px;box-shadow:var(--shadow);margin-bottom:16px;backdrop-filter:blur(6px);
+}
+.card h2{margin:0 0 6px;font-size:1.22rem}
+.card h3{margin:18px 0 8px;font-size:1.03rem;color:var(--accent)}
+.sub{color:var(--muted);font-size:.9rem;margin:0 0 10px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.right{margin-left:auto}
+.btn{
+  appearance:none;cursor:pointer;font:inherit;font-weight:700;
+  padding:11px 18px;border-radius:11px;border:1px solid var(--accent);
+  background:rgba(94,234,212,.1);color:var(--accent);transition:.18s;
+}
+.btn:hover{background:rgba(94,234,212,.22);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.primary{background:linear-gradient(135deg,#5eead4,#7dd3fc);color:#06213a;border-color:transparent}
+.btn.violet{border-color:var(--accent2);color:#d6c8ff;background:rgba(167,139,250,.12)}
+.btn.ghost{border-color:var(--line);color:var(--muted);background:transparent}
+.btn.small{padding:7px 12px;font-size:.86rem;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+input,select,textarea{
+  font:inherit;color:var(--text);background:rgba(0,0,0,.35);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;outline:none;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(94,234,212,.15)}
+label.fld{display:block;margin-bottom:12px;font-size:.9rem;color:var(--muted)}
+label.fld b{display:block;color:var(--text);font-size:.95rem;margin-bottom:6px;font-weight:600}
+input[type=range]{padding:0;background:transparent;border:none}
+.tag{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.76rem;border:1px solid var(--line);color:var(--muted)}
+.tag.ok{color:var(--good);border-color:rgba(74,222,128,.5);background:rgba(74,222,128,.1)}
+.tag.no{color:var(--warn);border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.08)}
+.kbd{font-family:ui-monospace,Consolas,monospace;background:rgba(0,0,0,.4);padding:2px 6px;border-radius:6px;border:1px solid var(--line)}
+.note{border-left:3px solid var(--accent2);background:rgba(167,139,250,.09);padding:10px 14px;border-radius:0 10px 10px 0;font-size:.92rem;margin:12px 0}
+.warnbox{border-left:3px solid var(--warn);background:rgba(251,191,36,.09);padding:10px 14px;border-radius:0 10px 10px 0;font-size:.92rem;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:center}
+th{color:var(--accent);font-weight:700;white-space:nowrap}
+td.left,th.left{text-align:left}
+.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+canvas.sim{width:100%;height:auto;display:block;background:#04060f;border:1px solid var(--line);border-radius:12px}
+.big{font-family:ui-monospace,Consolas,monospace;font-size:1.5rem;font-weight:700;color:var(--accent)}
+.meter{height:9px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.meter>i{display:block;height:100%;background:linear-gradient(90deg,#5eead4,#a78bfa);width:0%;transition:.4s}
+.fb{margin-top:8px;font-size:.92rem;min-height:1.2em}
+.fb.ok{color:var(--good)} .fb.no{color:var(--bad)}
+.qbox{border:1px solid var(--line);border-radius:13px;padding:14px;background:var(--panel2);margin-bottom:12px}
+.qbox.solved{border-color:rgba(74,222,128,.55);background:rgba(74,222,128,.07)}
+.qhead{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.qtext{font-weight:600;margin-bottom:10px}
+.choices{display:grid;gap:8px}
+.choice{
+  cursor:pointer;text-align:left;padding:10px 13px;border-radius:10px;border:1px solid var(--line);
+  background:rgba(0,0,0,.25);color:var(--text);font:inherit;transition:.15s;
+}
+.choice:hover{border-color:var(--accent);background:rgba(94,234,212,.1)}
+.choice.sel{border-color:var(--accent2);background:rgba(167,139,250,.18)}
+.choice.right{border-color:var(--good);background:rgba(74,222,128,.16)}
+.choice.wrong{border-color:var(--bad);background:rgba(248,113,113,.14)}
+.numrow{display:flex;gap:8px;align-items:center;max-width:420px}
+.numrow input{flex:1}
+.unit{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.stagecard{cursor:pointer;text-align:left;width:100%;border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:18px;color:inherit;font:inherit;transition:.18s}
+.stagecard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stagecard .lv{font-size:.78rem;color:var(--accent2);font-weight:700;letter-spacing:1px}
+.stagecard h3{margin:4px 0 6px;color:var(--text);font-size:1.1rem}
+.stagecard p{margin:0 0 10px;color:var(--muted);font-size:.88rem}
+.locked{opacity:.55}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{cursor:pointer;padding:8px 14px;border-radius:10px 10px 0 0;border:1px solid var(--line);border-bottom:none;background:transparent;color:var(--muted);font:inherit;font-weight:600}
+.tab.on{color:#06213a;background:linear-gradient(135deg,#5eead4,#7dd3fc)}
+.modal{position:fixed;inset:0;background:rgba(3,6,16,.82);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.modal .card{max-width:560px;width:100%;margin:0;max-height:86vh;overflow:auto}
+.pill{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid var(--line);font-size:.85rem}
+.pill b{color:var(--accent)}
+.roomgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.room{padding:10px 6px;text-align:center;border:1px solid var(--line);border-radius:11px;font-size:.8rem;color:var(--muted);background:rgba(0,0,0,.25)}
+.room.now{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px rgba(94,234,212,.12)}
+.room.done{border-color:rgba(74,222,128,.5);color:var(--good);background:rgba(74,222,128,.1)}
+.room .ic{display:block;font-size:1.3rem;line-height:1.4}
+.cert{border:2px solid var(--accent);border-radius:16px;padding:22px;text-align:center;background:linear-gradient(160deg,rgba(94,234,212,.12),rgba(167,139,250,.12))}
+.cert h3{font-size:1.4rem;margin:0 0 4px;color:var(--accent)}
+.code{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;word-break:break-all;background:rgba(0,0,0,.45);border:1px solid var(--line);border-radius:10px;padding:10px;max-height:120px;overflow:auto}
+.mini{font-size:.82rem;color:var(--muted)}
+.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line);min-width:120px}
+.bar i{display:block;height:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* ---------- 시각화 대시보드 ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kpi{border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:rgba(8,12,26,.6)}
+.kpi .lab{font-size:.78rem;color:var(--muted)}
+.kpi .val{font-size:1.6rem;font-weight:700;margin-top:2px}
+.kpi .sub2{font-size:.75rem;color:var(--muted)}
+.chartbox{border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:rgba(8,12,26,.6);position:relative}
+.chartbox h4{margin:0 0 2px;font-size:.96rem}
+.chartbox .cap{font-size:.76rem;color:var(--muted);margin:0 0 8px}
+.chartbox canvas{width:100%;height:auto;display:block}
+.chartbox .foot{font-size:.76rem;color:var(--muted);margin-top:8px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 8px;font-size:.78rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+#vizTip{position:fixed;pointer-events:none;z-index:80;display:none;max-width:240px;
+  background:#0b1226;border:1px solid var(--line);border-radius:9px;padding:7px 10px;
+  font-size:.8rem;box-shadow:var(--shadow);color:var(--text)}
+/* 교사 콘솔 접이식 카드 — 필요한 것만 펼쳐 보도록 */
+details.fold>summary{
+  cursor:pointer;list-style:none;font-size:1.05rem;font-weight:700;color:var(--accent);
+  display:flex;align-items:center;gap:8px;padding:2px 0;
+}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:'▸';font-size:.9rem;color:var(--muted);transition:.15s}
+details.fold[open]>summary::before{content:'▾';color:var(--accent)}
+details.fold>summary:hover{filter:brightness(1.15)}
+details.fold[open]>summary{margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+details.tableview{margin-top:12px}
+details.tableview summary{cursor:pointer;color:var(--accent);font-size:.85rem}
+.tab-num{font-variant-numeric:tabular-nums}
+footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
+@media (max-width:600px){
+  .wrap{padding:10px 10px 70px}
+  .card{padding:14px}
+  .big{font-size:1.25rem}
+}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">🔭 연주시차 <span>탐구소</span></div>
+    <button class="btn small ghost" id="btnHome">학습 허브</button>
+    <button class="btn small ghost" id="btnTeacher">교사 콘솔</button>
+    <div class="who" id="whoami"></div>
+  </header>
+
+  <!-- ============ 로그인 ============ -->
+  <section id="screen-login" class="screen">
+    <div class="card">
+      <h2>별까지의 거리, 어떻게 알아낼까?</h2>
+      <p class="sub">지구 공전으로 생기는 <b>연주시차</b>를 이용해 별까지의 거리를 구하는 탐구 앱입니다.
+        학습 세션 3단계를 거친 뒤, 방탈출 퀴즈로 확인합니다. (중학교 과학 · 별과 우주)</p>
+      <div class="grid g2">
+        <div>
+          <label class="fld"><b>학급</b><input id="inKlass" placeholder="예: 3학년 2반" autocomplete="off"></label>
+          <label class="fld"><b>이름</b><input id="inName" placeholder="예: 김하늘" autocomplete="off"></label>
+          <p class="mini" style="margin:0 0 6px">문제 수준 (학습 중에도 바꿀 수 있어요)</p>
+          <div class="row" style="margin-bottom:14px">
+            <button type="button" class="btn small lvbtn on" data-lv="basic">기본 — 딱 떨어지는 수로 개념 익히기</button>
+            <button type="button" class="btn small lvbtn" data-lv="adv">발전 — 실제 관측값·복잡한 환산까지</button>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="btnStart">학습 시작</button>
+            <button class="btn ghost" id="btnLoginTeacher">교사용 들어가기</button>
+          </div>
+          <p class="mini" style="margin-top:10px">같은 이름·학급으로 다시 들어오면 이전 기록이 이어집니다.</p>
+        </div>
+        <div class="card" style="margin:0;background:var(--panel2)">
+          <h3 style="margin-top:0">이 앱에서 하는 일</h3>
+          <ol class="mini" style="margin:0;padding-left:20px;line-height:2">
+            <li><b>기초</b> — 시뮬레이터로 “거리 ↔ 시차” 반비례를 눈으로 확인</li>
+            <li><b>발전</b> — d = 1/p 계산과 단위(″, pc, ly, AU) 익히기</li>
+            <li><b>심화</b> — 그래프를 직접 그리고 해석하기</li>
+            <li><b>방탈출</b> — 랜덤 문제를 <b>모두</b> 맞혀야 탈출</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 학습 허브 ============ -->
+  <section id="screen-home" class="screen hidden">
+    <div class="card">
+      <h2>학습 허브</h2>
+      <p class="sub">단계는 순서대로 열립니다. 각 단계의 확인 문제를 <b>모두</b> 맞히면 통과입니다.</p>
+      <div class="meter" style="margin-bottom:6px"><i id="homeMeter"></i></div>
+      <p class="mini" id="homeProgressTxt"></p>
+      <div class="row" style="margin-top:12px">
+        <span class="mini">문제 수준</span>
+        <button type="button" class="btn small lvbtn on" data-lv="basic">기본</button>
+        <button type="button" class="btn small lvbtn" data-lv="adv">발전</button>
+        <span class="pill">현재 <b class="lvNow">기본</b> 수준</span>
+      </div>
+    </div>
+    <div class="card" id="aiCoach">
+      <h3 style="margin-top:0">🤖 학습 코치 <span class="tag">이 기기 안에서만 분석</span></h3>
+      <p class="sub" style="margin:0 0 8px">지금까지의 풀이 기록을 분석한 맞춤 안내입니다. 인터넷 전송·회원가입·비용이 필요하지 않습니다.</p>
+      <div id="coachBody" class="mini"></div>
+    </div>
+    <div class="grid g3" id="stageCards"></div>
+    <div class="card">
+      <h3 style="margin-top:0">🚀 방탈출 퀴즈 세션</h3>
+      <p class="sub">6개의 구역, 매번 새로 만들어지는 랜덤 문제. 틀리면 같은 유형의 다른 문제가 다시 나옵니다.
+        <b>모든 문제를 맞혀야</b> 탈출 인증서를 받습니다.</p>
+      <div class="row">
+        <button class="btn primary" id="btnQuiz">방탈출 입장</button>
+        <button class="btn violet" id="btnReport">📊 내 학습 리포트</button>
+        <span class="pill">최근 결과 <b id="quizBest">기록 없음</b></span>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">🔑 모둠 열쇠 조각</h3>
+      <p class="sub">방탈출의 <b>최종 자물쇠</b>는 혼자 열 수 없습니다. 우리 모둠 전원의 열쇠 조각을 주고받아 모으세요(최소 <b id="teamNeed">3</b>개).
+        모둠이 3명이면 3개, 4명이면 4개 — 인원만큼 넣으면 됩니다. 조각마다 <b>연주시차</b>가 하나씩 적혀 있습니다.</p>
+      <div class="row" style="margin-bottom:10px">
+        <label class="fld" style="margin:0;min-width:160px"><b>내 모둠</b>
+          <input id="teamName" placeholder="예: 1조" autocomplete="off"></label>
+        <div style="min-width:220px">
+          <p class="mini" style="margin:0 0 4px">내 열쇠 조각</p>
+          <div class="big" id="myKeyCode">—</div>
+          <p class="mini" id="myKeyInfo"></p>
+        </div>
+        <button class="btn small ghost" id="btnKeyCopy">조각 복사</button>
+      </div>
+      <div class="note">조를 바꾸면 조각도 바뀝니다. 조원끼리 <b>서로 다른 조각</b>을 받으니, 칠판이나 학습지에 조각 코드를 적어 교환하세요.</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">📤 결과 제출</h3>
+      <p class="sub">아래 결과 코드를 복사해 선생님께 제출하면, 다른 기기의 교사 콘솔에서도 내 기록을 확인할 수 있습니다.</p>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn small" id="btnMakeCode">결과 코드 만들기</button>
+        <button class="btn small ghost" id="btnCopyCode">복사</button>
+      </div>
+      <div class="code" id="myCode">아직 만들지 않았습니다.</div>
+    </div>
+  </section>
+
+  <!-- ============ 기초 단계 ============ -->
+  <section id="screen-basic" class="screen hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2>기초 단계 · 시차를 눈으로 확인하기</h2>
+          <p class="sub" style="margin:0">목표: 별이 <b>멀수록</b> 연주시차가 <b>작아진다</b>는 관계를 정성적으로 인식한다.</p>
+        </div>
+        <button class="btn small ghost right" id="basicBack">← 허브</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">① 손가락 시차 체험 (1분)</h3>
+      <p class="sub">엄지를 세우고 왼눈만 → 오른눈만 번갈아 감아 보세요. 엄지가 배경에 대해 <b>움직여 보이는 각</b>이 시차입니다.</p>
+      <div class="grid g2">
+        <div class="note">엄지를 <b>가까이</b> 두면 움직임이 <b>크고</b>, <b>멀리</b> 뻗으면 <b>작아집니다</b>.
+          두 눈 = 1월과 7월의 지구, 엄지 = 별, 배경 = 아주 먼 별들.</div>
+        <div class="warnbox">지구는 반년마다 궤도의 반대편으로 갑니다. 그래서 별의 위치가 조금 달라 보입니다.
+          <b>연주시차 p</b>는 반년 동안 별이 움직여 보인 각의 <b>절반</b>입니다.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">② 연주시차 시뮬레이터</h3>
+      <div class="grid g2">
+        <div>
+          <p class="mini">우주 시점 — 위에서 내려다본 지구 공전</p>
+          <canvas id="cvSpace" class="sim" width="560" height="360" aria-label="지구 공전과 별의 방향을 보여주는 우주 시점 그림"></canvas>
+        </div>
+        <div>
+          <p class="mini">관측자 시점 — 지구에서 본 밤하늘</p>
+          <canvas id="cvSky" class="sim" width="560" height="360" aria-label="지구에서 본 밤하늘에서 별의 위치 변화"></canvas>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:14px">
+        <label class="fld"><b>별까지의 거리 <span id="lblDist">5.0</span> pc</b>
+          <input type="range" id="rgDist" min="1" max="40" step="0.5" value="5">
+        </label>
+        <label class="fld"><b>지구의 위치(월) <span id="lblMonth">1월</span></b>
+          <input type="range" id="rgMonth" min="0" max="11" step="1" value="0">
+        </label>
+      </div>
+      <div class="row">
+        <button class="btn small" id="btnSpin">▶ 공전 애니메이션</button>
+        <button class="btn small violet" id="btnHalf">↔ 6개월 이동</button>
+        <span class="pill">연주시차 p = <b id="valP">0.200″</b></span>
+        <span class="pill">거리 d = <b id="valD">5.0 pc</b></span>
+        <span class="pill">하늘에서의 흔들림 <b id="valWob">보통</b></span>
+      </div>
+      <div class="note" id="basicHint">거리 슬라이더를 움직이며 오른쪽 밤하늘의 별이 <b>얼마나</b> 흔들리는지 비교해 보세요.</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">③ 관찰 기록표</h3>
+      <p class="sub">거리를 <b>2 pc / 10 pc / 30 pc</b>로 맞추고 각각 <b>기록</b> 버튼을 누르세요. (3개 모두 필요)</p>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn small" id="btnRec">현재 값 기록</button>
+        <button class="btn small ghost" id="btnRecClear">기록 지우기</button>
+        <span class="pill">기록 <b id="recCount">0</b>/3</span>
+      </div>
+      <div class="scrollx"><table id="recTable">
+        <thead><tr><th>거리 d (pc)</th><th>연주시차 p (″)</th><th>하늘에서의 흔들림</th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="fb" id="recFb"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">④ 결론 문장 완성</h3>
+      <p class="qtext">별까지의 거리가 <b>멀어질수록</b> 연주시차는 <select id="selA" style="width:auto;display:inline-block"><option value="">고르기</option><option value="down">작아진다</option><option value="up">커진다</option><option value="same">변하지 않는다</option></select>.
+        따라서 거리와 연주시차는 서로 <select id="selB" style="width:auto;display:inline-block"><option value="">고르기</option><option value="inv">반비례</option><option value="pro">비례</option><option value="none">관계없다</option></select> 관계이다.</p>
+      <button class="btn small" id="btnConcl">확인</button>
+      <div class="fb" id="conclFb"></div>
+
+      <h3>⑤ 관찰 기록 서술하기 <span class="tag">주관식</span></h3>
+      <p class="sub">시뮬레이터에서 <b>무엇을 어떻게 관찰했고, 어떤 결론을 얻었는지</b> 두 문장 이상으로 쓰세요.
+        (예: 거리를 ○○에서 ○○로 바꾸니 …)</p>
+      <textarea id="txtBasic" rows="4" placeholder="내가 관찰한 것과 알게 된 것을 내 말로 써 봅니다."></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn small" id="btnTxtBasic">서술 제출·자기점검</button>
+        <span class="pill">글자 <b id="cntBasic">0</b></span>
+      </div>
+      <div id="rubBasic"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">⑥ 확인 문제</h3>
+      <p class="sub">4문제 모두 맞히면 기초 단계를 통과합니다. 틀린 문제는 새 문제로 다시 나옵니다.
+        <span class="pill">수준 <b class="lvNow">기본</b></span></p>
+      <div id="basicQuiz"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnBasicDone" disabled>기초 단계 통과하기</button>
+        <span class="pill">정답 <b id="basicScore">0</b>/4</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 발전 단계 ============ -->
+  <section id="screen-calc" class="screen hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2>발전 단계 · 계산과 단위</h2>
+          <p class="sub" style="margin:0">목표: d = 1/p 로 별까지의 거리를 구하고, ″ · pc · ly · AU 단위를 이해한다.</p>
+        </div>
+        <button class="btn small ghost right" id="calcBack">← 허브</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="calcTabs">
+      <button class="tab on" data-t="t1">1. 공식</button>
+      <button class="tab" data-t="t2">2. 단위 사전</button>
+      <button class="tab" data-t="t3">3. 단위 환산 연습</button>
+      <button class="tab" data-t="t4">4. 거리 계산 연습</button>
+    </div>
+
+    <div id="t1" class="tabpane">
+      <div class="card">
+        <h3 style="margin-top:0">거리 공식</h3>
+        <div style="text-align:center;padding:14px 0">
+          <div class="big" style="font-size:2rem">d (pc) = 1 ÷ p (″)</div>
+          <p class="mini">d: 별까지의 거리(파섹), p: 연주시차(각초)</p>
+        </div>
+        <div class="grid g3">
+          <div class="qbox"><b>p = 1″</b><br><span class="mini">d = 1/1 = <b>1 pc</b> — 파섹의 정의</span></div>
+          <div class="qbox"><b>p = 0.5″</b><br><span class="mini">d = 1/0.5 = <b>2 pc</b> — 시차 절반 → 거리 2배</span></div>
+          <div class="qbox"><b>p = 0.1″</b><br><span class="mini">d = 1/0.1 = <b>10 pc</b> — 시차 1/10 → 거리 10배</span></div>
+        </div>
+        <div class="note">공식이 <b>나눗셈</b>인 이유: 시차와 거리는 반비례이기 때문입니다. p가 작아지면 1/p는 커집니다.</div>
+        <div class="warnbox">자주 하는 실수 ① p의 단위를 각초(″)로 바꾸지 않고 계산 ② d = p 로 곱셈/그대로 쓰기 ③ 반년 동안의 이동각 전체를 p로 쓰기(절반이 p!)</div>
+        <h3>계산기로 감 잡기</h3>
+        <div class="row">
+          <label class="fld" style="flex:1;min-width:200px"><b>p (″)</b><input id="calcP" type="number" step="0.001" value="0.5"></label>
+          <div style="flex:1;min-width:200px">
+            <p class="mini" style="margin:0 0 4px">결과</p>
+            <div class="big" id="calcOut">2.00 pc</div>
+            <p class="mini" id="calcOut2"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="t2" class="tabpane hidden">
+      <div class="card">
+        <h3 style="margin-top:0">각도 단위 — 아주 작은 각을 재는 법</h3>
+        <div class="scrollx"><table>
+          <thead><tr><th>단위</th><th>기호</th><th>관계</th><th>어디에 쓰나</th></tr></thead>
+          <tbody>
+            <tr><td>도</td><td>°</td><td>1° = 60′</td><td class="left">보름달의 크기 ≈ 0.5°</td></tr>
+            <tr><td>각분</td><td>′</td><td>1′ = 60″</td><td class="left">사람 눈의 분해 한계 ≈ 1′</td></tr>
+            <tr><td>각초</td><td>″</td><td>1° = 3600″</td><td class="left"><b>연주시차의 단위</b></td></tr>
+          </tbody></table></div>
+        <div class="note">가장 큰 연주시차(프록시마 센타우리)도 <b>0.77″</b>입니다. 1°의 약 4700분의 1 — 그래서 망원경이 필요합니다.</div>
+        <h3>거리 단위</h3>
+        <div class="scrollx"><table>
+          <thead><tr><th>단위</th><th>기호</th><th>정의</th><th>크기</th></tr></thead>
+          <tbody>
+            <tr><td>천문단위</td><td>AU</td><td class="left">지구–태양 평균 거리</td><td>≈ 1.5억 km</td></tr>
+            <tr><td>광년</td><td>ly</td><td class="left">빛이 1년 동안 가는 거리</td><td>≈ 63241 AU</td></tr>
+            <tr><td>파섹</td><td>pc</td><td class="left">연주시차가 1″인 별까지의 거리</td><td>≈ 3.26 ly</td></tr>
+          </tbody></table></div>
+        <div class="grid g2">
+          <div class="qbox"><b>꼭 외울 환산</b><br>
+            1 pc = 3.26 ly<br>1 pc = 206265 AU<br>1 pc ≈ 3.09 × 10<sup>13</sup> km<br>1 ly ≈ 9.46 × 10<sup>12</sup> km</div>
+          <div class="qbox"><b>단위 감각</b><br>
+            <span class="mini">같은 거리를 여러 단위로: 아래 값을 바꿔 보세요.</span>
+            <label class="fld" style="margin-top:8px"><b>거리 (pc)</b><input id="uConv" type="number" step="0.1" value="1"></label>
+            <div id="uConvOut" class="mini"></div></div>
+        </div>
+        <h3>실제 별의 자료</h3>
+        <div class="scrollx"><table id="starTable">
+          <thead><tr><th class="left">별</th><th>연주시차 p (″)</th><th>거리 (pc)</th><th>거리 (ly)</th></tr></thead>
+          <tbody></tbody></table></div>
+        <p class="mini">※ 데네브·베텔게우스처럼 시차가 0.01″보다 작으면 측정 오차가 커서 거리를 정확히 알기 어렵습니다.</p>
+
+        <h3>거리 비교 스케일 바 — 우주의 규모 감각</h3>
+        <p class="sub">지구–달부터 우리 은하 중심까지 <b>같은 축</b>에 올렸습니다. 눈금 한 칸이 <b>10배</b>인
+          로그 눈금이라, 한 칸 옮겨갈 때마다 거리가 10배씩 커집니다. 점을 누르거나 마우스를 올려 보세요.</p>
+        <div class="row" style="margin-bottom:8px">
+          <span class="mini">기준 단위</span>
+          <select id="scaleUnit" style="width:auto">
+            <option value="au">AU (천문단위)</option>
+            <option value="ly">ly (광년)</option>
+            <option value="pc">pc (파섹)</option>
+          </select>
+          <span class="mini right">별에는 연주시차도 함께 표시됩니다</span>
+        </div>
+        <canvas id="cvScale" class="sim" aria-label="지구-달부터 은하 중심까지의 거리를 로그 눈금으로 비교한 그림"></canvas>
+        <div id="scaleInfo" class="qbox" style="margin-top:10px"></div>
+        <div class="scrollx" style="margin-top:10px"><table id="scaleTable">
+          <thead><tr><th class="left">대상</th><th>AU</th><th>ly</th><th>pc</th><th>연주시차(″)</th><th class="left">빛이 오는 시간</th></tr></thead>
+          <tbody></tbody></table></div>
+        <div class="warnbox">태양계(해왕성 30 AU)는 가장 가까운 별(프록시마 26만 AU)에 비하면 거의 <b>한 점</b>입니다.
+          그래서 별의 거리는 AU가 아니라 pc·광년으로 재는 것이 편리합니다.</div>
+      </div>
+    </div>
+
+    <div id="t3" class="tabpane hidden">
+      <div class="card">
+        <h3 style="margin-top:0">단위 환산 연습</h3>
+        <p class="sub">4문제 모두 정답이면 통과 조건 하나를 채웁니다. 오차 2%까지 정답으로 봅니다.</p>
+        <div id="unitQuiz"></div>
+        <div class="row"><span class="pill">정답 <b id="unitScore">0</b>/4</span>
+          <button class="btn small ghost" id="btnUnitNew">문제 새로 뽑기</button></div>
+      </div>
+    </div>
+
+    <div id="t4" class="tabpane hidden">
+      <div class="card">
+        <h3 style="margin-top:0">거리 계산 연습</h3>
+        <p class="sub">p → d, d → p 를 섞어 5문제. 모두 맞히면 통과 조건을 채웁니다. 막히면 <b>힌트</b>를 눌러 풀이 단계를 보세요.</p>
+        <div id="calcQuiz"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="btnCalcDone" disabled>발전 단계 통과하기</button>
+          <span class="pill">계산 <b id="calcScore">0</b>/5</span>
+          <span class="pill">환산 <b id="calcUnitState">미완료</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 심화 단계 ============ -->
+  <section id="screen-graph" class="screen hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2>심화 단계 · 그래프 그리기와 해석</h2>
+          <p class="sub" style="margin:0">목표: p–d 관계를 그래프로 나타내고, 곡선의 의미와 측정 한계를 해석한다.</p>
+        </div>
+        <button class="btn small ghost right" id="graphBack">← 허브</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">① 표 채우기 → 점 찍기</h3>
+      <p class="sub">각 별의 연주시차로 거리를 계산해 입력하세요. 맞게 입력하면 그래프에 점이 찍힙니다. (오차 3% 허용)</p>
+      <div class="scrollx"><table id="gTable">
+        <thead><tr><th class="left">별</th><th>p (″)</th><th>d = 1/p (pc)</th><th>판정</th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small" id="btnPlot">입력값 채점 · 점 찍기</button>
+        <button class="btn small ghost" id="btnShowCurve">이론 곡선 겹쳐 보기</button>
+        <span class="pill">정확한 점 <b id="plotCount">0</b>/5</span>
+      </div>
+      <div class="fb" id="plotFb"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">② 두 가지 그래프 비교</h3>
+      <div class="grid g2">
+        <div>
+          <p class="mini">가로축 p (″) — 세로축 d (pc)</p>
+          <canvas id="cvG1" class="sim" width="520" height="380" aria-label="연주시차와 거리의 반비례 그래프"></canvas>
+          <p class="mini">→ 오른쪽으로 갈수록 급히 낮아지는 <b>반비례 곡선</b></p>
+        </div>
+        <div>
+          <p class="mini">가로축 1/p — 세로축 d (pc)</p>
+          <canvas id="cvG2" class="sim" width="520" height="380" aria-label="1 나누기 연주시차와 거리의 비례 그래프"></canvas>
+          <p class="mini">→ 원점을 지나는 <b>직선</b>. 기울기 1 pc·″ 이 곧 d = 1/p</p>
+        </div>
+      </div>
+      <div class="note">반비례 관계는 가로축을 <b>1/p</b>로 바꾸면 직선이 됩니다. 과학에서 자료를 직선으로 바꿔 보는 것은 관계를 확인하는 강력한 방법입니다.</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">③ 그래프 해석 문제</h3>
+      <p class="sub">4문제 모두 맞히면 심화 단계를 통과합니다.</p>
+      <div id="graphQuiz"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">④ 그래프 해석 서술하기 <span class="tag">주관식 · 핵심 평가</span></h3>
+      <p class="sub">두 그래프를 비교하여 <b>① 곡선의 모양이 뜻하는 것 ② 가로축을 1/p로 바꾸면 직선이 되는 까닭
+        ③ 아주 먼 별의 거리를 구하기 어려운 이유</b>를 넣어 서술하세요. (세 문장 이상)</p>
+      <textarea id="txtGraph" rows="6" placeholder="예) p가 커질수록 d는 급격히 작아지는 반비례 곡선이 나타났다. …"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn small" id="btnTxtGraph">서술 제출·자기점검</button>
+        <span class="pill">글자 <b id="cntGraph">0</b></span>
+        <button class="btn small ghost" id="btnRubricHelp">채점 기준 보기</button>
+      </div>
+      <div id="rubGraph"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary" id="btnGraphDone" disabled>심화 단계 통과하기</button>
+        <span class="pill">정답 <b id="graphScore">0</b>/4</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 학생용 리포트 ============ -->
+  <section id="screen-report" class="screen hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2 style="margin:0">📊 내 학습 리포트</h2>
+          <p class="sub" style="margin:0">지금까지의 기록으로 내 강점과 보완할 점을 확인하고, 다음에 할 일을 정해 봅니다.</p>
+        </div>
+        <button class="btn small ghost right" id="repBack">← 허브</button>
+        <button class="btn small" id="repPrint">인쇄 · PDF 저장</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span class="pill" id="repWho"></span>
+        <span class="pill">성취기준 <b id="repReach">—</b></span>
+        <span class="pill">총 학습시간 <b id="repTime">—</b></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">① 성취기준 도달 현황</h3>
+      <p class="sub">중학교 과학 ‘별과 우주’ — 별의 특성을 관측 자료로 설명하기(연주시차와 별까지의 거리)</p>
+      <div id="repStd"></div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card" style="margin:0">
+        <h3 style="margin-top:0">② 영역별 성취 그래프</h3>
+        <p class="sub">교육과정 세 영역(지식·이해 / 과정·기능 / 가치·태도)을 여섯 갈래로 나누어 나타냈습니다.</p>
+        <div class="legend" id="repLegend"></div>
+        <canvas id="cvRadar" aria-label="영역별 성취 정도를 나타낸 방사형 그래프"></canvas>
+      </div>
+      <div class="card" style="margin:0">
+        <h3 style="margin-top:0">③ 영역 점수</h3>
+        <div id="repDomains"></div>
+        <div class="scrollx" style="margin-top:10px"><table id="repTable">
+          <thead><tr><th class="left">갈래</th><th>영역</th><th>점수</th><th class="left">근거</th></tr></thead>
+          <tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card" style="margin:0">
+        <h3 style="margin-top:0">④ 내 강점</h3>
+        <div id="repStrong"></div>
+      </div>
+      <div class="card" style="margin:0">
+        <h3 style="margin-top:0">⑤ 보완하면 좋은 점</h3>
+        <div id="repWeak"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">⑥ 다음에 할 일 (스스로 고르기)</h3>
+      <p class="sub">기록을 바탕으로 고른 활동입니다. 눌러서 바로 이동하세요.</p>
+      <div class="grid g3" id="repNext"></div>
+    </div>
+  </section>
+
+  <!-- ============ 방탈출 퀴즈 ============ -->
+  <section id="screen-quiz" class="screen hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2>🚀 방탈출 · 시차 관측선 탈출</h2>
+          <p class="sub" style="margin:0">각 구역의 잠금을 풀어야 다음으로 갑니다. <b>모든 문제를 맞혀야</b> 탈출!</p>
+        </div>
+        <button class="btn small ghost right" id="quizBack">← 허브</button>
+      </div>
+      <div class="roomgrid" id="roomGrid" style="margin-top:12px"></div>
+      <div class="row" style="margin-top:12px">
+        <span class="pill">경과 시간 <b id="qTime">0:00</b></span>
+        <span class="pill">해결 <b id="qSolved">0</b>/<span id="qTotal">6</span></span>
+        <span class="pill">오답 <b id="qWrong">0</b></span>
+        <span class="pill">힌트 <b id="qHints">0</b></span>
+        <span class="pill">수준 <b class="lvNow">기본</b></span>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card" style="margin:0">
+        <h3 style="margin-top:0">🇰🇷 누리호 조립 현황</h3>
+        <p class="sub" style="margin:0 0 8px">문제를 하나 풀 때마다 발사체가 한 단계씩 조립됩니다. 마지막 문제를 풀면 <b>발사</b>!</p>
+        <canvas id="cvRocket" class="sim" width="420" height="520" aria-label="문제 해결에 따라 조립되는 발사체 그림"></canvas>
+        <div id="buildLog" class="mini" style="margin-top:8px"></div>
+        <h3>⏱ 문항별 해결 시간</h3>
+        <div class="scrollx" id="itemTimes"></div>
+      </div>
+      <div id="quizArea"></div>
+    </div>
+  </section>
+
+  <!-- ============ 교사 콘솔 ============ -->
+  <section id="screen-teacher" class="screen hidden">
+    <div id="teacherGate" class="card">
+      <h2>교사 콘솔</h2>
+      <p class="sub">교사용 PIN을 입력하세요. (콘솔의 <b>수업 설정</b>에서 언제든 바꿀 수 있습니다)</p>
+      <div class="numrow"><input id="inPin" type="password" inputmode="numeric" placeholder="PIN">
+        <button class="btn primary" id="btnPin">입장</button></div>
+      <div class="fb" id="pinFb"></div>
+    </div>
+
+    <div id="teacherBody" class="hidden">
+      <div class="card">
+        <div class="row">
+          <div><h2 style="margin:0">교사 콘솔</h2><p class="sub" style="margin:0">학생별 학습 결과와 학급 통계를 확인합니다.</p></div>
+          <button class="btn small ghost right" id="btnTeacherOut">나가기</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <span class="pill">학생 <b id="tStuCount">0</b>명</span>
+          <span class="pill">성취기준 도달 <b id="tReach">0</b>명</span>
+          <span class="pill" id="tIntegrity">자료 상태 <b>확인 중</b></span>
+          <span class="pill">수업 코드 <b id="tClassCode">—</b></span>
+          <select id="tKlassFilter" style="width:auto;min-width:140px"><option value="">모든 학급</option></select>
+          <button class="btn small" id="btnCsv">CSV 내려받기</button>
+          <button class="btn small ghost" id="btnImport">결과 코드 가져오기</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">📈 학생 데이터 시각화</h3>
+        <p class="sub">모든 계산은 이 기기 안에서 이루어집니다(외부 전송 없음). 학급별로 나누어 보고, 개인정보 보호가 필요하면 이름 표시를 바꾸세요.</p>
+        <div class="row" style="margin-bottom:6px">
+          <span class="mini">이름 표시</span>
+          <select id="vizPriv" style="width:auto">
+            <option value="real">실명</option>
+            <option value="mask">마스킹 (김○○)</option>
+            <option value="code">관측 코드명 (관측자-01)</option>
+          </select>
+          <span class="mini right">아래 지표는 <b id="vizScope">모든 학급</b> 기준 · 학급 비교 그래프는 항상 전체 표시</span>
+        </div>
+        <div class="kpis" id="vizKpis"></div>
+        <div class="grid g2" id="vizCharts"></div>
+        <details class="fold" id="vizMoreWrap" style="margin-top:12px">
+          <summary>그래프 더 보기 (정답률 분포 · 오개념 · 문항 시간 · 완주 시간 · 서술 등급)</summary>
+          <div class="grid g2" id="vizChartsMore" style="margin-top:10px"></div>
+        </details>
+        <details class="tableview" id="vizTables">
+          <summary>그래프 대신 표로 보기 (읽기 도구·인쇄용)</summary>
+          <div id="vizTableBody"></div>
+        </details>
+        <div class="row" style="margin-top:14px">
+          <button class="btn small primary" id="btnClassReport">학급 분석 리포트 생성</button>
+          <button class="btn small ghost" id="btnClassCopy">복사</button>
+        </div>
+        <textarea id="classReportOut" rows="8" style="margin-top:8px" placeholder="학급 전체 자료를 분석해 재지도 우선순위와 다음 차시 제안을 만듭니다."></textarea>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">학생 현황</h3>
+        <p class="sub">도달 기준: 기초·발전·심화 3단계 통과 + 방탈출 성공. 이름을 누르면 상세 기록이 열립니다.</p>
+        <div class="scrollx"><table id="tTable">
+          <thead><tr>
+            <th class="left">이름</th><th>학급</th><th>기초</th><th>발전</th><th>심화</th>
+            <th>방탈출</th><th>정답률</th><th>학습시간</th><th>주요 오개념</th><th>도달</th>
+          </tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <details class="card fold">
+        <summary>학급 통계 · 어디서 많이 틀렸나</summary>
+        <p class="sub">정답률이 낮은 유형이 재지도 우선순위입니다.</p>
+        <div class="scrollx"><table id="tTypeTable">
+          <thead><tr><th class="left">문제 유형</th><th>시도</th><th>정답률</th><th class="left">막대</th><th class="left">연결 개념</th></tr></thead>
+          <tbody></tbody></table></div>
+        <h3>오개념 빈도</h3>
+        <div id="tMiscon"></div>
+      </details>
+
+      <details class="card fold">
+        <summary>📝 과세특(과목별 세부능력 및 특기사항) 초안</summary>
+        <p class="sub">학생의 단계 통과·정답률·오개념 극복·서술형 답안을 근거로 초안을 만듭니다.
+          <b>초안은 반드시 교사가 확인·수정</b>한 뒤 사용하세요. 문장은 이 기기 안에서 규칙 기반으로 조합됩니다.</p>
+        <div class="grid g4">
+          <label class="fld"><b>학생</b><select id="ntStu"></select></label>
+          <label class="fld"><b>분량</b><select id="ntLen">
+            <option value="250">약 250자</option><option value="400" selected>약 400자</option>
+            <option value="500">약 500자</option></select></label>
+          <label class="fld"><b>강조점</b><select id="ntFocus">
+            <option value="inquiry">탐구 과정·태도</option>
+            <option value="quant">정량적 사고·계산</option>
+            <option value="graph">자료 해석·그래프</option>
+            <option value="growth">성장·보완 노력</option></select></label>
+          <label class="fld"><b>문장 어투</b><select id="ntTone">
+            <option value="plain">보통(∼함)</option><option value="detail">상세(∼하였음)</option></select></label>
+        </div>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn primary small" id="btnNoteOne">선택 학생 초안 생성</button>
+          <button class="btn small violet" id="btnNoteAll">학급 전체 일괄 생성</button>
+          <button class="btn small ghost" id="btnNoteCopy">복사</button>
+          <span class="pill">글자 <b id="ntCount">0</b></span>
+        </div>
+        <textarea id="ntOut" rows="9" placeholder="초안이 여기에 생성됩니다."></textarea>
+      </details>
+
+      <details class="card fold">
+        <summary>💬 학생별 피드백 생성</summary>
+        <p class="sub">학생에게 그대로 전달할 수 있는 피드백입니다. <b>앱에 전달</b>을 누르면 해당 학생의 학습 허브에 표시됩니다.</p>
+        <div class="row" style="margin-bottom:10px">
+          <select id="fbStu" style="width:auto;min-width:180px"></select>
+          <select id="fbTone" style="width:auto">
+            <option value="warm">따뜻한 격려체</option>
+            <option value="coach">간결한 코치체</option>
+          </select>
+          <button class="btn primary small" id="btnFbOne">선택 학생 피드백</button>
+          <button class="btn small violet" id="btnFbAll">학급 전체 피드백</button>
+          <button class="btn small" id="btnFbSend">앱에 전달(저장)</button>
+          <button class="btn small ghost" id="btnFbCopy">복사</button>
+        </div>
+        <textarea id="fbOut" rows="8" placeholder="피드백이 여기에 생성됩니다."></textarea>
+      </details>
+
+      <details class="card fold">
+        <summary>📊 구글 시트 연동</summary>
+        <p class="sub">세 가지 방법 중 학교 환경에 맞는 것을 쓰세요. 학생 기기에서 외부 서비스로 자동 전송되는 것은 없습니다(③만 선생님이 직접 켤 때 동작).</p>
+        <div class="grid g2">
+          <div class="qbox"><b>① CSV → 시트 업로드</b><br><span class="mini">
+            위 <b>CSV 내려받기</b> → 구글 시트에서 <i>파일 › 가져오기</i>. 가장 간단하고 계정 연동이 필요 없습니다.</span></div>
+          <div class="qbox"><b>② 시트 표 붙여넣기</b><br><span class="mini">
+            시트에서 범위를 복사해 아래 칸에 붙여넣으면 학생 자료를 읽어 과세특 초안을 <b>일괄 생성</b>합니다.</span></div>
+          <div class="qbox"><b>③ 자동 수집(선택)</b><br><span class="mini">
+            선생님 계정의 Apps Script 웹앱 URL을 등록하면 학생이 <b>제출</b>을 누를 때 시트에 자동 기록됩니다.
+            <button class="btn small ghost" id="btnScript" style="margin-top:6px">Apps Script 코드 보기</button></span></div>
+          <div class="qbox"><b>수집 항목</b><br><span class="mini">
+            학급·이름·단계 통과·정답률·오개념·방탈출 기록·서술 답안. 주민번호 등 민감정보는 다루지 않습니다.</span></div>
+        </div>
+        <label class="fld" style="margin-top:12px"><b>시트에서 복사한 표 붙여넣기 (첫 줄은 머리글)</b>
+          <textarea id="sheetPaste" rows="5" placeholder="이름	학급	기초	발전	심화	방탈출	정답률	서술요약"></textarea></label>
+        <div class="row">
+          <button class="btn small" id="btnSheetParse">붙여넣은 표로 과세특 일괄 생성</button>
+          <span class="mini" id="sheetMsg"></span>
+        </div>
+      </details>
+
+      <details class="card fold">
+        <summary>수업 설정</summary>
+        <div class="grid g4">
+          <label class="fld"><b>방탈출 문제 수</b><input id="cfgQuizCount" type="number" min="3" max="15" value="6"></label>
+          <label class="fld"><b>힌트 허용</b><select id="cfgHints"><option value="1">허용</option><option value="0">금지</option></select></label>
+          <label class="fld"><b>계산 허용 오차(%)</b><input id="cfgTol" type="number" min="1" max="10" value="2"></label>
+          <label class="fld"><b>교사 PIN</b><input id="cfgPin" type="password" autocomplete="new-password" placeholder="숫자 4자리 권장"></label>
+          <label class="fld"><b>모둠 협동 잠금</b><select id="cfgTeam">
+            <option value="1">사용 (최종 자물쇠)</option><option value="0">미사용</option></select></label>
+          <label class="fld"><b>최소 열쇠 조각 수</b>
+            <input id="cfgTeamSize" type="number" min="2" max="6" value="3">
+            <span class="mini">모둠 인원이 3명·4명으로 달라도 됩니다. 학생이 자기 모둠 인원만큼 칸을 추가합니다.</span></label>
+        </div>
+        <label class="fld"><b>Apps Script 웹앱 URL (선택 · 자동 수집)</b>
+          <input id="cfgSheet" placeholder="https://script.google.com/macros/s/…/exec"></label>
+        <div class="row">
+          <button class="btn primary small" id="btnCfgSave">설정 저장</button>
+          <button class="btn small ghost" id="btnWipe">모든 학생 기록 삭제</button>
+        </div>
+        <div class="fb" id="cfgFb"></div>
+      </details>
+    </div>
+  </section>
+
+  <footer class="foot">연주시차 탐구소 · 오프라인 단일 파일 웹앱 · 기록은 이 기기에 저장됩니다</footer>
+</div>
+
+<div id="modalRoot"></div>
+<div id="vizTip" role="status"></div>
+
+<script>
+(function(){            /* 전체를 감싸 내부 함수·데이터가 전역(window)에 노출되지 않게 한다 */
+'use strict';
+
+/* =========================================================
+   -1. 보안 계층
+   · 문제 객체에 정답을 평문으로 두지 않는다(해시 비교로 채점)
+   · 해설·힌트·정답 문자열은 세션 키로 난독화해 보관
+   · 저장 자료(localStorage)도 난독화 + 무결성 검사
+   · 개발/점검용 접근 지점은 교사 PIN이 URL에 있을 때만 열린다
+   ※ 웹앱은 원리상 코드가 기기에 내려가므로 "절대적 비밀"은 불가능합니다.
+     여기서는 콘솔·저장소 훑어보기로 정답을 얻는 길을 막고, 비정상 기록을
+     교사가 탐지할 수 있게 하는 것을 목표로 합니다.
+   ========================================================= */
+const SESSION_SALT=(()=>{                 // 매 실행마다 달라져 사전 계산표를 못 만든다
+  let s='';
+  for(let i=0;i<4;i++) s+=Math.random().toString(36).slice(2);
+  return s+String(Date.now());
+})();
+const FIXED_SALT='plx-integrity-2026';
+function fnv(str){
+  let h=0x811c9dc5;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,0x01000193)>>>0; }
+  return h.toString(36);
+}
+const hsh   = v=>fnv(SESSION_SALT+'|'+v);
+const hshFix= v=>fnv(FIXED_SALT+'|'+v);
+/* 수치 정답: 허용오차 폭을 4분할한 구간 번호만 해시로 보관 (평문 정답 없음) */
+function bucketOf(v,tol){
+  const t=Math.max(0.25,+tol||2);
+  return Math.round(Math.log(Math.abs(v))/Math.log(1+t/400));
+}
+function xorBytes(bytes,keyBytes){
+  const out=new Uint8Array(bytes.length);
+  for(let i=0;i<bytes.length;i++) out[i]=bytes[i]^keyBytes[i%keyBytes.length]^(i&0xff);
+  return out;
+}
+function b64FromBytes(b){ let s=''; b.forEach(v=>s+=String.fromCharCode(v)); return btoa(s); }
+function bytesFromB64(s){ const r=atob(s); const o=new Uint8Array(r.length);
+  for(let i=0;i<r.length;i++) o[i]=r.charCodeAt(i); return o; }
+function encWith(key,str){
+  return b64FromBytes(xorBytes(new TextEncoder().encode(String(str)),new TextEncoder().encode(key)));
+}
+function decWith(key,b64){
+  try{ return new TextDecoder().decode(xorBytes(bytesFromB64(b64),new TextEncoder().encode(key))); }
+  catch(e){ return ''; }
+}
+const encStr = s=>encWith(SESSION_SALT,s);      // 문제 해설·정답용(세션 한정)
+const decStr = s=>decWith(SESSION_SALT,s);
+/* 개발/점검 모드: 주소창에 ?dev=<교사PIN> 이 있을 때만 내부 접근 허용 */
+const DEV_ARG=(()=>{ const m=/[?&]dev=([^&#]+)/.exec(location.search||''); return m?decodeURIComponent(m[1]):null; })();
+/* =========================================================
+   0. 공통 도구
+   ========================================================= */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const el = (tag,attrs={},...kids)=>{
+  const n=document.createElement(tag);
+  for(const k in attrs){
+    if(k==='class') n.className=attrs[k];
+    else if(k==='html') n.innerHTML=attrs[k];
+    else if(k.startsWith('on')) n.addEventListener(k.slice(2),attrs[k]);
+    else n.setAttribute(k,attrs[k]);
+  }
+  kids.flat().forEach(c=>n.append(c&&c.nodeType?c:document.createTextNode(c)));
+  return n;
+};
+const rnd  = (a,b)=>Math.random()*(b-a)+a;
+const rint = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick = a=>a[Math.floor(Math.random()*a.length)];
+const shuffle = a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=rint(0,i);[b[i],b[j]]=[b[j],b[i]];}return b;};
+const fx = (v,n=2)=>Number(v).toFixed(n);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const fmtTime = ms=>{const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+// 상대오차 판정
+const near = (given,ans,pct)=>{
+  if(!isFinite(given)) return false;
+  if(ans===0) return Math.abs(given)<1e-9;
+  return Math.abs(given-ans)/Math.abs(ans) <= pct/100;
+};
+// 상수
+const LY_PER_PC = 3.26, AU_PER_PC = 206265, KM_PER_PC = 3.086e13, KM_PER_LY = 9.46e12;
+
+const STARS = [
+  {n:'프록시마 센타우리', p:0.7687},
+  {n:'시리우스',        p:0.3792},
+  {n:'61 백조자리',     p:0.2860},
+  {n:'알타이르(견우성)', p:0.1948},
+  {n:'베가(직녀성)',    p:0.1303},
+  {n:'폴라리스(북극성)', p:0.00756},
+  {n:'베텔게우스',      p:0.00595},
+  {n:'데네브',          p:0.00232}
+];
+const GRAPH_STARS = STARS.slice(0,5);   // 심화 단계 표에 쓰는 가까운 별 5개
+
+/* =========================================================
+   1. 저장소 (localStorage)
+   ========================================================= */
+const DB_KEY='parallax_lab_v1';
+const DEFAULT_CFG={teacherPin:'1111',quizCount:6,allowHints:1,tolPct:2,sheetUrl:'',
+                   teamLock:1,teamSize:3};
+let DB, ME=null;                      // ME: 현재 학생 레코드
+
+/* 문제 수준: 'basic'(기본) | 'adv'(발전) — 학습자가 직접 고름 */
+let LV='basic';
+const isAdv=()=>LV==='adv';
+function setLevel(v){
+  LV=(v==='adv')?'adv':'basic';
+  if(ME){ ME.level=LV; saveDB(); }
+  $$('.lvbtn').forEach(b=>b.classList.toggle('on',b.dataset.lv===LV));
+  $$('.lvNow').forEach(n=>n.textContent = isAdv()?'발전':'기본');
+}
+
+const KEY_STORE='plx_dk';
+function deviceKey(){                     // 기기별 난독화 키
+  let k=null;
+  try{ k=localStorage.getItem(KEY_STORE); }catch(e){}
+  if(!k){
+    k=Math.random().toString(36).slice(2)+Date.now().toString(36);
+    try{ localStorage.setItem(KEY_STORE,k); }catch(e){}
+  }
+  return k;
+}
+let INTEGRITY='ok';                       // 'ok' | 'tampered'
+function loadDB(){
+  let raw=null;
+  try{ raw=localStorage.getItem(DB_KEY); }catch(e){}
+  DB=null;
+  if(raw){
+    if(raw.startsWith('X1:')){            // 난독화 + 무결성 검사 형식
+      const body=raw.slice(3), i=body.lastIndexOf('.');
+      const payload=body.slice(0,i), sum=body.slice(i+1);
+      const json=decWith(deviceKey(),payload);
+      if(hshFix(json)!==sum) INTEGRITY='tampered';   // 손으로 고친 흔적
+      try{ DB=JSON.parse(json); }catch(e){ DB=null; }
+    }else{
+      try{ DB=JSON.parse(raw); }catch(e){ DB=null; } // 이전 버전 평문 자료 호환
+    }
+  }
+  if(!DB||typeof DB!=='object') DB={v:1,cfg:{...DEFAULT_CFG},students:{}};
+  DB.cfg={...DEFAULT_CFG,...(DB.cfg||{})};
+  DB.students=DB.students||{};
+  if(!DB.cfg.classCode) DB.cfg.classCode=String(rint(1000,9999));  // 모둠 열쇠 솔트
+  if(DB.cfg.teacherPin==='1234') DB.cfg.teacherPin='1111';   // 이전 기본값 자동 이관
+  return DB;
+}
+function saveDB(){
+  try{
+    const json=JSON.stringify(DB);
+    localStorage.setItem(DB_KEY,'X1:'+encWith(deviceKey(),json)+'.'+hshFix(json));
+  }catch(e){ console.warn('저장 실패'); }
+}
+const cfg=()=>DB.cfg;
+
+function newStudent(name,klass){
+  return {
+    id:(klass+'|'+name).trim(), name, klass,
+    created:Date.now(), updated:Date.now(),
+    stages:{
+      basic:{done:false,correct:0,tries:0,ms:0},
+      calc :{done:false,correct:0,tries:0,ms:0,unitsDone:false,unitCorrect:0},
+      graph:{done:false,correct:0,tries:0,ms:0}
+    },
+    quiz:{runs:[],best:null},
+    logs:[], mis:{}
+  };
+}
+function enterStudent(name,klass){
+  const id=(klass+'|'+name).trim();
+  if(!DB.students[id]) DB.students[id]=newStudent(name,klass);
+  ME=DB.students[id];
+  // 이전 버전 호환
+  ME.stages=ME.stages||newStudent(name,klass).stages;
+  ME.mis=ME.mis||{}; ME.logs=ME.logs||[];
+  ME.quiz=ME.quiz||{runs:[],best:null};
+  ME.updated=Date.now(); saveDB(); paintWho();
+}
+
+/* 학습 로그 — 교사 콘솔 통계의 원자료 */
+function logAnswer(o){
+  if(!ME) return;
+  ME.logs.push({t:Date.now(),stage:o.stage,type:o.type,tag:o.tag||'',
+                ok:!!o.ok,given:String(o.given??''),ans:String(o.ans??''),
+                sec:o.sec||0});
+  if(ME.logs.length>600) ME.logs.splice(0,ME.logs.length-600);
+  if(!o.ok && o.mis){ ME.mis[o.mis]=(ME.mis[o.mis]||0)+1; }
+  ME.updated=Date.now(); saveDB();
+}
+function addStageTime(stage,ms){
+  if(!ME||!ME.stages[stage]) return;
+  ME.stages[stage].ms += ms; saveDB();
+}
+
+/* 오개념 사전 */
+const MIS_LABEL={
+  'inverse-reverse':'시차와 거리를 비례로 생각함',
+  'formula-invert' :'d=1/p 를 뒤집어 계산함',
+  'unit-confuse'   :'pc·ly·AU 단위를 혼동함',
+  'angle-unit'     :'° · ′ · ″ 환산을 혼동함',
+  'half-angle'     :'이동각 전체를 연주시차로 봄',
+  'cause'          :'시차의 원인(지구 공전)을 모름',
+  'limit'          :'시차 측정 한계를 이해하지 못함',
+  'graph-read'     :'그래프 읽기·해석이 어려움'
+};
+const TYPE_LABEL={
+  compare:'시차 크기 비교(정성)', ratio:'배수 관계 추론', calcD:'p → 거리 계산',
+  calcP:'거리 → p 계산', unitPcLy:'pc ↔ ly 환산', unitAngle:'° ′ ″ 환산',
+  unitAU:'pc ↔ AU 환산', graphRead:'그래프 읽기', graphShape:'그래프 모양 해석',
+  half:'이동각과 연주시차', cause:'시차의 발생 원인', limit:'측정 한계',
+  realStar:'실제 별 자료 비교', define:'단위의 정의', scale:'우주의 규모 감각'
+};
+const TYPE_CONCEPT={
+  compare:'반비례 정성 인식', ratio:'반비례 정량 추론', calcD:'d=1/p', calcP:'d=1/p 역산',
+  unitPcLy:'거리 단위', unitAngle:'각도 단위', unitAU:'거리 단위',
+  graphRead:'그래프 해석', graphShape:'그래프 해석', half:'관측 원리',
+  cause:'지구 공전', limit:'관측의 한계', realStar:'자료 해석', define:'단위 정의',
+  scale:'거리 단위와 규모'
+};
+
+/* =========================================================
+   2. 화면 전환
+   ========================================================= */
+const SCREENS=['login','home','basic','calc','graph','report','quiz','teacher'];
+let curScreen='login', screenEnterAt=Date.now();
+const STAGE_OF={basic:'basic',calc:'calc',graph:'graph'};
+
+function show(name){
+  // 떠나는 화면의 체류시간 기록
+  if(STAGE_OF[curScreen]) addStageTime(STAGE_OF[curScreen],Date.now()-screenEnterAt);
+  SCREENS.forEach(s=>$('#screen-'+s).classList.toggle('hidden',s!==name));
+  curScreen=name; screenEnterAt=Date.now();
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(name==='home') paintHome();
+  if(name==='basic') initBasic();
+  if(name==='calc')  initCalc();
+  if(name==='graph') initGraph();
+  if(name==='report') paintReport();
+  if(name==='teacher') paintTeacher();
+}
+function paintWho(){
+  $('#whoami').textContent = ME ? `${ME.klass} · ${ME.name}` : '';
+}
+function modal(title,bodyNode,buttons){
+  const root=$('#modalRoot'); root.innerHTML='';
+  const box=el('div',{class:'card'},el('h2',{},title));
+  box.append(bodyNode);
+  const row=el('div',{class:'row',style:'margin-top:14px;justify-content:flex-end'});
+  (buttons||[{label:'닫기'}]).forEach(b=>{
+    row.append(el('button',{class:'btn '+(b.cls||'ghost'),onclick:()=>{root.innerHTML='';b.fn&&b.fn();}},b.label));
+  });
+  box.append(row);
+  root.append(el('div',{class:'modal',onclick:e=>{if(e.target.classList.contains('modal'))root.innerHTML='';}},box));
+}
+function toast(msg,bad){
+  const t=el('div',{style:`position:fixed;left:50%;transform:translateX(-50%);bottom:26px;z-index:99;
+    padding:11px 18px;border-radius:11px;font-weight:600;box-shadow:var(--shadow);
+    background:${bad?'#7f1d1d':'#065f46'};color:#fff`},msg);
+  document.body.append(t); setTimeout(()=>t.remove(),2200);
+}
+
+/* =========================================================
+   3. 배경 별
+   ========================================================= */
+(function bgStars(){
+  const c=$('#stars'), x=c.getContext('2d');
+  let pts=[];
+  function fit(){
+    c.width=innerWidth; c.height=innerHeight;
+    pts=Array.from({length:Math.min(180,Math.round(innerWidth/8))},()=>({
+      x:Math.random()*c.width,y:Math.random()*c.height,
+      r:Math.random()*1.3+.2,a:Math.random(),s:Math.random()*.012+.003}));
+  }
+  function draw(){
+    x.clearRect(0,0,c.width,c.height);
+    pts.forEach(p=>{
+      p.a+=p.s; const al=.25+.55*Math.abs(Math.sin(p.a));
+      x.fillStyle=`rgba(200,225,255,${al})`;
+      x.beginPath(); x.arc(p.x,p.y,p.r,0,7); x.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  addEventListener('resize',fit); fit(); draw();
+})();
+
+/* =========================================================
+   4. 문제 은행 — 모든 문제는 실행마다 새로 생성(랜덤)
+   문제 객체: {type,tag,mis,text,kind:'mc'|'num',choices,answer,unit,tol,hint,explain,graph}
+   ========================================================= */
+/* 문제를 "정답이 들어 있지 않은" 형태로 굳힌다 */
+function mcQ(o){
+  const correct=(o.choices.find(c=>c.ok)||{}).t;
+  const q={kind:'mc',type:o.type,tag:o.tag,mis:o.mis,text:o.text,graph:o.graph};
+  q.choices=o.choices.map(c=>({t:c.t}));         // ok 플래그를 남기지 않는다
+  q._a=hsh('mc|'+correct);                        // 정답 판정용 해시
+  q._s=encStr(correct);                           // 기록·표시용(난독화)
+  q._e=encStr(o.explain||''); q._h=encStr(o.hint||'');
+  return q;
+}
+function numQ(o){
+  const tol=o.tol||cfg().tolPct;
+  const q={kind:'num',type:o.type,tag:o.tag,mis:o.mis,text:o.text,unit:o.unit,tol,graph:o.graph};
+  const b=bucketOf(o.answer,tol);
+  q._n=[]; for(let k=-4;k<=4;k++) q._n.push(hsh('num|'+(b+k)));   // 허용오차 구간 해시들
+  q._s=encStr(fx(o.answer,4));
+  q._e=encStr(o.explain||''); q._h=encStr(o.hint||'');
+  return q;
+}
+
+const GEN = {
+  /* 정성 비교 */
+  compare(){
+    let p1=+fx(rnd(.05,.9),3), p2=+fx(rnd(.05,.9),3);
+    while(Math.abs(p1-p2)<.08){ p2=+fx(rnd(.05,.9),3); }
+    const farIsA = p1<p2;
+    const q=pick(['far','near']);
+    const text = q==='far'
+      ? `별 A의 연주시차는 ${p1}″, 별 B의 연주시차는 ${p2}″ 이다. 지구에서 <b>더 멀리</b> 있는 별은?`
+      : `별 A의 연주시차는 ${p1}″, 별 B의 연주시차는 ${p2}″ 이다. 지구에서 <b>더 가까이</b> 있는 별은?`;
+    const ansA = (q==='far') ? farIsA : !farIsA;
+    return mcQ({type:'compare',tag:'정성',mis:'inverse-reverse',text,
+      choices:[{t:'별 A',ok:ansA},{t:'별 B',ok:!ansA},{t:'두 별의 거리가 같다',ok:false},{t:'연주시차로는 알 수 없다',ok:false}],
+      hint:'연주시차가 클수록 가까운 별입니다.',
+      explain:`d=1/p 이므로 p가 작은 별이 더 멉니다. (A: ${fx(1/p1,2)} pc, B: ${fx(1/p2,2)} pc)`});
+  },
+  /* 배수 관계 */
+  ratio(){
+    const k=pick([2,3,4,5,10]);
+    const dir=pick(['pUp','pDown','dUp']);
+    let text,right,others;
+    if(dir==='pUp'){
+      text=`어떤 별의 연주시차가 지금보다 <b>${k}배 커졌다</b>고 하면, 계산되는 거리는 어떻게 되는가?`;
+      right=`${k}분의 1로 줄어든다`; others=[`${k}배로 늘어난다`,`${k*k}배로 늘어난다`,'변하지 않는다'];
+    }else if(dir==='pDown'){
+      text=`어떤 별의 연주시차가 지금의 <b>${k}분의 1</b>이라면, 계산되는 거리는?`;
+      right=`${k}배로 늘어난다`; others=[`${k}분의 1로 줄어든다`,`${k*k}배로 늘어난다`,'변하지 않는다'];
+    }else{
+      text=`별 P는 별 Q보다 <b>${k}배 멀리</b> 있다. 별 P의 연주시차는 별 Q의 몇 배인가?`;
+      right=`${k}분의 1배`; others=[`${k}배`,'같다',`${k*k}배`];
+    }
+    return mcQ({type:'ratio',tag:'반비례',mis:'inverse-reverse',text,
+      choices:shuffle([{t:right,ok:true},...others.map(t=>({t,ok:false}))]),
+      hint:'d와 p는 반비례입니다. 한쪽이 k배면 다른 쪽은 1/k배.',
+      explain:'d = 1/p 이므로 p가 k배가 되면 d는 1/k배가 됩니다.'});
+  },
+  /* p → d  (기본: 나눗셈이 딱 떨어지는 값 / 발전: 실제 관측값에 가까운 소수) */
+  calcD(){
+    const p = isAdv()
+      ? +fx(pick([rnd(.02,.09),rnd(.1,.9)]),3)
+      : pick([1,0.5,0.25,0.2,0.1,0.05,0.04,0.02]);
+    return numQ({type:'calcD',tag:'계산',mis:'formula-invert',
+      text:`연주시차가 <b>${p}″</b>인 별까지의 거리는 몇 pc인가?`,
+      unit:'pc', answer:1/p,
+      hint:`d = 1 ÷ p = 1 ÷ ${p}`,
+      explain:`d = 1/${p} = ${fx(1/p,2)} pc ( ≈ ${fx(1/p*LY_PER_PC,1)} ly )`});
+  },
+  /* d → p */
+  calcP(){
+    const d = isAdv() ? pick([8,20,40,80,125,200,400]) : pick([2,4,5,10,20,25,50]);
+    return numQ({type:'calcP',tag:'계산',mis:'formula-invert',
+      text:`지구에서 <b>${d} pc</b> 떨어진 별의 연주시차는 몇 ″인가?`,
+      unit:'″', answer:1/d, tol:3,
+      hint:`d = 1/p 를 p에 대해 풀면 p = 1 ÷ d = 1 ÷ ${d}`,
+      explain:`p = 1/${d} = ${fx(1/d,4)}″`});
+  },
+  /* pc ↔ ly  (기본: pc → ly 곱셈만 / 발전: 나눗셈 방향도 포함) */
+  unitPcLy(){
+    if(!isAdv() || Math.random()<.5){
+      const d = isAdv()? pick([2,3,4,5,8,12,20]) : pick([1,2,3,5,10]);
+      return numQ({type:'unitPcLy',tag:'단위',mis:'unit-confuse',
+        text:`<b>${d} pc</b>는 약 몇 광년(ly)인가? (1 pc = 3.26 ly)`,
+        unit:'ly', answer:d*LY_PER_PC, tol:3,
+        hint:`pc → ly 는 3.26을 곱합니다: ${d} × 3.26`,
+        explain:`${d} × 3.26 = ${fx(d*LY_PER_PC,1)} ly`});
+    }
+    const l=pick([10,16,20,26,33,50,65]);
+    return numQ({type:'unitPcLy',tag:'단위',mis:'unit-confuse',
+      text:`<b>${l} ly</b>는 약 몇 pc인가? (1 pc = 3.26 ly)`,
+      unit:'pc', answer:l/LY_PER_PC, tol:3,
+      hint:`ly → pc 는 3.26으로 나눕니다: ${l} ÷ 3.26`,
+      explain:`${l} ÷ 3.26 = ${fx(l/LY_PER_PC,2)} pc`});
+  },
+  /* 각도 단위 */
+  unitAngle(){
+    const m = isAdv() ? pick(['deg2sec','sec2min','min2sec','deg2min'])
+                      : pick(['deg2sec','min2sec','deg2min']);
+    if(m==='deg2sec'){ const v = isAdv()? pick([.5,.25,.1,2]) : pick([1,2,.5]);
+      return numQ({type:'unitAngle',tag:'단위',mis:'angle-unit',
+        text:`<b>${v}°</b>는 몇 ″(각초)인가? (1° = 3600″)`,unit:'″',answer:v*3600,tol:1,
+        hint:'1° = 60′ = 3600″',explain:`${v} × 3600 = ${v*3600}″`});
+    }
+    if(m==='deg2min'){ const v=pick([.5,1.5,2,3]);
+      return numQ({type:'unitAngle',tag:'단위',mis:'angle-unit',
+        text:`<b>${v}°</b>는 몇 ′(각분)인가?`,unit:'′',answer:v*60,tol:1,
+        hint:'1° = 60′',explain:`${v} × 60 = ${v*60}′`});
+    }
+    if(m==='sec2min'){ const v=pick([120,180,300,600,1800]);
+      return numQ({type:'unitAngle',tag:'단위',mis:'angle-unit',
+        text:`<b>${v}″</b>는 몇 ′(각분)인가?`,unit:'′',answer:v/60,tol:1,
+        hint:'60″ = 1′ 이므로 60으로 나눕니다.',explain:`${v} ÷ 60 = ${v/60}′`});
+    }
+    const v=pick([2,5,10,30]);
+    return numQ({type:'unitAngle',tag:'단위',mis:'angle-unit',
+      text:`<b>${v}′</b>는 몇 ″(각초)인가?`,unit:'″',answer:v*60,tol:1,
+      hint:'1′ = 60″',explain:`${v} × 60 = ${v*60}″`});
+  },
+  /* pc ↔ AU */
+  unitAU(){
+    const d=pick([1,2,3,5]);
+    const right=d*AU_PER_PC;
+    const opts=shuffle([
+      {t:`약 ${(right).toLocaleString()} AU`,ok:true},
+      {t:`약 ${(d*3.26).toLocaleString()} AU`,ok:false},
+      {t:`약 ${(d*63241).toLocaleString()} AU`,ok:false},
+      {t:`약 ${(d*1000).toLocaleString()} AU`,ok:false}]);
+    return mcQ({type:'unitAU',tag:'단위',mis:'unit-confuse',
+      text:`<b>${d} pc</b>는 약 몇 AU인가? (1 pc = 206265 AU)`,choices:opts,
+      hint:'1 pc = 206265 AU 를 곱하세요. (3.26은 광년 환산값입니다)',
+      explain:`${d} × 206265 = ${right.toLocaleString()} AU`});
+  },
+  /* 그래프 읽기 */
+  graphRead(){
+    const p=pick([0.1,0.2,0.25,0.4,0.5,0.8]);
+    return numQ({type:'graphRead',tag:'그래프',mis:'graph-read',
+      text:`아래 그래프는 연주시차 p와 거리 d의 관계이다. p = <b>${p}″</b>인 별의 거리는 몇 pc인가?`,
+      unit:'pc', answer:1/p, tol:5, graph:{mark:p},
+      hint:'가로축에서 p를 찾아 곡선까지 올라가고, 그 높이를 세로축에서 읽습니다. (곡선은 d=1/p)',
+      explain:`d = 1/${p} = ${fx(1/p,2)} pc`});
+  },
+  /* 그래프 모양 */
+  graphShape(){
+    const v=pick(['shape','linear','extrap']);
+    if(v==='shape') return mcQ({type:'graphShape',tag:'그래프',mis:'graph-read',
+      text:'가로축을 연주시차 p, 세로축을 거리 d로 하여 그래프를 그리면 어떤 모양인가?',
+      choices:shuffle([
+        {t:'p가 커질수록 d가 급히 작아지는 반비례 곡선',ok:true},
+        {t:'원점을 지나는 오른쪽 위로 향하는 직선',ok:false},
+        {t:'가로축과 평행한 수평선',ok:false},
+        {t:'위로 볼록하게 커지는 곡선',ok:false}]),
+      hint:'d = 1/p 형태의 그래프를 떠올려 보세요.',
+      explain:'d=1/p 는 반비례 관계이므로 p가 커질수록 d는 급격히 작아지는 곡선이 됩니다.'});
+    if(v==='linear') return mcQ({type:'graphShape',tag:'그래프',mis:'graph-read',
+      text:'거리 d를 세로축에 두었을 때, <b>직선 그래프</b>가 되도록 하려면 가로축을 무엇으로 잡아야 하는가?',
+      choices:shuffle([
+        {t:'1/p',ok:true},{t:'p',ok:false},{t:'p²',ok:false},{t:'p 의 절반',ok:false}]),
+      hint:'d = 1/p 에서 1/p 를 하나의 변수로 보면?',
+      explain:'d = (1) × (1/p) 이므로 가로축을 1/p로 잡으면 기울기 1의 직선이 됩니다.'});
+    const p=pick([0.05,0.02,0.01]);
+    return mcQ({type:'graphShape',tag:'그래프',mis:'graph-read',
+      text:`p–d 그래프에서 p가 <b>${p}″</b>보다 더 작아지는 구간을 보면 곡선은 어떻게 되는가?`,
+      choices:shuffle([
+        {t:'거리가 매우 빠르게 커져 그래프가 세로로 치솟는다',ok:true},
+        {t:'거리가 일정한 값에 가까워진다',ok:false},
+        {t:'거리가 0에 가까워진다',ok:false},
+        {t:'거리가 음수가 된다',ok:false}]),
+      hint:'p가 0에 가까워지면 1/p 는?',
+      explain:'p→0 이면 d=1/p 는 무한히 커집니다. 그래서 아주 먼 별은 시차 측정이 어렵습니다.'});
+  },
+  /* 이동각과 연주시차 */
+  half(){
+    const p = isAdv()? +fx(rnd(.1,.6),2) : pick([0.1,0.2,0.3,0.4,0.5]);
+    const tot=+fx(p*2,2);
+    if(Math.random()<.5) return numQ({type:'half',tag:'원리',mis:'half-angle',
+      text:`6개월 간격으로 관측했을 때 어떤 별의 위치가 <b>${tot}″</b> 움직여 보였다. 이 별의 연주시차는 몇 ″인가?`,
+      unit:'″',answer:p,tol:2,
+      hint:'연주시차는 반년 동안의 전체 이동각의 절반입니다.',
+      explain:`${tot} ÷ 2 = ${p}″`});
+    return numQ({type:'half',tag:'원리',mis:'half-angle',
+      text:`연주시차가 <b>${p}″</b>인 별은 6개월 간격 관측에서 하늘에서 몇 ″ 움직여 보이는가?`,
+      unit:'″',answer:tot,tol:2,
+      hint:'연주시차의 2배가 전체 이동각입니다.',
+      explain:`${p} × 2 = ${tot}″`});
+  },
+  /* 원인 */
+  cause(){
+    const v=pick(['why','when','which']);
+    if(v==='why') return mcQ({type:'cause',tag:'원리',mis:'cause',
+      text:'연주시차가 나타나는 근본 원인은 무엇인가?',
+      choices:shuffle([
+        {t:'지구가 태양 주위를 공전하기 때문',ok:true},
+        {t:'지구가 하루에 한 번 자전하기 때문',ok:false},
+        {t:'별이 스스로 빛을 내기 때문',ok:false},
+        {t:'대기가 별빛을 굴절시키기 때문',ok:false}]),
+      hint:'관측 위치가 달라져야 시차가 생깁니다. 반년이면 지구는 어디에?',
+      explain:'지구 공전으로 관측 위치가 바뀌면서 가까운 별의 방향이 달라 보입니다.'});
+    if(v==='when') return mcQ({type:'cause',tag:'원리',mis:'cause',
+      text:'연주시차를 측정할 때 관측 간격을 <b>6개월</b>로 하는 이유는?',
+      choices:shuffle([
+        {t:'지구가 궤도의 정반대편으로 이동해 관측 위치 차이가 가장 크기 때문',ok:true},
+        {t:'6개월이면 별이 스스로 많이 움직이기 때문',ok:false},
+        {t:'계절에 따라 별의 밝기가 달라지기 때문',ok:false},
+        {t:'6개월마다 지구 자전축이 뒤집히기 때문',ok:false}]),
+      hint:'기선(관측 위치 사이 거리)이 클수록 시차가 잘 보입니다.',
+      explain:'6개월 간격이면 기선이 지구 궤도 지름(2 AU)으로 최대가 됩니다.'});
+    return mcQ({type:'cause',tag:'원리',mis:'cause',
+      text:'다음 중 연주시차를 <b>측정할 수 있는</b> 별은?',
+      choices:shuffle([
+        {t:'비교적 가까이 있는 별',ok:true},
+        {t:'아주 멀리 있어 시차가 0에 가까운 별',ok:false},
+        {t:'표면 온도가 높은 별',ok:false},
+        {t:'붉은색으로 보이는 별',ok:false}]),
+      hint:'시차가 커야 관측이 가능합니다.',
+      explain:'가까운 별일수록 시차가 커서 측정이 가능합니다.'});
+  },
+  /* 측정 한계 */
+  limit(){
+    const lim=pick([0.01,0.001]);
+    const d=1/lim;
+    return mcQ({type:'limit',tag:'한계',mis:'limit',
+      text:`연주시차를 <b>${lim}″</b>까지만 측정할 수 있는 장비가 있다. 이 장비로 거리를 구할 수 있는 별은?`,
+      choices:shuffle([
+        {t:`약 ${d.toLocaleString()} pc 보다 가까운 별`,ok:true},
+        {t:`약 ${d.toLocaleString()} pc 보다 먼 별`,ok:false},
+        {t:'거리에 상관없이 모든 별',ok:false},
+        {t:'표면 온도가 높은 별만',ok:false}]),
+      hint:`측정 한계 시차 ${lim}″ 에 해당하는 거리는 1/${lim} pc 입니다.`,
+      explain:`1/${lim} = ${d.toLocaleString()} pc. 이보다 먼 별은 시차가 더 작아 측정 한계를 넘습니다.`});
+  },
+  /* 실제 별 자료 */
+  realStar(){
+    const four=shuffle(STARS).slice(0,4);
+    const askFar=Math.random()<.5;
+    const target=four.reduce((a,b)=> (askFar ? (a.p<b.p?a:b) : (a.p>b.p?a:b)));
+    const list=four.map(s=>`${s.n} ${s.p}″`).join(' / ');
+    return mcQ({type:'realStar',tag:'자료',mis:'inverse-reverse',
+      text:`다음 별들의 연주시차이다. ${list} <br>이 중 지구에서 <b>가장 ${askFar?'먼':'가까운'}</b> 별은?`,
+      choices:shuffle(four.map(s=>({t:s.n,ok:s.n===target.n}))),
+      hint:askFar?'시차가 가장 작은 별을 찾으세요.':'시차가 가장 큰 별을 찾으세요.',
+      explain:`${target.n}: p=${target.p}″ → d=${fx(1/target.p,2)} pc`});
+  },
+  /* 규모 감각 (스케일 바 연계) */
+  scale(){
+    const v=pick(['farthest','order','ratio','whyUnit']);
+    if(v==='farthest'){
+      const four=shuffle(SCALE).slice(0,4);
+      const far=four.reduce((a,b)=>a.au>b.au?a:b);
+      return mcQ({type:'scale',tag:'규모',mis:'unit-confuse',
+        text:'다음 중 지구에서 <b>가장 먼</b> 것은?',
+        choices:shuffle(four.map(s=>({t:s.n,ok:s.n===far.n}))),
+        hint:'태양계 안의 거리는 AU, 별까지는 pc·광년으로 재는 것을 떠올리세요.',
+        explain:`${far.n}: ${niceNum(far.au)} AU (= ${niceNum(far.pc)} pc)`});
+    }
+    if(v==='order'){
+      const three=shuffle([SCALE[2],SCALE[5],SCALE[9]]);   // 해왕성 · 프록시마 · 데네브
+      const sorted=[SCALE[2],SCALE[5],SCALE[9]].map(s=>s.n).join(' < ');
+      const wrongs=[
+        [SCALE[5],SCALE[2],SCALE[9]].map(s=>s.n).join(' < '),
+        [SCALE[9],SCALE[5],SCALE[2]].map(s=>s.n).join(' < '),
+        [SCALE[2],SCALE[9],SCALE[5]].map(s=>s.n).join(' < ')];
+      return mcQ({type:'scale',tag:'규모',mis:'unit-confuse',
+        text:`다음 세 거리를 <b>가까운 것부터</b> 옳게 늘어놓은 것은? (${three.map(s=>s.n).join(', ')})`,
+        choices:shuffle([{t:sorted,ok:true},...wrongs.map(t=>({t,ok:false}))]),
+        hint:'해왕성은 태양계 안(30 AU), 프록시마는 1.3 pc, 데네브는 431 pc입니다.',
+        explain:'태양–해왕성 30 AU < 프록시마 1.3 pc(26만 AU) < 데네브 431 pc'});
+    }
+    if(v==='ratio'){
+      const s=pick([SCALE[5],SCALE[6],SCALE[7]]);
+      const right=Math.round(s.au/30);
+      return mcQ({type:'scale',tag:'규모',mis:'unit-confuse',
+        text:`${s.n}까지의 거리(${niceNum(s.pc)} pc)는 <b>태양–해왕성 거리(30 AU)</b>의 약 몇 배인가?`,
+        choices:shuffle([
+          {t:`약 ${right.toLocaleString()}배`,ok:true},
+          {t:`약 ${Math.round(right/100).toLocaleString()}배`,ok:false},
+          {t:'약 30배',ok:false},{t:'약 3.26배',ok:false}]),
+        hint:`먼저 pc를 AU로 바꾸세요: ${niceNum(s.pc)} × 206265 AU`,
+        explain:`${niceNum(s.au)} AU ÷ 30 AU ≈ ${right.toLocaleString()}배 — 태양계는 별 사이 거리에 비하면 아주 작습니다.`});
+    }
+    return mcQ({type:'scale',tag:'규모',mis:'unit-confuse',
+      text:'별까지의 거리를 AU 대신 pc·광년으로 나타내는 가장 큰 이유는?',
+      choices:shuffle([
+        {t:'AU로 나타내면 수십만~수억처럼 너무 큰 수가 되어 불편하기 때문',ok:true},
+        {t:'AU는 태양계 밖에서는 길이가 달라지기 때문',ok:false},
+        {t:'pc가 AU보다 더 정확하게 측정되기 때문',ok:false},
+        {t:'광년은 시간 단위여서 거리와 함께 쓰기 좋기 때문',ok:false}]),
+      hint:'프록시마까지가 몇 AU였는지 스케일 바에서 확인해 보세요.',
+      explain:'프록시마까지 약 268,000 AU = 1.3 pc. 큰 거리를 다루기 쉬운 단위를 쓰는 것입니다.'});
+  },
+  /* 정의 */
+  define(){
+    const v=pick(['pc','ly','au']);
+    if(v==='pc') return mcQ({type:'define',tag:'단위',mis:'unit-confuse',
+      text:'1 pc(파섹)의 정의는?',
+      choices:shuffle([
+        {t:'연주시차가 1″인 별까지의 거리',ok:true},
+        {t:'빛이 1년 동안 가는 거리',ok:false},
+        {t:'지구와 태양 사이의 평균 거리',ok:false},
+        {t:'연주시차가 1°인 별까지의 거리',ok:false}]),
+      hint:'파섹은 시차(parallax)와 각초(arcsecond)를 합친 말입니다.',
+      explain:'1 pc = 연주시차 1″인 별까지의 거리 ≈ 3.26 ly ≈ 206265 AU'});
+    if(v==='ly') return mcQ({type:'define',tag:'단위',mis:'unit-confuse',
+      text:'1 광년(ly)의 정의는?',
+      choices:shuffle([
+        {t:'빛이 1년 동안 이동하는 거리',ok:true},
+        {t:'빛이 태양에서 지구까지 오는 시간',ok:false},
+        {t:'연주시차가 1″인 별까지의 거리',ok:false},
+        {t:'지구가 1년 동안 공전한 거리',ok:false}]),
+      hint:'광년은 시간이 아니라 거리 단위입니다.',
+      explain:'1 ly ≈ 9.46 × 10¹² km. 1 pc = 3.26 ly'});
+    return mcQ({type:'define',tag:'단위',mis:'unit-confuse',
+      text:'1 AU(천문단위)에 가장 가까운 설명은?',
+      choices:shuffle([
+        {t:'지구와 태양 사이의 평균 거리(약 1.5억 km)',ok:true},
+        {t:'지구 지름의 100배',ok:false},
+        {t:'빛이 1년 동안 가는 거리',ok:false},
+        {t:'연주시차 1″에 해당하는 거리',ok:false}]),
+      hint:'연주시차 관측의 기준이 되는 지구 궤도 반지름입니다.',
+      explain:'1 AU ≈ 1.5억 km. 6개월 간격 관측의 기선은 2 AU입니다.'});
+  }
+};
+const ALL_TYPES=Object.keys(GEN);
+const genQ = type => GEN[type]();
+function genSet(types,n){          // 유형 중복 없이 n개 뽑기
+  const t=shuffle(types); const out=[];
+  for(let i=0;i<n;i++) out.push(genQ(t[i%t.length]));
+  return out;
+}
+/* =========================================================
+   5. 온디바이스 학습 지능 (서버·비용·개인정보 전송 없음)
+      · 로그로 유형별 정답률을 계산해 약점 유형을 진단
+      · 약한 유형이 더 자주 나오도록 적응형 출제
+      · 오답 패턴 → 오개념 태그 → 맞춤 처방 문구
+   ========================================================= */
+const AI = {
+  stat(){                                  // 유형별 {n, ok}
+    const s={};
+    (ME? ME.logs:[]).forEach(l=>{
+      if(!l.type||l.type==='essay'||l.type==='support') return;
+      s[l.type]=s[l.type]||{n:0,ok:0};
+      s[l.type].n++; if(l.ok) s[l.type].ok++;
+    });
+    return s;
+  },
+  weight(type){                             // 낮은 정답률 → 큰 가중치
+    const s=this.stat()[type];
+    if(!s||s.n===0) return 1.0;             // 미출제 유형도 기본 기회
+    const rate=s.ok/s.n;
+    return 0.35 + (1-rate)*2.2;             // 0.35 ~ 2.55
+  },
+  /* 가중 랜덤으로 유형 n개 뽑기(중복 없이) */
+  pickTypes(pool,n){
+    const p=pool.slice(), out=[];
+    while(out.length<n && p.length){
+      const w=p.map(t=>this.weight(t));
+      let r=Math.random()*w.reduce((a,b)=>a+b,0), i=0;
+      while(i<w.length-1 && r>w[i]){ r-=w[i]; i++; }
+      out.push(p.splice(i,1)[0]);
+    }
+    while(out.length<n) out.push(pick(pool));
+    return out;
+  },
+  /* 약점 진단 결과 (교사 콘솔 / 학생 처방에 사용) */
+  weakest(rec,k=3){
+    const s={};
+    (rec.logs||[]).forEach(l=>{ if(!l.type||l.type==='essay'||l.type==='support') return;
+      s[l.type]=s[l.type]||{n:0,ok:0}; s[l.type].n++; if(l.ok)s[l.type].ok++; });
+    return Object.entries(s).filter(([,v])=>v.n>=2)
+      .map(([t,v])=>({type:t,rate:v.ok/v.n,n:v.n}))
+      .sort((a,b)=>a.rate-b.rate).slice(0,k);
+  },
+  /* 맞춤 처방 문구 생성 (템플릿 기반) */
+  advice(rec){
+    const out=[];
+    const mis=Object.entries(rec.mis||{}).sort((a,b)=>b[1]-a[1]);
+    mis.slice(0,2).forEach(([m,c])=>{
+      const fix={
+        'inverse-reverse':'기초 단계 시뮬레이터에서 거리 2 pc와 30 pc의 흔들림을 다시 비교해 보세요.',
+        'formula-invert' :'발전 단계 “공식” 탭의 계산기에 p를 넣어 d가 어떻게 변하는지 확인하세요.',
+        'unit-confuse'   :'단위 사전의 1 pc = 3.26 ly = 206265 AU 를 소리 내어 외운 뒤 환산 연습을 다시 하세요.',
+        'angle-unit'     :'1° = 60′ = 3600″ 를 표로 다시 확인하세요.',
+        'half-angle'     :'연주시차는 6개월 이동각의 절반임을 그림으로 다시 확인하세요.',
+        'cause'          :'“6개월 이동” 버튼을 눌러 지구 공전과 시차의 관계를 다시 관찰하세요.',
+        'limit'          :'심화 단계 그래프에서 p가 0에 가까워질 때 곡선이 치솟는 구간을 보세요.',
+        'graph-read'     :'심화 단계에서 이론 곡선을 켜고 값을 읽는 연습을 하세요.'
+      }[m]||'해당 개념을 다시 확인하세요.';
+      out.push(`· ${MIS_LABEL[m]||m} (${c}회) → ${fix}`);
+    });
+    this.weakest(rec,2).forEach(w=>{
+      if(w.rate<0.7) out.push(`· 약점 유형: ${TYPE_LABEL[w.type]||w.type} — 정답률 ${Math.round(w.rate*100)}% (${w.n}문항)`);
+    });
+    if(!out.length) out.push('· 뚜렷한 약점이 없습니다. 방탈출 기록 단축에 도전해 보세요.');
+    return out;
+  }
+};
+/* 읽어주기 — 브라우저 내장 음성 합성만 사용(네트워크 전송 없음) */
+const TTS={
+  on:false,
+  speak(t){
+    if(!this.on||!('speechSynthesis' in window)) return;
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(String(t).replace(/<[^>]+>/g,''));
+      u.lang='ko-KR'; u.rate=.95; speechSynthesis.speak(u);
+    }catch(e){}
+  }
+};
+
+/* =========================================================
+   6. 문제 카드 렌더러
+   ========================================================= */
+const TYPE_TIP={
+  calcD:'거리 = 1 ÷ 시차. 나눗셈입니다.',
+  calcP:'시차 = 1 ÷ 거리.',
+  unitPcLy:'pc → ly 는 ×3.26, ly → pc 는 ÷3.26.',
+  unitAngle:'1° = 60′, 1′ = 60″, 1° = 3600″.',
+  unitAU:'1 pc = 206265 AU.',
+  half:'연주시차 = 6개월 이동각 ÷ 2.',
+  graphRead:'가로축 값 → 곡선 → 세로축 값 순서로 읽습니다.',
+  limit:'측정 가능한 최소 시차의 역수가 최대 측정 거리입니다.'
+};
+
+/* =========================================================
+   6-2. 느린 학습자 지원 모드
+   한 문제에 5분 이상 걸리면 자동으로 열린다.
+   · 간단한 그림 1개 + 핵심 한두 줄(최소한의 내용)
+   · 선택지 축소 / 수치 문제는 3택으로 바꿔 계산 부담을 낮춘다
+   ========================================================= */
+const SUPPORT_MS=300000;                       // 5분
+const HELP_FAMILY={
+  compare:'inverse',ratio:'inverse',realStar:'inverse',cause:'inverse',half:'inverse',
+  calcD:'formula',calcP:'formula',
+  unitPcLy:'unit',unitAngle:'unit',unitAU:'unit',define:'unit',scale:'unit',
+  graphRead:'graph',graphShape:'graph',limit:'graph'
+};
+const HELP={
+  inverse:{t:'핵심만 · 가까운 별은 많이 흔들려요',
+    l:['별이 <b>가까우면</b> 연주시차가 <b>크다</b>.','별이 <b>멀면</b> 연주시차가 <b>작다</b>.',
+       '예) 0.5″인 별이 0.1″인 별보다 <b>가깝다</b>.']},
+  formula:{t:'핵심만 · 거리 = 1 ÷ 시차',
+    l:['<b>d(pc) = 1 ÷ p(″)</b>','예) p = 0.5″ → d = 1 ÷ 0.5 = <b>2 pc</b>',
+       '거꾸로) d = 4 pc → p = 1 ÷ 4 = <b>0.25″</b>']},
+  unit:{t:'핵심만 · 단위 사다리',
+    l:['<b>1 pc = 3.26 ly = 206265 AU</b>','<b>1° = 60′ = 3600″</b>',
+       'pc → ly 는 ×3.26 · ly → pc 는 ÷3.26']},
+  graph:{t:'핵심만 · 그래프 읽는 순서',
+    l:['① 가로축에서 p를 찾는다','② 위로 올라가 곡선을 만난다','③ 왼쪽 세로축에서 거리를 읽는다']}
+};
+/* 아주 단순한 도움 그림 (글씨 크게, 요소 최소) */
+function drawHelp(cv,fam){
+  const {x,W,H}=prep(cv,150);
+  x.fillStyle='#0a1020'; x.fillRect(0,0,W,H);
+  const mid=H/2;
+  if(fam==='inverse'){
+    // 가까운 별(큰 흔들림) vs 먼 별(작은 흔들림)
+    x.fillStyle='#6ea8fe'; x.beginPath(); x.arc(28,mid,7,0,7); x.fill();
+    x.fillStyle=VIZ.ink2; x.font=VIZ.font(11); x.fillText('지구',14,mid+24);
+    [{d:95,amp:26,lab:'가까운 별',c:VIZ.status.warn},{d:230,amp:7,lab:'먼 별',c:'#cbd5f5'}].forEach(o=>{
+      x.strokeStyle='rgba(255,255,255,.25)';
+      x.beginPath(); x.moveTo(28,mid); x.lineTo(28+o.d,mid-o.amp); x.stroke();
+      x.beginPath(); x.moveTo(28,mid); x.lineTo(28+o.d,mid+o.amp); x.stroke();
+      x.fillStyle=o.c;
+      x.beginPath(); x.arc(28+o.d,mid-o.amp,5,0,7); x.fill();
+      x.beginPath(); x.arc(28+o.d,mid+o.amp,5,0,7); x.fill();
+      x.strokeStyle=o.c; x.lineWidth=2;
+      x.beginPath(); x.moveTo(28+o.d+14,mid-o.amp); x.lineTo(28+o.d+14,mid+o.amp); x.stroke();
+      x.fillStyle=VIZ.ink; x.font=VIZ.font(12,'600');
+      x.fillText(o.lab,28+o.d-18,mid+o.amp+26);
+      x.fillStyle=o.c; x.font=VIZ.font(11);
+      x.fillText(o.amp>15?'시차 큼':'시차 작음',28+o.d+20,mid+4);
+    });
+  }else if(fam==='formula'){
+    x.fillStyle=VIZ.ink; x.font=VIZ.font(22,'700'); x.fillText('d = 1 ÷ p',24,mid-8);
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(12);
+    x.fillText('거리(pc)      연주시차(각초 ″)',24,mid+16);
+    x.strokeStyle=VIZ.status.good; x.lineWidth=2;
+    x.beginPath(); x.moveTo(W-190,mid-24); x.lineTo(W-150,mid-24); x.stroke();
+    x.fillStyle=VIZ.status.good; x.font=VIZ.font(13,'600');
+    x.fillText('p = 0.5″ → d = 2 pc',W-145,mid-20);
+    x.fillText('p = 0.1″ → d = 10 pc',W-145,mid+4);
+    x.fillText('p = 0.25″ → d = 4 pc',W-145,mid+28);
+  }else if(fam==='unit'){
+    const steps=[['1 pc','#5eead4'],['3.26 ly','#7dd3fc'],['206265 AU','#a78bfa']];
+    steps.forEach((s,i)=>{
+      const px=20+i*((W-60)/3);
+      x.fillStyle=s[1]; rrect(x,px,mid-18,(W-90)/3,36,8);
+      x.fillStyle='#06213a'; x.font=VIZ.font(14,'700');
+      x.fillText(s[0],px+12,mid+5);
+      if(i<2){ x.fillStyle=VIZ.ink; x.font=VIZ.font(16,'700'); x.fillText('=',px+(W-90)/3+6,mid+6); }
+    });
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(11);
+    x.fillText('1° = 60′ = 3600″  (각도 단위)',20,mid+50);
+  }else{
+    // 그래프 읽는 순서
+    const L=40,B=30;
+    x.strokeStyle=VIZ.axis; x.lineWidth=1.5;
+    x.beginPath(); x.moveTo(L,12); x.lineTo(L,H-B); x.lineTo(W-14,H-B); x.stroke();
+    x.strokeStyle=VIZ.accent2; x.lineWidth=2.5; x.beginPath();
+    for(let i=0;i<=60;i++){
+      const t=0.12+ (i/60)*0.88, px=L+(t/1.05)*(W-L-20), py=(H-B)-(1/t)/9*(H-B-18);
+      if(py<10) continue;
+      i===0? x.moveTo(px,py) : x.lineTo(px,py);
+    }
+    x.stroke();
+    x.fillStyle=VIZ.status.warn; x.font=VIZ.font(12,'600');
+    x.fillText('① p 찾기',L+30,H-10);
+    x.fillText('② 곡선까지',L+95,H-10);
+    x.fillText('③ 거리 읽기',4,22);
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(11);
+    x.fillText('p (″)',W-46,H-10); x.fillText('d (pc)',L-34,H-B-8);
+  }
+}
+/* 하나의 문제 카드. onResult(ok) 콜백, 오답이면 같은 유형의 새 문제로 교체 */
+function questionCard(q,opts){
+  opts=opts||{};
+  const box=el('div',{class:'qbox'});
+  let hintLv=0, solved=false, sel=-1;
+  const t0=(typeof performance!=='undefined'?performance.now():Date.now());
+
+  if(window.PLX&&typeof window.PLX.onQuestion==='function'){    // 점검 모드 전용 후크
+    try{ window.PLX.onQuestion(q); }catch(e){}
+  }
+  const head=el('div',{class:'qhead'},
+    `${opts.label||''}${opts.label?' · ':''}${TYPE_LABEL[q.type]||q.type}`);
+  const text=el('div',{class:'qtext',html:q.text});
+  box.append(head,text);
+
+  if(q.graph){                                  // 그래프 문제용 미니 그래프
+    const c=el('canvas',{class:'sim',width:520,height:300,
+      style:'max-width:460px',role:'img','aria-label':'연주시차와 거리 관계 그래프'});
+    box.append(c);
+    requestAnimationFrame(()=>drawPD(c,{mark:q.graph.mark,curve:true,points:[]}));
+  }
+
+  const fb=el('div',{class:'fb','aria-live':'polite'});
+  let inputNode, choiceBtns=[];
+
+  if(q.kind==='mc'){
+    const wrap=el('div',{class:'choices'});
+    q.choices.forEach((c,i)=>{
+      const b=el('button',{class:'choice',type:'button',onclick:()=>{
+        if(solved) return;
+        choiceBtns.forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel'); sel=i;
+      }},c.t);
+      choiceBtns.push(b); wrap.append(b);
+    });
+    box.append(wrap); inputNode=wrap;
+  }else{
+    const row=el('div',{class:'numrow'});
+    const inp=el('input',{type:'text',inputmode:'decimal',placeholder:'숫자 입력',
+      onkeydown:e=>{ if(e.key==='Enter') submit(); }});
+    row.append(inp,el('span',{class:'unit'},q.unit||''));
+    box.append(row); inputNode=inp;
+  }
+
+  /* ---- 느린 학습자 지원 모드 ---- */
+  const helpHost=el('div',{});
+  box.append(helpHost);
+  let supOn=false, supTimer=null;
+  function openSupport(auto,silent){
+    if(supOn||solved) return;
+    supOn=true; clearTimeout(supTimer);
+    if(ME&&!silent){
+      ME.supportUses=(ME.supportUses||0)+1;
+      if(auto) ME.supportAuto=(ME.supportAuto||0)+1;
+      if(ME.supportUses>=2 && !ME.support){ ME.support=true; setLevel('basic'); }
+      saveDB();
+    }
+    const fam=HELP_FAMILY[q.type]||'formula';
+    const H=HELP[fam];
+    const card=el('div',{class:'qbox',style:'border-color:var(--accent);background:rgba(94,234,212,.08)'});
+    card.append(el('div',{class:'row'},
+      el('b',{style:'color:var(--accent)'},'🧭 '+H.t),
+      el('span',{class:'tag'},auto?'5분 경과 · 자동 열림':silent?'지원 모드':'도움 요청')));
+    const cvh=el('canvas',{role:'img','aria-label':H.t+' 설명 그림',style:'width:100%;margin:8px 0'});
+    card.append(cvh);
+    H.l.forEach(t=>card.append(el('div',{class:'mini',html:'· '+t})));
+    // 선택지 줄이기 / 수치 문제 → 3택
+    if(q.kind==='mc'){
+      const right=decStr(q._s);
+      const others=q.choices.map((c,i)=>i).filter(i=>q.choices[i].t!==right);
+      const keep=new Set([q.choices.findIndex(c=>c.t===right),pick(others)]);
+      choiceBtns.forEach((b,i)=>{ if(!keep.has(i)) b.classList.add('hidden'); });
+      card.append(el('div',{class:'mini',style:'margin-top:8px;color:var(--accent)'},
+        '보기를 2개로 줄였습니다. 둘 중 하나를 고르세요.'));
+    }else{
+      const ans=Number(decStr(q._s));
+      const opts=shuffle([ans,ans*2,ans/2]).map(v=>{
+        const dv = Math.abs(v)>=100? String(Math.round(v)) : fx(v, Math.abs(v)<0.1?4:2);
+        return {v,dv};
+      });
+      const wrap=el('div',{class:'choices',style:'margin-top:8px'});
+      opts.forEach(o=>wrap.append(el('button',{class:'choice',type:'button',onclick:()=>{
+        inputNode.value=o.dv; submit();
+      }},`${o.dv} ${q.unit||''}`)));
+      card.append(el('div',{class:'mini',style:'margin-top:8px;color:var(--accent)'},
+        '계산이 어렵다면 아래 셋 중에서 골라 보세요. 직접 입력해도 됩니다.'),wrap);
+    }
+    helpHost.innerHTML=''; helpHost.append(card);
+    requestAnimationFrame(()=>drawHelp(cvh,fam));
+    if(!silent){
+      // 정답률 통계와 섞이지 않도록 별도 유형으로 기록
+      logAnswer({stage:opts.stage||'',type:'support',tag:q.type,ok:true,
+                 given:auto?'5분 경과 자동':'학생 요청',ans:''});
+      toast(auto?'천천히 해도 괜찮아요 — 핵심 도움을 열었습니다.':'핵심 도움을 열었습니다.');
+    }
+  }
+  supTimer=setTimeout(()=>openSupport(true),SUPPORT_MS);
+
+  const btnRow=el('div',{class:'row',style:'margin-top:10px'});
+  const bOk=el('button',{class:'btn small primary',onclick:()=>submit()},'확인');
+  const bHint=el('button',{class:'btn small ghost',onclick:()=>{
+    hintLv++;
+    const h2=TYPE_TIP[q.type]||'단위를 먼저 정리해 보세요.';
+    fb.className='fb'; fb.innerHTML='💡 '+(hintLv===1?decStr(q._h):h2);
+    if(ME) ME.hintUse=(ME.hintUse||0)+1;
+    opts.onHint&&opts.onHint();
+  }},'힌트');
+  btnRow.append(bOk);
+  if(+cfg().allowHints) btnRow.append(bHint);
+  btnRow.append(el('button',{class:'btn small ghost',
+    title:'5분이 지나면 자동으로 열립니다',
+    onclick:()=>openSupport(false)},'🧭 도움이 필요해요'));
+  if('speechSynthesis' in window){
+    btnRow.append(el('button',{class:'btn small ghost',title:'문제 읽어주기',
+      onclick:()=>{TTS.on=true;TTS.speak(q.text);}},'🔊'));
+  }
+  box.append(btnRow,fb);
+  // 이미 지원이 필요한 학생에게는 처음부터 핵심 도움을 함께 제시
+  if(ME&&ME.support) requestAnimationFrame(()=>openSupport(false,true));
+
+  function submit(){
+    if(solved) return;
+    let ok=false, given='';
+    if(q.kind==='mc'){
+      if(sel<0){ fb.className='fb no'; fb.textContent='답을 하나 고르세요.'; return; }
+      given=q.choices[sel].t;
+      ok=hsh('mc|'+given)===q._a;                       // 해시 비교로 채점
+      choiceBtns.forEach((b,i)=>{
+        if(hsh('mc|'+q.choices[i].t)===q._a) b.classList.add('right');
+        else if(i===sel) b.classList.add('wrong');
+      });
+    }else{
+      const raw=inputNode.value.trim().replace(/,/g,'');
+      if(raw===''){ fb.className='fb no'; fb.textContent='값을 입력하세요.'; return; }
+      const v=Number(raw); given=raw;
+      ok=isFinite(v)&&v>0&&q._n.indexOf(hsh('num|'+bucketOf(v,q.tol)))>=0;
+    }
+    const sec=Math.round(((typeof performance!=='undefined'?performance.now():Date.now())-t0)/100)/10;
+    logAnswer({stage:opts.stage||'',type:q.type,tag:q.tag,ok,given,sec,
+               ans:decStr(q._s), mis:ok?null:q.mis});
+    if(ok){
+      solved=true; box.classList.add('solved');
+      fb.className='fb ok'; fb.innerHTML='⭕ 정답! '+decStr(q._e);
+      bOk.disabled=true; bHint.disabled=true;
+      if(q.kind==='num') inputNode.disabled=true;
+      opts.onResult&&opts.onResult(true,sec);
+    }else{
+      fb.className='fb no';
+      const exp=decStr(q._e);
+      fb.innerHTML=`❌ 다시! ${exp?'풀이: '+exp:''}<br><span class="mini">같은 유형의 새 문제로 바꿔 드립니다…</span>`;
+      bOk.disabled=true;
+      opts.onResult&&opts.onResult(false,sec);
+      setTimeout(()=>{
+        const fresh=genQ(q.type);
+        const nb=questionCard(fresh,opts);
+        box.replaceWith(nb);
+      },1800);
+    }
+  }
+  return box;
+}
+
+/* 여러 문제를 묶어 "모두 맞히면 통과" 로 관리 */
+function makeQuizList(host,pool,n,stageKey,onCount){
+  host.innerHTML='';
+  const types=AI.pickTypes(pool,n);
+  let solved=0;
+  const state={solved:0,total:n};
+  types.forEach((t,i)=>{
+    host.append(questionCard(genQ(t),{
+      label:`문제 ${i+1}`, stage:stageKey,
+      onResult:ok=>{
+        if(ok){ solved++; state.solved=solved; }
+        onCount&&onCount(solved,n);
+        if(ME&&ME.stages[stageKey]){
+          const st=ME.stages[stageKey]; st.tries++; if(ok) st.correct++;
+          saveDB();
+        }
+      }
+    }));
+  });
+  onCount&&onCount(0,n);
+  return state;
+}
+
+/* =========================================================
+   7. 기초 단계 — 시뮬레이터 + 정성 인식
+   ========================================================= */
+const basic={dist:5,month:0,spin:null,rec:[],concl:false,solved:0,essayOk:false,inited:false};
+
+function pOf(d){ return 1/d; }                       // p(″) = 1/d(pc)
+
+function drawSpace(){
+  const c=$('#cvSpace'), x=c.getContext('2d'), W=c.width, H=c.height;
+  x.clearRect(0,0,W,H);
+  const cx=W*.26, cy=H/2, R=54;                      // 태양 위치, 궤도 반지름(픽셀)
+  const ang=basic.month/12*Math.PI*2;
+  const ex=cx+R*Math.cos(ang), ey=cy+R*Math.sin(ang)*.42;
+  // 별 위치: 거리에 따라 화면 오른쪽에서의 위치(로그 스케일로 압축)
+  const t=(Math.log(basic.dist)-Math.log(1))/(Math.log(40)-Math.log(1));
+  const sx=cx+W*(.35+t*.55), sy=cy;
+
+  x.strokeStyle='rgba(255,255,255,.12)'; x.setLineDash([4,4]);
+  x.beginPath(); x.ellipse(cx,cy,R,R*.42,0,0,7); x.stroke(); x.setLineDash([]);
+  // 시선
+  ['rgba(94,234,212,.85)','rgba(167,139,250,.5)'].forEach((col,k)=>{
+    const a=ang+(k?Math.PI:0);
+    const px=cx+R*Math.cos(a), py=cy+R*Math.sin(a)*.42;
+    x.strokeStyle=col; x.lineWidth=k?1:1.6;
+    x.beginPath(); x.moveTo(px,py);
+    x.lineTo(sx+(px-sx)*0.001,sy); x.stroke();
+  });
+  // 태양
+  const g=x.createRadialGradient(cx,cy,2,cx,cy,16);
+  g.addColorStop(0,'#fff3b0'); g.addColorStop(1,'rgba(255,180,60,0)');
+  x.fillStyle=g; x.beginPath(); x.arc(cx,cy,16,0,7); x.fill();
+  x.fillStyle='#ffcf5c'; x.beginPath(); x.arc(cx,cy,7,0,7); x.fill();
+  // 지구(현재 위치)와 반년 뒤 위치
+  const ex2=cx+R*Math.cos(ang+Math.PI), ey2=cy+R*Math.sin(ang+Math.PI)*.42;
+  x.fillStyle='rgba(120,170,255,.35)'; x.beginPath(); x.arc(ex2,ey2,5,0,7); x.fill();
+  x.fillStyle='#6ea8fe'; x.beginPath(); x.arc(ex,ey,6.5,0,7); x.fill();
+  // 별
+  const gs=x.createRadialGradient(sx,sy,1,sx,sy,14);
+  gs.addColorStop(0,'#fff'); gs.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=gs; x.beginPath(); x.arc(sx,sy,14,0,7); x.fill();
+  x.fillStyle='#fff'; x.beginPath(); x.arc(sx,sy,3.4,0,7); x.fill();
+  // 라벨
+  x.font='13px system-ui'; x.fillStyle='#9fb3d9';
+  x.fillText('태양',cx-14,cy+30); x.fillText('지구',ex-14,ey-12);
+  x.fillStyle='#e8eefb'; x.fillText(`별 (d = ${fx(basic.dist,1)} pc)`,sx-46,sy-22);
+  // 시차각 표시
+  x.strokeStyle='rgba(251,191,36,.9)'; x.lineWidth=1.4;
+  x.beginPath(); x.arc(sx,sy,Math.min(120,26+2200/basic.dist),Math.PI-0.09,Math.PI+0.09); x.stroke();
+  x.fillStyle='#fbbf24'; x.font='bold 13px system-ui';
+  x.fillText(`p = ${fx(pOf(basic.dist),3)}″`,sx-Math.min(150,60+2200/basic.dist),sy-8);
+  x.fillStyle='#93a3c4'; x.font='12px system-ui';
+  x.fillText('반년 뒤 지구 위치는 궤도 반대편(연한 점)',12,H-12);
+}
+
+let skyBg=null;
+function drawSky(){
+  const c=$('#cvSky'), x=c.getContext('2d'), W=c.width, H=c.height;
+  if(!skyBg){                     // 배경별은 고정
+    skyBg=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.3}));
+  }
+  x.fillStyle='#04060f'; x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(210,225,255,.75)';
+  skyBg.forEach(s=>{x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill();});
+  // 관측 대상 별: 시차에 비례한 진폭으로 좌우 흔들림
+  const amp=clamp(pOf(basic.dist)*150,2,140);
+  const ang=basic.month/12*Math.PI*2;
+  const px=W/2+amp*Math.cos(ang), py=H/2+amp*Math.sin(ang)*.10;
+  // 흔들림 범위 표시
+  x.strokeStyle='rgba(251,191,36,.45)'; x.setLineDash([5,5]);
+  x.beginPath(); x.moveTo(W/2-amp,H/2); x.lineTo(W/2+amp,H/2); x.stroke(); x.setLineDash([]);
+  x.strokeStyle='rgba(255,255,255,.25)';
+  [-amp,amp].forEach(o=>{x.beginPath();x.moveTo(W/2+o,H/2-8);x.lineTo(W/2+o,H/2+8);x.stroke();});
+  const g=x.createRadialGradient(px,py,1,px,py,18);
+  g.addColorStop(0,'#fffbe6'); g.addColorStop(.4,'rgba(255,230,150,.6)'); g.addColorStop(1,'rgba(255,200,80,0)');
+  x.fillStyle=g; x.beginPath(); x.arc(px,py,18,0,7); x.fill();
+  x.fillStyle='#fff'; x.beginPath(); x.arc(px,py,4.2,0,7); x.fill();
+  x.font='12px system-ui'; x.fillStyle='#fbbf24';
+  x.fillText('← 반년 동안 이 폭만큼 움직여 보임 →',W/2-amp-4,H/2+26);
+  x.fillStyle='#93a3c4';
+  x.fillText(`${['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'][basic.month]} 관측`,12,20);
+}
+function basicPaint(){
+  drawSpace(); drawSky();
+  const p=pOf(basic.dist);
+  $('#lblDist').textContent=fx(basic.dist,1);
+  $('#lblMonth').textContent=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'][basic.month];
+  $('#valP').textContent=fx(p,3)+'″';
+  $('#valD').textContent=fx(basic.dist,1)+' pc';
+  $('#valWob').textContent = p>0.35?'매우 큼':p>0.15?'큼':p>0.07?'보통':p>0.035?'작음':'매우 작음';
+}
+function wobLabel(){ return $('#valWob').textContent; }
+
+function initBasic(){
+  if(basic.inited){ basicPaint(); return; }
+  basic.inited=true;
+  const rg=$('#rgDist'), rm=$('#rgMonth');
+  rg.addEventListener('input',()=>{basic.dist=+rg.value;basicPaint();});
+  rm.addEventListener('input',()=>{basic.month=+rm.value;basicPaint();});
+  $('#btnSpin').addEventListener('click',e=>{
+    if(basic.spin){ clearInterval(basic.spin); basic.spin=null; e.target.textContent='▶ 공전 애니메이션'; return; }
+    e.target.textContent='⏸ 멈추기';
+    basic.spin=setInterval(()=>{
+      basic.month=(basic.month+1)%12; rm.value=basic.month; basicPaint();
+    },420);
+  });
+  $('#btnHalf').addEventListener('click',()=>{
+    basic.month=(basic.month+6)%12; rm.value=basic.month; basicPaint();
+    $('#basicHint').innerHTML='6개월 뒤! 별이 <b>반대쪽</b>으로 옮겨 보입니다. 이 전체 이동 폭의 <b>절반</b>이 연주시차 p입니다.';
+  });
+  $('#btnRec').addEventListener('click',()=>{
+    const d=+fx(basic.dist,1);
+    if(basic.rec.some(r=>Math.abs(r.d-d)<0.05)){ $('#recFb').className='fb no'; $('#recFb').textContent='이미 기록한 거리입니다.'; return; }
+    basic.rec.push({d,p:pOf(basic.dist),w:wobLabel()});
+    paintRec();
+  });
+  $('#btnRecClear').addEventListener('click',()=>{basic.rec=[];paintRec();});
+  $('#btnConcl').addEventListener('click',checkConcl);
+  $('#basicBack').addEventListener('click',()=>show('home'));
+  $('#btnBasicDone').addEventListener('click',()=>{
+    ME.stages.basic.done=true; saveDB();
+    toast('기초 단계 통과! 발전 단계가 열렸습니다.');
+    show('home');
+  });
+  makeQuizList($('#basicQuiz'),['compare','ratio','cause','realStar','half'],4,'basic',(s,n)=>{
+    basic.solved=s; $('#basicScore').textContent=s; checkBasicDone();
+  });
+  bindEssay('basic','#txtBasic','#btnTxtBasic','#cntBasic','#rubBasic',g=>{
+    basic.essayOk=g.score>=65; checkBasicDone();
+  });
+  if(ME.essays&&ME.essays.basic&&ME.essays.basic.score>=65) basic.essayOk=true;
+  paintRec(); basicPaint();
+}
+function paintRec(){
+  const tb=$('#recTable tbody'); tb.innerHTML='';
+  basic.rec.sort((a,b)=>a.d-b.d).forEach(r=>{
+    tb.append(el('tr',{},el('td',{},fx(r.d,1)),el('td',{},fx(r.p,3)),el('td',{},r.w)));
+  });
+  $('#recCount').textContent=basic.rec.length;
+  const need=[2,10,30], has=need.every(v=>basic.rec.some(r=>Math.abs(r.d-v)<1.1));
+  const fb=$('#recFb');
+  if(basic.rec.length>=3&&has){ fb.className='fb ok'; fb.textContent='좋아요! 거리가 커질수록 p가 작아지는 것이 표에 그대로 보입니다.'; }
+  else if(basic.rec.length>=3){ fb.className='fb'; fb.textContent='2 pc · 10 pc · 30 pc 근처의 값을 각각 기록해 보세요.'; }
+  else{ fb.className='fb'; fb.textContent=''; }
+  checkBasicDone();
+}
+function checkConcl(){
+  const a=$('#selA').value, b=$('#selB').value, fb=$('#conclFb');
+  const ok=(a==='down'&&b==='inv');
+  logAnswer({stage:'basic',type:'compare',tag:'결론',ok,given:a+'/'+b,ans:'down/inv',mis:ok?null:'inverse-reverse'});
+  if(ok){ fb.className='fb ok'; fb.textContent='⭕ 정확합니다. 거리와 연주시차는 반비례 — 이 관계가 d = 1/p 공식의 뿌리입니다.'; basic.concl=true; }
+  else{ fb.className='fb no'; fb.textContent='❌ 다시 생각해 보세요. 시뮬레이터에서 거리를 크게 하면 밤하늘의 흔들림은 어떻게 되었나요?'; basic.concl=false; }
+  checkBasicDone();
+}
+function checkBasicDone(){
+  const need=[2,10,30];
+  const recOk=need.every(v=>basic.rec.some(r=>Math.abs(r.d-v)<1.1));
+  const ok=recOk&&basic.concl&&basic.essayOk&&basic.solved>=4;
+  const b=$('#btnBasicDone'); if(!b) return;
+  b.disabled=!ok;
+  b.textContent = ok?'기초 단계 통과하기 ✓'
+    :`기초 단계 통과하기 (기록 ${recOk?'✓':'✗'} / 결론 ${basic.concl?'✓':'✗'} / 서술 ${basic.essayOk?'✓':'✗'} / 문제 ${basic.solved}/4)`;
+}
+/* =========================================================
+   8. 서술형(주관식) — 온디바이스 루브릭 채점
+      키워드·인과 표현·분량을 규칙으로 분석해 형성평가 피드백을 만든다.
+      (문장 원문은 기기에만 저장되며, 교사 콘솔·과세특 초안에서 활용)
+   ========================================================= */
+const RUBRICS={
+  basic:{
+    title:'관찰 서술 채점 기준',
+    items:[
+      {k:'거리 변화 언급', any:['거리','멀','가까','pc','파섹'],           tip:'별까지의 거리를 어떻게 바꾸었는지 쓰세요.'},
+      {k:'시차 변화 언급', any:['시차','흔들','움직','각','p가','p는'],    tip:'그때 연주시차(흔들리는 폭)가 어떻게 되었는지 쓰세요.'},
+      {k:'반비례 관계 진술', any:['반비례','작아','줄어','커지','증가','감소'], tip:'“멀수록 작아진다”처럼 관계를 분명히 쓰세요.'},
+      {k:'원인·근거 표현', any:['때문','그래서','따라서','왜냐','공전','이유','므로'], tip:'“∼때문에/따라서”처럼 까닭을 덧붙이세요.'}
+    ],
+    minLen:40, minSent:2
+  },
+  graph:{
+    title:'그래프 해석 서술 채점 기준',
+    items:[
+      {k:'곡선 모양 해석', any:['곡선','반비례','급격','급히','휘어','감소'],       tip:'p–d 그래프가 어떤 모양인지 쓰세요.'},
+      {k:'1/p 직선 근거',  any:['1/p','역수','직선','비례','기울기'],              tip:'가로축을 1/p로 바꾸면 왜 직선이 되는지 쓰세요.'},
+      {k:'측정 한계 설명', any:['한계','작아서','오차','멀리','어렵','측정할 수 없'], tip:'먼 별의 거리를 구하기 어려운 이유를 쓰세요.'},
+      {k:'단위 사용',      any:['pc','파섹','″','각초','ly','광년'],               tip:'값을 말할 때 단위를 함께 쓰세요.'},
+      {k:'논리 연결어',    any:['따라서','때문','그러므로','왜냐','즉','그래서'],    tip:'문장을 근거로 연결해 보세요.'}
+    ],
+    minLen:80, minSent:3
+  },
+  quiz:{
+    title:'탈출 보고서 채점 기준',
+    items:[
+      {k:'핵심 개념 사용', any:['시차','반비례','1/p','거리','파섹','pc'], tip:'배운 핵심 용어를 넣어 쓰세요.'},
+      {k:'자기 성찰',      any:['어려','실수','알게','배웠','깨달','헷갈','재미'], tip:'무엇이 어려웠고 무엇을 알게 되었는지 쓰세요.'}
+    ],
+    minLen:30, minSent:1
+  }
+};
+function gradeText(kind,raw){
+  const t=(raw||'').trim();
+  const R=RUBRICS[kind];
+  const sent=t.split(/[.!?。\n]/).filter(s=>s.trim().length>4).length;
+  const hits=R.items.map(it=>({k:it.k,ok:it.any.some(w=>t.includes(w)),tip:it.tip}));
+  const lenOk=t.length>=R.minLen, sentOk=sent>=R.minSent;
+  const got=hits.filter(h=>h.ok).length;
+  const score=Math.round((got/R.items.length)*70 + (lenOk?15:0) + (sentOk?15:0));
+  let level = score>=85?'A · 매우 우수' : score>=65?'B · 충실' : score>=45?'C · 보완 필요' : 'D · 다시 작성';
+  return {text:t,len:t.length,sent,hits,lenOk,sentOk,score:clamp(score,0,100),level};
+}
+/* 서술형 UI 묶음 */
+function bindEssay(kind,taSel,btnSel,cntSel,outSel,onDone){
+  const ta=$(taSel), out=$(outSel), cnt=$(cntSel);
+  if(!ta) return;
+  const saved = ME && ME.essays && ME.essays[kind];
+  if(saved){ ta.value=saved.text; }
+  const upd=()=>{ cnt.textContent=ta.value.trim().length; };
+  ta.addEventListener('input',upd); upd();
+  $(btnSel).addEventListener('click',()=>{
+    const g=gradeText(kind,ta.value);
+    ME.essays=ME.essays||{};
+    ME.essays[kind]={text:g.text,score:g.score,level:g.level,at:Date.now()};
+    saveDB();
+    out.innerHTML='';
+    const R=RUBRICS[kind];
+    const box=el('div',{class:'qbox'+(g.score>=65?' solved':'')});
+    box.append(el('div',{class:'row'},
+      el('b',{},`자기점검 결과: ${g.level} (${g.score}점)`),
+      el('span',{class:'tag'},`${g.len}자 · ${g.sent}문장`)));
+    const ul=el('div',{style:'margin-top:8px'});
+    g.hits.forEach(h=>ul.append(el('div',{class:'mini'},
+      (h.ok?'✅ ':'⬜ ')+h.k+(h.ok?'':' — '+h.tip))));
+    if(!g.lenOk) ul.append(el('div',{class:'mini'},`⬜ 분량 — ${R.minLen}자 이상 권장`));
+    if(!g.sentOk) ul.append(el('div',{class:'mini'},`⬜ 문장 수 — ${R.minSent}문장 이상`));
+    box.append(ul);
+    box.append(el('div',{class:'mini',style:'margin-top:8px;color:var(--accent)'},
+      g.score>=65?'선생님께 제출되는 기록에 저장되었습니다. 더 고쳐 쓰고 다시 제출해도 됩니다.'
+                 :'⬜ 항목을 채워 다시 제출하면 점수가 올라갑니다.'));
+    out.append(box);
+    logAnswer({stage:kind,type:'essay',tag:'서술',ok:g.score>=65,given:String(g.score),ans:'65+'});
+    onDone&&onDone(g);
+  });
+}
+
+/* =========================================================
+   9. 발전 단계 — 단위와 계산
+   ========================================================= */
+const calcS={inited:false,unit:0,calc:0};
+
+function initCalc(){
+  if(calcS.inited){ paintStarTable(); refreshCalcDone(); return; }
+  calcS.inited=true;
+  // 탭
+  $$('#calcTabs .tab').forEach(b=>b.addEventListener('click',()=>{
+    $$('#calcTabs .tab').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    ['t1','t2','t3','t4'].forEach(id=>$('#'+id).classList.toggle('hidden',id!==b.dataset.t));
+  }));
+  $('#calcBack').addEventListener('click',()=>show('home'));
+  // 공식 계산기
+  const cp=$('#calcP');
+  const upd=()=>{
+    const p=Number(cp.value);
+    if(!isFinite(p)||p<=0){ $('#calcOut').textContent='p는 0보다 커야 해요'; $('#calcOut2').textContent=''; return; }
+    const d=1/p;
+    $('#calcOut').textContent=fx(d,2)+' pc';
+    $('#calcOut2').innerHTML=`= ${fx(d*LY_PER_PC,1)} ly = ${Math.round(d*AU_PER_PC).toLocaleString()} AU ≈ ${(d*KM_PER_PC).toExponential(2)} km`;
+  };
+  cp.addEventListener('input',upd); upd();
+  // 단위 감각
+  const uc=$('#uConv');
+  const updU=()=>{
+    const d=Number(uc.value)||0;
+    $('#uConvOut').innerHTML=
+      `${fx(d,2)} pc<br>= ${fx(d*LY_PER_PC,2)} ly<br>= ${Math.round(d*AU_PER_PC).toLocaleString()} AU<br>
+       = ${(d*KM_PER_PC).toExponential(3)} km<br><span style="color:var(--accent)">연주시차 p = ${d>0?fx(1/d,4)+'″':'—'}</span>`;
+  };
+  uc.addEventListener('input',updU); updU();
+  paintStarTable();
+  // 거리 비교 스케일 바
+  paintScaleTable(); paintScaleInfo(); drawScaleBar();
+  $('#scaleUnit').addEventListener('change',e=>{ scaleS.unit=e.target.value; drawScaleBar(); });
+  // 단위 환산 4문제 (스케일 감각 문항 포함)
+  const newUnit=()=>makeQuizList($('#unitQuiz'),['unitPcLy','unitAngle','unitAU','define','scale'],4,'calc',(s,n)=>{
+    calcS.unit=s; $('#unitScore').textContent=s;
+    ME.stages.calc.unitCorrect=s; ME.stages.calc.unitsDone=(s>=4); saveDB();
+    $('#calcUnitState').textContent = s>=4?'완료 ✓':`${s}/4`;
+    refreshCalcDone();
+  });
+  newUnit();
+  $('#btnUnitNew').addEventListener('click',newUnit);
+  // 거리 계산 5문제
+  makeQuizList($('#calcQuiz'),['calcD','calcP','half','limit','calcD'],5,'calc',(s,n)=>{
+    calcS.calc=s; $('#calcScore').textContent=s; refreshCalcDone();
+  });
+  $('#btnCalcDone').addEventListener('click',()=>{
+    ME.stages.calc.done=true; saveDB();
+    toast('발전 단계 통과! 심화 단계가 열렸습니다.'); show('home');
+  });
+  refreshCalcDone();
+}
+function paintStarTable(){
+  const tb=$('#starTable tbody'); if(!tb) return; tb.innerHTML='';
+  STARS.forEach(s=>{
+    const d=1/s.p;
+    tb.append(el('tr',{},
+      el('td',{class:'left'},s.n), el('td',{},String(s.p)),
+      el('td',{},d>=100?Math.round(d).toLocaleString():fx(d,2)),
+      el('td',{},d*LY_PER_PC>=100?Math.round(d*LY_PER_PC).toLocaleString():fx(d*LY_PER_PC,1))));
+  });
+}
+function refreshCalcDone(){
+  const ok = calcS.calc>=5 && calcS.unit>=4;
+  const b=$('#btnCalcDone'); if(!b) return;
+  b.disabled=!ok;
+  b.textContent = ok?'발전 단계 통과하기 ✓':`발전 단계 통과하기 (계산 ${calcS.calc}/5 · 환산 ${calcS.unit}/4)`;
+}
+
+/* =========================================================
+   9-2. 거리 비교 스케일 바 (로그 눈금)
+   ========================================================= */
+const SCALE=[
+  {n:'지구 – 달',        au:0.00257, kind:'near', note:'빛으로 1.3초'},
+  {n:'지구 – 태양 (1 AU)',au:1,       kind:'near', note:'연주시차 관측의 기선(반년이면 2 AU)'},
+  {n:'태양 – 해왕성',    au:30.1,     kind:'near', note:'태양계 행성의 바깥쪽'},
+  {n:'보이저 1호',       au:167,      kind:'near', note:'인류가 보낸 가장 먼 탐사선'},
+  {n:'오르트 구름 바깥', au:100000,   kind:'near', note:'태양계의 경계로 여겨지는 영역'},
+  {n:'프록시마 센타우리',pc:1.301,    kind:'star', note:'가장 가까운 별 · 연주시차 최대'},
+  {n:'시리우스',         pc:2.637,    kind:'star', note:'밤하늘에서 가장 밝게 보이는 별'},
+  {n:'베가(직녀성)',     pc:7.676,    kind:'star', note:'여름철 대표 별'},
+  {n:'폴라리스(북극성)', pc:132,      kind:'star', note:'시차가 0.008″ — 측정이 매우 어렵다'},
+  {n:'데네브',           pc:431,      kind:'star', note:'시차 0.002″ — 사실상 측정 한계 밖'},
+  {n:'우리 은하 중심',   pc:8000,     kind:'far',  note:'연주시차로는 도저히 잴 수 없다'}
+];
+SCALE.forEach(s=>{ if(s.pc!==undefined) s.au=s.pc*AU_PER_PC; else s.pc=s.au/AU_PER_PC; });
+const scaleS={unit:'au',sel:null};
+
+function unitVal(s,u){ return u==='pc'? s.pc : u==='ly'? s.pc*LY_PER_PC : s.au; }
+function unitName(u){ return u==='pc'?'pc':u==='ly'?'ly':'AU'; }
+function niceNum(v){
+  if(v>=1e6||(v<0.01&&v>0)) return v.toExponential(2).replace('e+','×10^').replace('e-','×10^-');
+  if(v>=1000) return Math.round(v).toLocaleString();
+  if(v>=10) return fx(v,1);
+  return fx(v,v<0.1?4:2);
+}
+function drawScaleBar(){
+  const cv=$('#cvScale'); if(!cv) return;
+  const u=scaleS.unit;
+  const {x,W,H}=prep(cv,240);
+  const vals=SCALE.map(s=>unitVal(s,u));
+  const lo=Math.floor(Math.log10(Math.min(...vals)))-0.3;
+  const hi=Math.ceil(Math.log10(Math.max(...vals)))+0.3;
+  const L=18,R=18, yb=H-58;
+  const X=v=>L+((Math.log10(v)-lo)/(hi-lo))*(W-L-R);
+
+  // 10배 눈금
+  x.strokeStyle=VIZ.grid; x.lineWidth=1;
+  for(let k=Math.ceil(lo);k<=Math.floor(hi);k++){
+    const px=X(Math.pow(10,k));
+    x.beginPath(); x.moveTo(px,26); x.lineTo(px,yb); x.stroke();
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+    const lab=k===0?'1':(k>0&&k<=3?Math.pow(10,k).toLocaleString():'10^'+k);
+    x.fillText(lab,px-8,yb+14);
+  }
+  x.fillStyle=VIZ.ink2; x.font=VIZ.font(11);
+  x.fillText(`가로축: ${unitName(u)} (로그 눈금 · 한 칸 = 10배)`,L,yb+34);
+
+  // 축 막대(태양계 → 별 → 은하 구간 색 구분)
+  const seg=[{c:VIZ.ord[0],to:1e5/(u==='au'?1:(u==='ly'?AU_PER_PC/LY_PER_PC:AU_PER_PC))},
+             {c:VIZ.ord[2],to:unitVal({pc:1000,au:1000*AU_PER_PC},u)},
+             {c:VIZ.accent2,to:Math.pow(10,hi)}];
+  let x0=L;
+  seg.forEach(s=>{
+    const x1=Math.min(W-R,X(s.to));
+    if(x1>x0){ x.fillStyle=s.c; rrect(x,x0,yb-9,x1-x0,9,3); x0=x1; }
+  });
+
+  // 대상 점 + 라벨(위/아래 번갈아)
+  SCALE.forEach((s,i)=>{
+    const v=unitVal(s,u), px=X(v);
+    const up=i%2===0;
+    const py=up? yb-22 : yb+0;
+    const dotY=yb-4.5;
+    x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(px,dotY); x.lineTo(px,up?py+4:py+18); x.stroke();
+    x.fillStyle = s.kind==='star'? VIZ.status.warn : s.kind==='far'? VIZ.accent2 : VIZ.ord[1];
+    x.beginPath(); x.arc(px,dotY,scaleS.sel===i?6:4.5,0,7); x.fill();
+    x.strokeStyle='#141c36'; x.lineWidth=2; x.stroke();      // 2px 표면 링
+    // 라벨
+    const t=s.n.length>12?s.n.slice(0,11)+'…':s.n;
+    x.font=VIZ.font(11,scaleS.sel===i?'700':'');
+    const tw=x.measureText(t).width;
+    let tx=clamp(px-tw/2,2,W-tw-2);
+    x.fillStyle=scaleS.sel===i?VIZ.ink:VIZ.ink2;
+    x.fillText(t,tx,up?py-4:py+30);
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+    const vv=niceNum(v)+' '+unitName(u);
+    const vw=x.measureText(vv).width;
+    x.fillText(vv,clamp(px-vw/2,2,W-vw-2),up?py+8:py+42);
+    cv._hits.push({x:px-16,y:up?py-18:dotY,w:32,h:64,
+      text:`<b>${s.n}</b><br>${niceNum(s.au)} AU · ${niceNum(s.pc*LY_PER_PC)} ly · ${niceNum(s.pc)} pc`
+           +(s.kind==='near'?'':`<br>연주시차 ${s.pc>0?fx(1/s.pc,4):'—'}″`)+`<br>${s.note}`});
+  });
+  // 제목
+  x.fillStyle=VIZ.ink; x.font=VIZ.font(12,'600');
+  x.fillText('태양계(파란 구간) → 가까운 별(초록) → 은하 규모(보라)',L,18);
+  if(!cv._clickBound){
+    cv._clickBound=true;
+    cv.addEventListener('click',e=>{
+      const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+      const idx=(cv._hits||[]).findIndex(h=>mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h);
+      if(idx>=0){ scaleS.sel=idx; drawScaleBar(); paintScaleInfo(); }
+    });
+  }
+}
+function paintScaleInfo(){
+  const host=$('#scaleInfo'); if(!host) return;
+  if(scaleS.sel===null){
+    host.innerHTML='<span class="mini">점을 누르면 그 대상의 거리를 세 단위로 비교해 줍니다.</span>'; return;
+  }
+  const s=SCALE[scaleS.sel];
+  const ratioAU=s.au;                              // 1 AU 대비 배수
+  const lightY=s.pc*LY_PER_PC;
+  host.innerHTML=`<b>${s.n}</b> <span class="tag">${s.kind==='near'?'태양계 규모':s.kind==='star'?'별':'은하 규모'}</span>
+    <div class="mini" style="margin-top:6px">
+    · ${niceNum(s.au)} AU = ${niceNum(lightY)} 광년 = ${niceNum(s.pc)} pc<br>
+    · 지구–태양 거리(1 AU)의 <b>약 ${niceNum(ratioAU)}배</b><br>
+    · 빛이 오는 데 걸리는 시간: <b>${lightY<1/365?fx(lightY*365*24*60,1)+'분':lightY<1?fx(lightY*365,1)+'일':niceNum(lightY)+'년'}</b><br>
+    ${s.kind==='near'?'· 태양계 안이라 연주시차로 재지 않습니다.'
+      :`· 연주시차 <b>${fx(1/s.pc,4)}″</b> — ${1/s.pc<0.01?'너무 작아 측정이 매우 어렵습니다.':'현대 장비로 측정 가능합니다.'}`}<br>
+    · ${s.note}</div>`;
+}
+function paintScaleTable(){
+  const tb=$('#scaleTable tbody'); if(!tb) return; tb.innerHTML='';
+  SCALE.forEach(s=>{
+    const ly=s.pc*LY_PER_PC;
+    tb.append(el('tr',{},
+      el('td',{class:'left'},s.n),
+      el('td',{},niceNum(s.au)), el('td',{},niceNum(ly)), el('td',{},niceNum(s.pc)),
+      el('td',{},s.kind==='near'?'—':fx(1/s.pc,4)),
+      el('td',{class:'left mini'},ly<1/365?fx(ly*365*24*60,1)+'분':ly<1?fx(ly*365,1)+'일':niceNum(ly)+'년')));
+  });
+}
+
+/* =========================================================
+   10. 심화 단계 — 그래프 그리기·해석
+   ========================================================= */
+const graphS={inited:false,points:[],curve:false,solved:0,essayOk:false};
+
+/* p–d 그래프 (공용) : opts {points, curve, mark, xIsInv} */
+function drawPD(cv,opts){
+  const x=cv.getContext('2d'), W=cv.width, H=cv.height;
+  const L=54,B=42,T=16,R=14;
+  const xIsInv=!!opts.xIsInv;
+  const xMax = xIsInv? 12 : 0.9;      // 1/p 최대 12, p 최대 0.9″
+  const yMax = 12;                    // d 최대 12 pc
+  const X = v=>L+(v/xMax)*(W-L-R);
+  const Y = v=>H-B-(v/yMax)*(H-B-T);
+  x.fillStyle='#04060f'; x.fillRect(0,0,W,H);
+  // 격자
+  x.strokeStyle='rgba(255,255,255,.08)'; x.lineWidth=1;
+  for(let i=0;i<=6;i++){
+    const gx=L+i*(W-L-R)/6, gy=H-B-i*(H-B-T)/6;
+    x.beginPath(); x.moveTo(gx,T); x.lineTo(gx,H-B); x.stroke();
+    x.beginPath(); x.moveTo(L,gy); x.lineTo(W-R,gy); x.stroke();
+  }
+  // 축
+  x.strokeStyle='rgba(200,220,255,.6)'; x.lineWidth=1.6;
+  x.beginPath(); x.moveTo(L,T); x.lineTo(L,H-B); x.lineTo(W-R,H-B); x.stroke();
+  x.fillStyle='#93a3c4'; x.font='11px system-ui';
+  for(let i=0;i<=6;i++){
+    const v=xMax*i/6; x.fillText(xIsInv?fx(v,0):fx(v,2),L+i*(W-L-R)/6-10,H-B+16);
+    const w=yMax*i/6; x.fillText(fx(w,0),L-26,H-B-i*(H-B-T)/6+4);
+  }
+  x.fillStyle='#e8eefb'; x.font='12px system-ui';
+  x.fillText(xIsInv?'1/p  (1/″)':'연주시차 p (″)',W/2-40,H-8);
+  x.save(); x.translate(14,H/2+28); x.rotate(-Math.PI/2); x.fillText('거리 d (pc)',0,0); x.restore();
+  // 이론 곡선/직선
+  if(opts.curve){
+    x.strokeStyle='rgba(167,139,250,.85)'; x.lineWidth=2; x.beginPath();
+    let started=false;
+    for(let i=0;i<=300;i++){
+      const v=xMax*i/300;
+      const d = xIsInv? v : (v>0? 1/v : 1e9);
+      if(d>yMax||d<=0){ started=false; continue; }
+      const px=X(v), py=Y(d);
+      if(!started){ x.moveTo(px,py); started=true; } else x.lineTo(px,py);
+    }
+    x.stroke();
+    x.fillStyle='#a78bfa'; x.font='12px system-ui';
+    x.fillText(xIsInv?'d = (1/p)  기울기 1의 직선':'d = 1/p  반비례 곡선',W-R-190,T+16);
+  }
+  // 학생 점
+  (opts.points||[]).forEach(pt=>{
+    const v = xIsInv? 1/pt.p : pt.p;
+    if(v>xMax||pt.d>yMax) return;
+    const px=X(v), py=Y(pt.d);
+    x.fillStyle=pt.ok?'#5eead4':'#f87171';
+    x.beginPath(); x.arc(px,py,5,0,7); x.fill();
+    x.strokeStyle='rgba(255,255,255,.6)'; x.stroke();
+    if(pt.n){ x.fillStyle='#cbd5f5'; x.font='11px system-ui'; x.fillText(pt.n,px+8,py-6); }
+  });
+  // 문제용 눈금 표시
+  if(opts.mark){
+    const v=opts.mark, d=1/v;
+    x.strokeStyle='rgba(251,191,36,.9)'; x.setLineDash([4,4]);
+    x.beginPath(); x.moveTo(X(v),H-B); x.lineTo(X(v),Y(Math.min(d,yMax))); x.stroke();
+    x.setLineDash([]);
+    x.fillStyle='#fbbf24'; x.font='bold 12px system-ui'; x.fillText(`p=${v}″`,X(v)-16,H-B+30);
+  }
+}
+function paintGraphs(){
+  drawPD($('#cvG1'),{points:graphS.points,curve:graphS.curve});
+  drawPD($('#cvG2'),{points:graphS.points,curve:true,xIsInv:true});
+}
+function initGraph(){
+  if(graphS.inited){ paintGraphs(); return; }
+  graphS.inited=true;
+  const tb=$('#gTable tbody'); tb.innerHTML='';
+  GRAPH_STARS.forEach((s,i)=>{
+    const inp=el('input',{type:'text',inputmode:'decimal',placeholder:'?',style:'max-width:120px;margin:auto',
+      id:'gIn'+i});
+    tb.append(el('tr',{},
+      el('td',{class:'left'},s.n), el('td',{},String(s.p)),
+      el('td',{},inp), el('td',{id:'gJ'+i},'—')));
+  });
+  $('#btnPlot').addEventListener('click',()=>{
+    let ok=0; graphS.points=[];
+    GRAPH_STARS.forEach((s,i)=>{
+      const raw=$('#gIn'+i).value.trim().replace(/,/g,'');
+      const v=Number(raw), ans=1/s.p, good=raw!==''&&near(v,ans,3);
+      $('#gJ'+i).innerHTML = raw===''? '—' : (good?'<span style="color:var(--good)">정확 ✓</span>'
+                                                  :`<span style="color:var(--bad)">다시 (정답 ${fx(ans,2)})</span>`);
+      if(raw!==''){
+        graphS.points.push({p:s.p,d:good?ans:v,ok:good,n:s.n.split(/[ (]/)[0]});
+        logAnswer({stage:'graph',type:'calcD',tag:'표채우기',ok:good,given:raw,ans:fx(ans,2),mis:good?null:'formula-invert'});
+        if(good) ok++;
+      }
+    });
+    $('#plotCount').textContent=ok;
+    const fb=$('#plotFb');
+    if(ok===GRAPH_STARS.length){ fb.className='fb ok'; fb.textContent='5개 모두 정확합니다! 점들이 이루는 모양을 확인하고 이론 곡선을 겹쳐 보세요.'; }
+    else { fb.className='fb no'; fb.textContent=`정확한 점 ${ok}/${GRAPH_STARS.length} — d = 1/p 로 다시 계산해 보세요.`; }
+    ME.stages.graph.plot=ok; saveDB();
+    paintGraphs(); refreshGraphDone();
+  });
+  $('#btnShowCurve').addEventListener('click',()=>{ graphS.curve=!graphS.curve; paintGraphs(); });
+  $('#graphBack').addEventListener('click',()=>show('home'));
+  $('#btnRubricHelp').addEventListener('click',()=>{
+    const b=el('div',{});
+    RUBRICS.graph.items.forEach(it=>b.append(el('div',{class:'mini'},'· '+it.k+' — '+it.tip)));
+    b.append(el('div',{class:'note'},`${RUBRICS.graph.minLen}자 이상, ${RUBRICS.graph.minSent}문장 이상이면 분량 점수를 받습니다.`));
+    modal(RUBRICS.graph.title,b);
+  });
+  makeQuizList($('#graphQuiz'),['graphRead','graphShape','limit','ratio'],4,'graph',(s,n)=>{
+    graphS.solved=s; $('#graphScore').textContent=s; refreshGraphDone();
+  });
+  bindEssay('graph','#txtGraph','#btnTxtGraph','#cntGraph','#rubGraph',g=>{
+    graphS.essayOk=g.score>=65; refreshGraphDone();
+  });
+  if(ME.essays&&ME.essays.graph&&ME.essays.graph.score>=65) graphS.essayOk=true;
+  $('#btnGraphDone').addEventListener('click',()=>{
+    ME.stages.graph.done=true; saveDB();
+    toast('심화 단계 통과! 방탈출에 도전하세요.'); show('home');
+  });
+  paintGraphs(); refreshGraphDone();
+}
+function refreshGraphDone(){
+  const plotOk=(ME.stages.graph.plot||0)>=GRAPH_STARS.length;
+  const ok=plotOk&&graphS.solved>=4&&graphS.essayOk;
+  const b=$('#btnGraphDone'); if(!b) return;
+  b.disabled=!ok;
+  b.textContent= ok?'심화 단계 통과하기 ✓'
+    :`심화 단계 통과하기 (점 ${plotOk?'✓':'✗'} / 문제 ${graphS.solved}/4 / 서술 ${graphS.essayOk?'✓':'✗'})`;
+}
+/* =========================================================
+   11. 방탈출 세션 + 누리호 단계 조립 / 발사 이벤트
+   ========================================================= */
+const ROOMS=[
+  {n:'관제실',   ic:'🛰️'},{n:'항법 컴퓨터',ic:'🧭'},{n:'관측 돔',ic:'🔭'},
+  {n:'계산실',   ic:'🧮'},{n:'자료 보관실',ic:'📚'},{n:'발사 통제실',ic:'🚀'},
+  {n:'추진 제어실',ic:'⚙️'},{n:'통신실',ic:'📡'},{n:'격납고',ic:'🏗️'}
+];
+const BUILD=[
+  {n:'발사대 기립',      d:'이렉터로 발사체를 세우고 지상 설비를 연결했습니다.'},
+  {n:'1단 결합',        d:'75톤급 액체엔진 4기(클러스터링) 1단을 세웠습니다.'},
+  {n:'2단 결합',        d:'75톤급 엔진 1기의 2단을 올렸습니다.'},
+  {n:'3단 결합',        d:'7톤급 엔진의 3단을 올렸습니다.'},
+  {n:'위성 탑재·페어링', d:'위성을 넣고 페어링(덮개)을 씌웠습니다.'},
+  {n:'연료 충전·최종 점검',d:'추진제를 채우고 발사 준비를 마쳤습니다.'}
+];
+const quizS={run:null,timer:null,anim:null};
+
+function builtCount(){
+  const r=quizS.run; if(!r) return 0;
+  return clamp(Math.round(r.solved/r.total*BUILD.length),0,BUILD.length);
+}
+/* --- 발사체 그림 --- */
+function drawRocketScene(built,L){
+  const c=$('#cvRocket'); if(!c) return;
+  const x=c.getContext('2d'), W=c.width, H=c.height;
+  const phase=L?L.phase:'build', t=L?(L.t||0):0;
+  const ease=v=>v*v;
+  const lift = phase==='fly'? ease(t)*680 : phase==='orbit'? 680 : 0;
+
+  // 배경(상승할수록 우주에 가까워짐)
+  const sky=x.createLinearGradient(0,0,0,H);
+  const k=phase==='build'?0:Math.min(1,t*1.3);
+  sky.addColorStop(0,`rgb(${Math.round(8-6*k)},${Math.round(14-10*k)},${Math.round(38-30*k)})`);
+  sky.addColorStop(1,`rgb(${Math.round(20-14*k)},${Math.round(30-24*k)},${Math.round(60-50*k)})`);
+  x.fillStyle=sky; x.fillRect(0,0,W,H);
+  for(let i=0;i<50;i++){                     // 배경별(고정 시드)
+    const sx=(i*97)%W, sy=(i*53)%(H-90);
+    x.fillStyle=`rgba(255,255,255,${0.15+((i*37)%50)/160})`;
+    x.fillRect(sx,sy,1.6,1.6);
+  }
+  const bottom=470, cx=190;
+
+  // 지면 · 발사대
+  x.fillStyle='#0e1526'; x.fillRect(0,bottom,W,H-bottom);
+  x.fillStyle='#1b2540'; x.fillRect(cx-92,bottom-10,184,12);
+  if(built>=1){
+    x.fillStyle='#334160'; x.fillRect(cx+66,bottom-330,14,330);       // 타워
+    x.strokeStyle='#46557a'; x.lineWidth=2;
+    for(let y=bottom-320;y<bottom-10;y+=42){
+      x.beginPath(); x.moveTo(cx+66,y); x.lineTo(cx+80,y+21); x.stroke();
+    }
+    if(phase==='build'||phase==='cd'){                                // 지지 암
+      x.strokeStyle='#5b6b96'; x.lineWidth=4;
+      [bottom-90,bottom-210].forEach(y=>{ x.beginPath(); x.moveTo(cx+66,y); x.lineTo(cx+28,y); x.stroke(); });
+    }
+    x.fillStyle='#93a3c4'; x.font='11px system-ui'; x.fillText('나로우주센터',10,bottom+24);
+  }
+
+  x.save(); x.translate(0,-lift);
+  const yb=bottom-12;                        // 발사체 밑면
+  const h1=132,h2=96,h3=60,hf=56;
+  const y1=yb-h1, y2=y1-h2, y3=y2-h3, y4=y3-hf;
+  const body=(cxx,y,w,h,c1,c2)=>{
+    const g=x.createLinearGradient(cxx-w/2,0,cxx+w/2,0);
+    g.addColorStop(0,c1); g.addColorStop(.45,c2); g.addColorStop(1,c1);
+    x.fillStyle=g; x.fillRect(cxx-w/2,y,w,h);
+    x.strokeStyle='rgba(255,255,255,.25)'; x.lineWidth=1; x.strokeRect(cxx-w/2,y,w,h);
+  };
+  // 1단 (분리 연출)
+  const sep1 = phase==='fly'&&t>0.42, sep2 = phase==='fly'&&t>0.68;
+  if(built>=2){
+    const off = sep1? (t-0.42)*900 : 0;
+    const rot = sep1? (t-0.42)*1.2 : 0;
+    x.save(); x.translate(cx,y1+h1/2+off); x.rotate(rot); x.translate(-cx,-(y1+h1/2));
+    body(cx,y1,56,h1,'#c8d2e4','#ffffff');
+    x.fillStyle='#2f3a57'; x.fillRect(cx-28,y1+h1-16,56,16);          // 엔진 마운트
+    x.fillStyle='#8e9ab8';
+    [-18,-6,6,18].forEach(o=>x.fillRect(cx+o-4,y1+h1,8,10));          // 4기 클러스터
+    x.fillStyle='#1e3a8a'; x.font='bold 11px system-ui';
+    x.fillText('KOREA',cx-20,y1+30);
+    x.fillStyle='#dc2626'; x.beginPath(); x.arc(cx,y1+52,7,0,7); x.fill();
+    x.fillStyle='#1d4ed8'; x.beginPath(); x.arc(cx,y1+52,7,Math.PI,7); x.fill();
+    x.restore();
+  }
+  // 2단
+  if(built>=3){
+    const off = sep2? (t-0.68)*700 : 0;
+    x.save(); x.translate(0,off);
+    body(cx,y2,44,h2,'#c8d2e4','#ffffff');
+    x.fillStyle='#2f3a57'; x.fillRect(cx-22,y2+h2-10,44,10);
+    x.fillStyle='#8e9ab8'; x.fillRect(cx-5,y2+h2,10,9);
+    x.fillStyle='#334160'; x.font='10px system-ui'; x.fillText('KSLV-II',cx-19,y2+22);
+    x.restore();
+  }
+  // 3단
+  if(built>=4){ body(cx,y3,34,h3,'#cfd8e8','#ffffff'); x.fillStyle='#8e9ab8'; x.fillRect(cx-4,y3+h3,8,7); }
+  // 페어링 + 위성
+  if(built>=5){
+    x.beginPath(); x.moveTo(cx,y4); x.quadraticCurveTo(cx-17,y4+hf*.55,cx-17,y4+hf);
+    x.lineTo(cx+17,y4+hf); x.quadraticCurveTo(cx+17,y4+hf*.55,cx,y4);
+    const g=x.createLinearGradient(cx-17,0,cx+17,0);
+    g.addColorStop(0,'#b9c4da'); g.addColorStop(.5,'#fff'); g.addColorStop(1,'#b9c4da');
+    x.fillStyle=g; x.fill(); x.strokeStyle='rgba(255,255,255,.3)'; x.stroke();
+    x.fillStyle='#fbbf24'; x.font='10px system-ui'; x.fillText('SAT',cx-10,y4+40);
+  }
+  // 연료 충전 완료 표시
+  if(built>=6&&phase==='build'){
+    x.strokeStyle='rgba(94,234,212,.8)'; x.lineWidth=2; x.setLineDash([6,5]);
+    x.strokeRect(cx-36,y4-6,72,yb-y4+12); x.setLineDash([]);
+    x.fillStyle='#5eead4'; x.font='bold 12px system-ui'; x.fillText('FUELED · READY',cx-44,y4-14);
+  }
+  // 화염
+  if(phase==='fly'){
+    const fl=26+Math.random()*30, w=18+Math.random()*8;
+    const g=x.createLinearGradient(0,yb,0,yb+fl);
+    g.addColorStop(0,'rgba(255,255,220,.95)'); g.addColorStop(.4,'rgba(255,170,60,.85)');
+    g.addColorStop(1,'rgba(255,80,30,0)');
+    x.fillStyle=g; x.beginPath(); x.moveTo(cx-w,yb); x.lineTo(cx+w,yb);
+    x.lineTo(cx+w*.3,yb+fl); x.lineTo(cx-w*.3,yb+fl); x.closePath(); x.fill();
+  }
+  x.restore();
+
+  // 연기
+  if(phase==='fly'){
+    for(let i=0;i<22;i++){
+      const a=(i/22)*Math.PI*2, r=20+t*160+((i*13)%40);
+      const px=cx+Math.cos(a)*r*1.3, py=bottom-8+Math.sin(a)*r*.34;
+      x.fillStyle=`rgba(210,220,240,${Math.max(0,.30-t*.22-(i%5)*0.02)})`;
+      x.beginPath(); x.arc(px,py,12+t*22,0,7); x.fill();
+    }
+  }
+  // 카운트다운 / 안내 문구
+  x.fillStyle='#e8eefb'; x.font='bold 16px system-ui';
+  if(phase==='cd'){
+    x.font='bold 44px system-ui'; x.fillStyle='#fbbf24';
+    x.fillText('T-'+L.cd,W/2-42,90);
+    x.font='13px system-ui'; x.fillStyle='#e8eefb'; x.fillText('전 계통 정상 · 발사 시퀀스 진행',W/2-104,116);
+  }else if(phase==='fly'){
+    x.fillText(t<0.42?'1단 연소 중':t<0.68?'1단 분리 · 2단 점화':t<0.9?'2단 분리 · 3단 점화':'페어링 분리 · 위성 사출',18,30);
+  }else if(phase==='orbit'){
+    x.fillStyle='#5eead4'; x.fillText('🎉 위성 목표 궤도 진입 성공!',18,30);
+  }else{
+    x.fillStyle='#93a3c4'; x.font='12px system-ui';
+    x.fillText(`조립 ${built}/${BUILD.length} 단계`,18,26);
+  }
+}
+function paintBuildLog(){
+  const b=builtCount(), host=$('#buildLog'); if(!host) return;
+  host.innerHTML='';
+  BUILD.forEach((s,i)=>{
+    host.append(el('div',{class:'mini',style:i<b?'color:var(--good)':''},
+      (i<b?'✅ ':'⬜ ')+s.n+(i<b?' — '+s.d:'')));
+  });
+}
+/* 문항별 해결 시간 표 (진행 중 · 인증서 · 교사 콘솔 공용) */
+function itemTable(items){
+  const t=el('table',{});
+  t.append(el('thead',{},el('tr',{},
+    el('th',{},'문항'),el('th',{class:'left'},'구역 · 유형'),
+    el('th',{},'해결 시간'),el('th',{},'오답'),el('th',{},'힌트'))));
+  const tb=el('tbody',{});
+  items.forEach(it=>{
+    tb.append(el('tr',{},
+      el('td',{},String(it.no)),
+      el('td',{class:'left mini'},`${it.room} · ${it.typeName||TYPE_LABEL[it.type]||it.type}`),
+      el('td',{style:it.sec>90?'color:var(--warn)':''},fmtTime(it.sec*1000)),
+      el('td',{},String(it.wrong||0)),
+      el('td',{},String(it.hints||0))));
+  });
+  t.append(tb);
+  if(items.length){
+    const secs=items.map(i=>i.sec);
+    const avg=secs.reduce((a,b)=>a+b,0)/secs.length;
+    const slow=items[secs.indexOf(Math.max(...secs))];
+    t.append(el('tfoot',{},el('tr',{},
+      el('td',{class:'left mini',colspan:'5'},
+        `평균 ${fmtTime(avg*1000)} · 가장 오래 걸린 문항: ${slow.no}번 ${slow.typeName||''} (${fmtTime(slow.sec*1000)})`))));
+  }
+  return t;
+}
+function paintItemTimes(){
+  const host=$('#itemTimes'); if(!host||!quizS.run) return;
+  host.innerHTML='';
+  if(!quizS.run.items.length){ host.append(el('p',{class:'mini'},'아직 해결한 문항이 없습니다.')); return; }
+  host.append(itemTable(quizS.run.items));
+}
+function paintRooms(){
+  const r=quizS.run, host=$('#roomGrid'); host.innerHTML='';
+  for(let i=0;i<r.total;i++){
+    const room=ROOMS[i%ROOMS.length];
+    host.append(el('div',{class:'room '+(i<r.solved?'done':i===r.solved?'now':'')},
+      el('span',{class:'ic'},i<r.solved?'🔓':room.ic), room.n));
+  }
+  if(+cfg().teamLock){
+    const on=r.solved>=r.total;
+    host.append(el('div',{class:'room '+(r.team?'done':on?'now':'')},
+      el('span',{class:'ic'},r.team?'🔓':'🔐'),'모둠 자물쇠'));
+  }
+  $('#qSolved').textContent=r.solved; $('#qTotal').textContent=r.total;
+  $('#qWrong').textContent=r.wrong; $('#qHints').textContent=r.hints;
+}
+function startQuiz(){
+  const total=clamp(+cfg().quizCount||6,3,15);
+  quizS.run={total,solved:0,wrong:0,hints:0,start:Date.now(),
+             types:AI.pickTypes(ALL_TYPES,total),level:LV,done:false,
+             items:[],roomStart:Date.now(),curWrong:0,curHints:0};
+  paintRooms(); paintBuildLog(); paintItemTimes(); drawRocketScene(0,null);
+  clearInterval(quizS.timer);
+  quizS.timer=setInterval(()=>{
+    if(!quizS.run||quizS.run.done) return;
+    $('#qTime').textContent=fmtTime(Date.now()-quizS.run.start);
+  },500);
+  askRoom();
+}
+function askRoom(){
+  const r=quizS.run, i=r.solved;
+  r.roomStart=Date.now(); r.curWrong=0; r.curHints=0;   // 이 구역의 시작 시각
+  const area=$('#quizArea'); area.innerHTML='';
+  const room=ROOMS[i%ROOMS.length];
+  const card=el('div',{class:'card',style:'margin:0'});
+  card.append(el('h3',{style:'margin-top:0'},`${room.ic} ${room.n} · 잠금 ${i+1}/${r.total}`));
+  card.append(el('p',{class:'sub'},'정답을 맞히면 발사체가 한 단계 조립됩니다. 틀리면 같은 유형의 새 문제가 나옵니다.'));
+  const holder=el('div',{});
+  holder.append(questionCard(genQ(r.types[i]),{
+    label:'잠금 '+(i+1), stage:'quiz',
+    onHint:()=>{ r.hints++; r.curHints++; paintRooms(); },
+    onResult:ok=>{
+      if(ok){
+        // 구역(문항)별 해결 시간 기록 — 오답 후 재도전 시간까지 포함
+        r.items.push({no:i+1, room:room.n, type:r.types[i],
+                      typeName:TYPE_LABEL[r.types[i]]||r.types[i],
+                      sec:Math.round((Date.now()-r.roomStart)/100)/10,
+                      wrong:r.curWrong, hints:r.curHints});
+        const before=builtCount();
+        r.solved++; paintRooms(); paintBuildLog(); paintItemTimes();
+        const b=builtCount();
+        drawRocketScene(b,null);
+        const newly=BUILD.slice(before,b).map(s=>s.n);   // 이번에 완료된 조립 단계
+        if(newly.length) toast(`🔧 ${newly.join(' · ')} 완료!`);
+        if(r.solved>=r.total) setTimeout(finishQuiz,700);
+        else setTimeout(askRoom,900);
+      }else{
+        r.wrong++; r.curWrong++; paintRooms();
+      }
+    }
+  }));
+  card.append(holder);
+  area.append(card);
+}
+/* =========================================================
+   11-2. 모둠 협동 잠금 — 조원들의 열쇠 조각을 모아야 열리는 최종 자물쇠
+   조각 코드: K + 세 자리(=시차×1000) + 검사숫자  (예: p=0.125 → K1254)
+   ========================================================= */
+/* 조각에 쓰는 시차 값 — 모두 소수점 세 자리로 정확히 표현되고, 거리가 깔끔하게 나오는 값 */
+const KEY_P=[0.5,0.4,0.25,0.2,0.16,0.125,0.1,0.08,0.05,0.04,0.032,0.025,0.02,0.016,0.01,0.008,0.005];
+function keyDigits(p){ return String(Math.round(p*1000)).padStart(3,'0'); }
+function keyCheck(d){ return (+d[0]*1 + +d[1]*2 + +d[2]*3)%10; }
+function keyFragment(rec){
+  const seed=(cfg().classCode||'0000')+'|'+((rec&&rec.team)||'1조')+'|'
+             +((rec&&rec.klass)||'')+'|'+((rec&&rec.name)||'');
+  let h=7;
+  for(let i=0;i<seed.length;i++) h=(h*31+seed.charCodeAt(i))%9973;
+  const p=KEY_P[h%KEY_P.length];
+  const d=keyDigits(p);
+  return {p,code:'K'+d+keyCheck(d)};
+}
+function parseKey(code){
+  const m=/^K(\d{3})(\d)$/.exec(String(code||'').trim().toUpperCase().replace(/[\s-]/g,''));
+  if(!m) return null;
+  if(+m[2]!==keyCheck(m[1])) return null;
+  const p=(+m[1])/1000;
+  if(!(p>0)) return null;
+  return {p,code:'K'+m[1]+m[2]};
+}
+function paintMyKey(){
+  if(!ME) return;
+  const need=clamp(+cfg().teamSize||3,2,4);
+  const t=$('#teamName'); if(t&&!t.value) t.value=ME.team||'1조';
+  ME.team=(t?t.value.trim():ME.team)||'1조';
+  const f=keyFragment(ME);
+  const c=$('#myKeyCode'); if(c) c.textContent=f.code;
+  const i=$('#myKeyInfo');
+  if(i) i.innerHTML=`내 조각의 연주시차 <b>${f.p}″</b> → 거리 ${fx(1/f.p,2)} pc`;
+  const nd=$('#teamNeed'); if(nd) nd.textContent=need;
+  saveDB();
+  return f;
+}
+/* 최종 자물쇠 화면 — 성공하면 onDone()
+   모둠 인원이 3명·4명으로 다를 수 있으므로, 교사가 정한 값은 "최소 조각 수"이고
+   학생이 자기 모둠 인원만큼 칸을 추가한다. */
+function teamLockUI(onDone){
+  const need=clamp(+cfg().teamSize||3,2,6);
+  const MAXR=6;
+  const mine=keyFragment(ME);
+  const area=$('#quizArea'); area.innerHTML='';
+  const card=el('div',{class:'card',style:'margin:0'});
+  card.append(el('h3',{style:'margin-top:0'},'🔐 최종 자물쇠 · 모둠 협동'));
+  card.append(el('div',{class:'note',html:
+    `개인 잠금은 모두 열렸습니다. 마지막 자물쇠는 <b>혼자 열 수 없습니다</b>.<br>
+     우리 모둠 <b>전원</b>의 열쇠 조각을 모아 입력하세요(<b>최소 ${need}개</b>).
+     그리고 조각에 적힌 연주시차로 <b>각 별까지의 거리를 구해 모두 더한 값</b>을 넣으세요.<br>
+     <span class="mini">모둠이 4명이면 <b>조원 칸 추가</b>를 눌러 4개를 넣으면 됩니다.</span>`}));
+  card.append(el('p',{class:'sub'},
+    `내 조각: ${mine.code} (p = ${mine.p}″) · 내 모둠: ${ME.team||'1조'}`));
+
+  const inputs=[];
+  const grid=el('div',{class:'grid g3'});
+  function addRow(){
+    if(inputs.length>=MAXR) return;
+    const i=inputs.length;
+    const inp=el('input',{type:'text',placeholder:'K◯◯◯◯',value:i===0?mine.code:'',
+      maxlength:'6',style:'text-transform:uppercase'});
+    inp.addEventListener('change',()=>paintState());
+    inputs.push(inp);
+    grid.append(el('label',{class:'fld'},
+      el('b',{},i===0?'내 조각':`조원 ${i}의 조각`),inp));
+  }
+  for(let i=0;i<need;i++) addRow();
+  card.append(grid);
+  const rowAdd=el('div',{class:'row',style:'margin-bottom:10px'});
+  const bAdd=el('button',{class:'btn small ghost',onclick:()=>{
+    addRow(); paintState();
+    if(inputs.length>=MAXR) bAdd.disabled=true;
+    bCnt.textContent=`현재 ${inputs.length}칸 (최소 ${need}개 필요)`;
+  }},'＋ 조원 칸 추가');
+  const bCnt=el('span',{class:'mini'},`현재 ${inputs.length}칸 (최소 ${need}개 필요)`);
+  rowAdd.append(bAdd,bCnt);
+  card.append(rowAdd);
+  const state=el('div',{class:'qbox'});
+  card.append(state);
+  const sum=el('input',{type:'text',inputmode:'decimal',placeholder:'예: 26.5'});
+  card.append(el('label',{class:'fld'},el('b',{},'세 조각의 거리 합계 (pc)'),sum));
+  const fb=el('div',{class:'fb','aria-live':'polite'});
+  const row=el('div',{class:'row'});
+  const bChk=el('button',{class:'btn small ghost'},'조각 확인');
+  const bOpen=el('button',{class:'btn primary'},'자물쇠 열기');
+  const bHint=el('button',{class:'btn small ghost'},'힌트');
+  row.append(bOpen,bChk); if(+cfg().allowHints) row.append(bHint);
+  card.append(row,fb);
+  area.append(card);
+
+  function read(){
+    return inputs.map(i=>({raw:i.value.trim(),k:parseKey(i.value)}));
+  }
+  function paintState(){
+    const ks=read();
+    state.innerHTML='';
+    ks.forEach((o,i)=>{
+      const line=o.raw===''? '⬜ 비어 있음(모둠 인원이 적으면 비워 두어도 됩니다)'
+        : o.k? `✅ ${o.k.code} · p = ${o.k.p}″ → d = ${fx(1/o.k.p,2)} pc`
+             : `❌ ${o.raw} — 코드 형식이나 검사숫자가 맞지 않습니다`;
+      state.append(el('div',{class:'mini'},`${i===0?'내 조각':'조원 '+i}: ${line}`));
+    });
+    const valid=ks.filter(o=>o.k), bad=ks.filter(o=>o.raw!==''&&!o.k);
+    if(bad.length){
+      state.append(el('div',{class:'mini',style:'margin-top:6px;color:var(--bad)'},
+        `❌ 잘못된 조각 ${bad.length}개 — 조원에게 코드를 다시 확인하세요.`));
+    }else if(valid.length<need){
+      state.append(el('div',{class:'mini',style:'margin-top:6px;color:var(--warn)'},
+        `조각 ${valid.length}개 — 최소 ${need}개가 필요합니다.`));
+    }else{
+      const dup=new Set(valid.map(o=>o.k.code)).size!==valid.length;
+      state.append(el('div',{class:'mini',style:'margin-top:6px;color:'+(dup?'var(--warn)':'var(--accent)')},
+        dup?'⚠ 같은 조각이 두 개 이상입니다 — 다른 조원의 조각인지 확인하세요.'
+           :`조각 ${valid.length}개 확인 완료. ${valid.length}개 거리의 합계를 계산해 입력하세요.`));
+    }
+    return ks;
+  }
+  bChk.addEventListener('click',paintState);
+  bHint.addEventListener('click',()=>{
+    const ks=read().filter(o=>o.k);
+    quizS.run.hints++; paintRooms();
+    fb.className='fb';
+    fb.innerHTML='💡 각 조각의 거리는 d = 1 ÷ p 로 구합니다.'+
+      (ks.length? '<br>지금 입력된 조각: '+ks.map(o=>`1/${o.k.p} = ${fx(1/o.k.p,2)} pc`).join(' , ')+' → 이 값들을 더하세요.'
+                : '<br>먼저 조원들의 조각 코드를 모아 입력하세요.');
+  });
+  bOpen.addEventListener('click',()=>{
+    const ks=paintState();
+    const valid=ks.filter(o=>o.k), bad=ks.filter(o=>o.raw!==''&&!o.k);
+    if(bad.length||valid.length<need){
+      fb.className='fb no';
+      fb.textContent = bad.length
+        ? '❌ 열쇠 조각을 모두 올바르게 입력해야 합니다. (조원에게 코드를 다시 확인하세요)'
+        : `❌ 열쇠 조각이 ${valid.length}개입니다 — 최소 ${need}개를 모아야 열립니다.`;
+      quizS.run.wrong++; paintRooms();
+      logAnswer({stage:'quiz',type:'teamLock',tag:'협동',ok:false,given:'조각오류',ans:'유효 조각 '+valid.length});
+      return;
+    }
+    const ks2=valid;
+    const target=ks2.reduce((a,o)=>a+1/o.k.p,0);
+    const v=Number(sum.value.trim().replace(/,/g,''));
+    if(!near(v,target,1)){
+      fb.className='fb no';
+      fb.innerHTML=`❌ 합계가 맞지 않습니다. 각 조각의 거리를 <b>1 ÷ p</b>로 구한 뒤 모두 더해 보세요.`;
+      quizS.run.wrong++; paintRooms();
+      logAnswer({stage:'quiz',type:'teamLock',tag:'협동',ok:false,given:sum.value,ans:fx(target,2),mis:'formula-invert'});
+      return;
+    }
+    fb.className='fb ok';
+    fb.innerHTML=`⭕ 철컥! 모둠 자물쇠가 열렸습니다. (${ks2.map(o=>fx(1/o.k.p,2)).join(' + ')} = ${fx(target,2)} pc)`;
+    bOpen.disabled=true; bChk.disabled=true; bHint.disabled=true; bAdd.disabled=true;
+    logAnswer({stage:'quiz',type:'teamLock',tag:'협동',ok:true,given:sum.value,ans:fx(target,2)});
+    quizS.run.team={team:ME.team||'1조',codes:ks2.map(o=>o.k.code),
+                    total:+fx(target,2),size:ks2.length};
+    setTimeout(()=>onDone&&onDone(),1200);
+  });
+  paintState();
+}
+
+function finishQuiz(){
+  const r=quizS.run;
+  // 개인 잠금을 모두 푼 뒤, 모둠 협동 잠금이 남아 있으면 먼저 진행
+  if(+cfg().teamLock && !r.team && !r.teamSkipped){
+    paintRooms(); paintBuildLog();
+    teamLockUI(()=>finishQuiz());
+    return;
+  }
+  r.done=true; r.end=Date.now();
+  clearInterval(quizS.timer);
+  const ms=r.end-r.start;
+  const rec={at:r.end,ms,total:r.total,wrong:r.wrong,hints:r.hints,level:r.level,
+             success:true,items:r.items.slice(),team:r.team||null};
+  ME.quiz.runs.push(rec);
+  if(!ME.quiz.best||ms<ME.quiz.best.ms) ME.quiz.best=rec;
+  saveDB();
+  $('#quizArea').innerHTML='';
+  const wait=el('div',{class:'card',style:'margin:0'},
+    el('h3',{style:'margin-top:0'},'🚀 모든 잠금 해제 — 발사 시퀀스 시작'),
+    el('p',{class:'sub'},'조립이 끝났습니다. 카운트다운을 지켜보세요!'));
+  $('#quizArea').append(wait);
+  paintBuildLog();
+  launchSequence(()=>showCert(rec));
+}
+function launchSequence(cb){
+  const t0=performance.now(), CD=3200, FL=6000;
+  cancelAnimationFrame(quizS.anim);
+  (function frame(now){
+    const e=(now||performance.now())-t0;
+    if(e<CD){ drawRocketScene(BUILD.length,{phase:'cd',cd:Math.max(1,Math.ceil((CD-e)/1000))}); }
+    else if(e<CD+FL){ drawRocketScene(BUILD.length,{phase:'fly',t:(e-CD)/FL}); }
+    else { drawRocketScene(BUILD.length,{phase:'orbit',t:1}); cb&&cb(); return; }
+    quizS.anim=requestAnimationFrame(frame);
+  })();
+}
+function showCert(rec){
+  const area=$('#quizArea'); area.innerHTML='';
+  const cert=el('div',{class:'cert'},
+    el('h3',{},'🏅 탈출 성공 · 발사 인증서'),
+    el('p',{class:'mini'},`${ME.klass} ${ME.name}`),
+    el('div',{class:'row',style:'justify-content:center;margin:10px 0'},
+      el('span',{class:'pill'},'소요 시간 ',el('b',{},fmtTime(rec.ms))),
+      el('span',{class:'pill'},'문제 ',el('b',{},String(rec.total))),
+      el('span',{class:'pill'},'오답 ',el('b',{},String(rec.wrong))),
+      el('span',{class:'pill'},'힌트 ',el('b',{},String(rec.hints))),
+      el('span',{class:'pill'},'수준 ',el('b',{},rec.level==='adv'?'발전':'기본'))),
+    rec.team
+      ? el('p',{class:'mini'},`🔐 모둠 협동 잠금 해제 — ${rec.team.team} · 열쇠 조각 ${rec.team.codes.join(' + ')} → 합계 ${rec.team.total} pc`)
+      : el('span',{}),
+    el('p',{class:'mini'},'연주시차와 별까지의 거리 관계를 이용해 모든 잠금을 해제하고 누리호를 발사했습니다.'));
+  const card=el('div',{class:'card',style:'margin:0'});
+  card.append(cert);
+  if(rec.items&&rec.items.length){
+    card.append(el('h3',{},'⏱ 문항별 해결 시간 (결과 시트에 함께 기록됩니다)'));
+    card.append(el('div',{class:'scrollx'},itemTable(rec.items)));
+  }
+  card.append(el('h3',{},'✍️ 탈출 보고서 (주관식)'));
+  card.append(el('p',{class:'sub'},'가장 어려웠던 문제와 그것을 해결한 방법을 남겨 주세요. 선생님이 확인합니다.'));
+  const ta=el('textarea',{id:'txtQuiz',rows:'4',placeholder:'예) 거리에서 시차를 구하는 문제가 어려웠는데 …'});
+  card.append(ta);
+  card.append(el('div',{class:'row',style:'margin-top:8px'},
+    el('button',{class:'btn small',id:'btnTxtQuiz'},'보고서 제출'),
+    el('span',{class:'pill'},'글자 ',el('b',{id:'cntQuiz'},'0'))));
+  card.append(el('div',{id:'rubQuiz'}));
+  card.append(el('div',{class:'row',style:'margin-top:14px'},
+    el('button',{class:'btn primary',onclick:()=>show('home')},'허브로'),
+    el('button',{class:'btn violet',onclick:()=>startQuiz()},'다시 도전(새 문제)')));
+  area.append(card);
+  bindEssay('quiz','#txtQuiz','#btnTxtQuiz','#cntQuiz','#rubQuiz');
+  toast('발사 성공! 인증서가 발급되었습니다.');
+}
+/* =========================================================
+   12. 학생 요약 계산 (교사 콘솔·과세특 공용)
+   ========================================================= */
+function summarize(r){
+  const st=r.stages||{};
+  const stages=['basic','calc','graph'].map(k=>!!(st[k]&&st[k].done));
+  const logs=(r.logs||[]).filter(l=>l.type&&l.type!=='essay'&&l.type!=='support');
+  const n=logs.length, ok=logs.filter(l=>l.ok).length;
+  const rate=n?ok/n:0;
+  const best=(r.quiz&&r.quiz.best)||null;
+  const ms=['basic','calc','graph'].reduce((a,k)=>a+((st[k]&&st[k].ms)||0),0);
+  const mis=Object.entries(r.mis||{}).sort((a,b)=>b[1]-a[1]);
+  const reach=stages.every(Boolean)&&!!best;
+  const essays=r.essays||{};
+  // 이상 기록 탐지: 정답인데 유난히 빠른(1.5초 미만) 응답 비율
+  const timed=logs.filter(l=>l.ok&&l.sec>0);
+  const fast=timed.filter(l=>l.sec<1.5).length;
+  const suspicious = timed.length>=5 && fast/timed.length>0.5;
+  // 협동 잠금은 '가장 빠른 기록'이 아니어도 해제 사실을 유지한다
+  const teamRun=((r.quiz&&r.quiz.runs)||[]).filter(x=>x.success&&x.team).slice(-1)[0]||null;
+  return {stages,n,ok,rate,best,ms,mis,reach,essays,fast,timed:timed.length,suspicious,teamRun,
+          weak:AI.weakest(r,3),level:r.level||'basic'};
+}
+const STAGE_NAME={basic:'기초',calc:'발전',graph:'심화'};
+
+/* 방탈출 문항별 시간 → 시트/CSV용 문자열 */
+function itemsToText(items){
+  if(!items||!items.length) return '';
+  return items.map(i=>`${i.no}번 ${(i.typeName||TYPE_LABEL[i.type]||i.type)} ${i.sec}초(오답${i.wrong||0}·힌트${i.hints||0})`).join(' | ');
+}
+function itemsStats(items){
+  if(!items||!items.length) return {avg:'',slow:''};
+  const secs=items.map(i=>i.sec);
+  const avg=Math.round(secs.reduce((a,b)=>a+b,0)/secs.length*10)/10;
+  const s=items[secs.indexOf(Math.max(...secs))];
+  return {avg,slow:`${s.no}번 ${(s.typeName||TYPE_LABEL[s.type]||s.type)} ${s.sec}초`};
+}
+
+/* =========================================================
+   12-2. 시각화 — 캔버스 차트 엔진 (외부 라이브러리 없음)
+   팔레트는 다크 표면 #141c36 기준으로 검증된 값
+   ========================================================= */
+const VIZ={
+  ink:'#e8eefb', ink2:'#c3cde4', muted:'#8d9ab8',
+  grid:'rgba(255,255,255,.07)', axis:'rgba(255,255,255,.22)',
+  cat:['#3987e5','#d95926','#199e70','#c98500'],     // 범주형(고정 순서)
+  ord:['#9ec5f4','#6da7ec','#3987e5','#256abf'],     // 순서형 1색 램프
+  seq:'#3987e5', accent2:'#9085e9',
+  status:{good:'#0ca30c',warn:'#fab219',bad:'#d03b3b'},
+  font:(s,w)=>`${w||''} ${s}px system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif`.trim()
+};
+function statusColor(pct){ return pct>=80?VIZ.status.good:pct>=60?VIZ.status.warn:VIZ.status.bad; }
+function statusWord(pct){ return pct>=80?'안정':pct>=60?'점검':'재지도'; }
+
+/* 캔버스 준비: 고해상도 대응 + 히트 영역 초기화 */
+function prep(cv,h){
+  const wCss=cv.clientWidth||cv.parentElement&&cv.parentElement.clientWidth||520;
+  const dpr=Math.min(2,(window.devicePixelRatio||1));
+  cv.width=Math.round(wCss*dpr); cv.height=Math.round(h*dpr);
+  cv.style.height=h+'px';
+  const x=cv.getContext('2d');
+  if(x.setTransform) x.setTransform(dpr,0,0,dpr,0,0);
+  x.clearRect(0,0,wCss,h);
+  cv._hits=[];
+  if(!cv._tipBound){
+    cv._tipBound=true;
+    const tip=$('#vizTip');
+    cv.addEventListener('mousemove',e=>{
+      const r=cv.getBoundingClientRect();
+      const mx=e.clientX-r.left, my=e.clientY-r.top;
+      const hit=(cv._hits||[]).find(h2=>mx>=h2.x&&mx<=h2.x+h2.w&&my>=h2.y&&my<=h2.y+h2.h);
+      if(hit){ tip.innerHTML=hit.text; tip.style.display='block';
+        tip.style.left=Math.min(innerWidth-250,e.clientX+12)+'px';
+        tip.style.top=(e.clientY-10)+'px'; }
+      else tip.style.display='none';
+    });
+    cv.addEventListener('mouseleave',()=>{ $('#vizTip').style.display='none'; });
+  }
+  return {x,W:wCss,H:h};
+}
+function rrect(x,px,py,w,h,r){
+  r=Math.min(r,Math.abs(h)/2,Math.abs(w)/2);
+  x.beginPath();
+  if(x.roundRect){ x.roundRect(px,py,w,h,r); }
+  else{
+    x.moveTo(px+r,py); x.lineTo(px+w-r,py); x.quadraticCurveTo(px+w,py,px+w,py+r);
+    x.lineTo(px+w,py+h-r); x.quadraticCurveTo(px+w,py+h,px+w-r,py+h);
+    x.lineTo(px+r,py+h); x.quadraticCurveTo(px,py+h,px,py+h-r);
+    x.lineTo(px,py+r); x.quadraticCurveTo(px,py,px+r,py);
+  }
+  x.closePath(); x.fill();
+}
+/* 가로 막대 — rows:[{label,value,color,note,tip}] */
+function chartBarsH(cv,rows,opt){
+  opt=opt||{};
+  const rowH=opt.rowH||26, pad=8, top=10;
+  const {x,W}=prep(cv,top+rows.length*rowH+pad+(opt.axisNote?16:0));
+  const labW=opt.labW||Math.min(160,W*0.36), valW=opt.valW||58;
+  const max=Math.max(opt.max||0,...rows.map(r=>r.value),1);
+  rows.forEach((r,i)=>{
+    const y=top+i*rowH, bh=Math.min(14,rowH-10);
+    x.fillStyle=VIZ.ink2; x.font=VIZ.font(12);
+    const lab=String(r.label);
+    x.fillText(lab.length>16?lab.slice(0,15)+'…':lab,0,y+bh);
+    // 트랙
+    x.fillStyle='rgba(255,255,255,.06)';
+    rrect(x,labW,y+2,W-labW-valW,bh,4);
+    const w=Math.max(2,(W-labW-valW)*(r.value/max));
+    x.fillStyle=r.color||VIZ.seq;
+    rrect(x,labW,y+2,w,bh,4);
+    x.fillStyle=VIZ.ink; x.font=VIZ.font(12,'600');
+    x.fillText(r.disp!==undefined?r.disp:String(r.value),W-valW+6,y+bh);
+    cv._hits.push({x:labW,y:y,w:W-labW,h:rowH-2,
+      text:r.tip||`<b>${lab}</b><br>${r.disp!==undefined?r.disp:r.value}${r.note?'<br>'+r.note:''}`});
+  });
+  if(opt.axisNote){
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(11);
+    x.fillText(opt.axisNote,labW,top+rows.length*rowH+10);
+  }
+}
+/* 세로 막대(분포) — rows:[{label,value,tip}] */
+function chartBarsV(cv,rows,opt){
+  opt=opt||{};
+  const {x,W,H}=prep(cv,opt.h||190);
+  const L=30,B=34,T=12,R=6;
+  const max=Math.max(1,...rows.map(r=>r.value));
+  const bw=(W-L-R)/rows.length;
+  // 격자 · y축
+  x.strokeStyle=VIZ.grid; x.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const gy=T+(H-T-B)*i/4;
+    x.beginPath(); x.moveTo(L,gy); x.lineTo(W-R,gy); x.stroke();
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+    x.fillText(String(Math.round(max*(1-i/4))),4,gy+3);
+  }
+  x.strokeStyle=VIZ.axis; x.beginPath(); x.moveTo(L,H-B); x.lineTo(W-R,H-B); x.stroke();
+  rows.forEach((r,i)=>{
+    const h=(H-T-B)*(r.value/max);
+    const px=L+i*bw+3, py=H-B-h, w=bw-6;
+    x.fillStyle=r.color||VIZ.seq;
+    if(h>0.5) rrect(x,px,py,w,h,4);
+    x.fillStyle=VIZ.ink2; x.font=VIZ.font(10);
+    const t=String(r.label);
+    x.fillText(t,px+w/2-x.measureText(t).width/2,H-B+14);
+    if(r.value>0){
+      x.fillStyle=VIZ.ink; x.font=VIZ.font(11,'600');
+      const v=String(r.disp!==undefined?r.disp:r.value);
+      x.fillText(v,px+w/2-x.measureText(v).width/2,py-4);
+    }
+    cv._hits.push({x:px-3,y:T,w:bw,h:H-T-B,text:r.tip||`<b>${r.label}</b><br>${r.value}명`});
+  });
+  if(opt.xLabel){ x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+    x.fillText(opt.xLabel,L,H-4); }
+}
+/* 그룹 막대 — groups:[{label,values:[..]}], series:[{name,color}] */
+function chartGrouped(cv,groups,series,opt){
+  opt=opt||{};
+  const {x,W,H}=prep(cv,opt.h||220);
+  const L=34,B=38,T=12,R=6;
+  const max=opt.max||Math.max(1,...groups.flatMap(g=>g.values));
+  const gw=(W-L-R)/Math.max(1,groups.length);
+  const bw=Math.max(4,(gw-14)/series.length);
+  x.strokeStyle=VIZ.grid;
+  for(let i=0;i<=4;i++){
+    const gy=T+(H-T-B)*i/4;
+    x.beginPath(); x.moveTo(L,gy); x.lineTo(W-R,gy); x.stroke();
+    x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+    x.fillText(Math.round(max*(1-i/4))+'%',2,gy+3);
+  }
+  x.strokeStyle=VIZ.axis; x.beginPath(); x.moveTo(L,H-B); x.lineTo(W-R,H-B); x.stroke();
+  groups.forEach((g,gi)=>{
+    g.values.forEach((v,si)=>{
+      const h=(H-T-B)*(v/max);
+      const px=L+gi*gw+7+si*bw, py=H-B-h;
+      x.fillStyle=series[si].color;
+      if(h>0.5) rrect(x,px+1,py,bw-2,h,4);   // 2px 표면 간격
+      cv._hits.push({x:px,y:T,w:bw,h:H-T-B,
+        text:`<b>${g.label}</b><br>${series[si].name}: ${Math.round(v)}%<br>${g.note||''}`});
+    });
+    x.fillStyle=VIZ.ink2; x.font=VIZ.font(11);
+    const t=String(g.label);
+    const tw=x.measureText(t).width;
+    x.fillText(t,L+gi*gw+gw/2-tw/2,H-B+15);
+    if(g.sub){ x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+      const sw=x.measureText(g.sub).width;
+      x.fillText(g.sub,L+gi*gw+gw/2-sw/2,H-B+28); }
+  });
+}
+/* 도넛 — parts:[{label,value,color}] */
+function chartDonut(cv,parts,opt){
+  opt=opt||{};
+  const {x,W,H}=prep(cv,opt.h||190);
+  const total=parts.reduce((a,b)=>a+b.value,0)||1;
+  const cx=Math.min(W*0.32,90)+10, cy=H/2, R=Math.min(cy-10,70), r=R*0.58;
+  let a0=-Math.PI/2;
+  parts.forEach(p=>{
+    const a1=a0+(p.value/total)*Math.PI*2;
+    x.beginPath(); x.arc(cx,cy,R,a0,a1); x.arc(cx,cy,r,a1,a0,true); x.closePath();
+    x.fillStyle=p.color; x.fill();
+    x.strokeStyle='#141c36'; x.lineWidth=2; x.stroke();   // 2px 표면 링
+    a0=a1;
+  });
+  x.fillStyle=VIZ.ink; x.font=VIZ.font(20,'700');
+  const c=String(opt.center||total);
+  x.fillText(c,cx-x.measureText(c).width/2,cy+4);
+  x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+  if(opt.centerLab){ x.fillText(opt.centerLab,cx-x.measureText(opt.centerLab).width/2,cy+18); }
+  // 직접 라벨(범례는 HTML로도 제공)
+  let ly=18;
+  parts.forEach(p=>{
+    x.fillStyle=p.color; rrect(x,cx+R+18,ly-8,9,9,3);
+    x.fillStyle=VIZ.ink2; x.font=VIZ.font(11);
+    x.fillText(`${p.label} ${p.value}명 (${Math.round(p.value/total*100)}%)`,cx+R+32,ly);
+    ly+=17;
+  });
+}
+/* 범례(HTML) */
+function legendEl(series){
+  const w=el('div',{class:'legend'});
+  series.forEach(s=>w.append(el('span',{},el('i',{style:'background:'+s.color}),s.name)));
+  return w;
+}
+function chartBox(title,cap,footNote){
+  const b=el('div',{class:'chartbox'});
+  b.append(el('h4',{},title));
+  if(cap) b.append(el('p',{class:'cap'},cap));
+  const cv=el('canvas',{role:'img','aria-label':title+' 그래프'});
+  b._cv=cv;
+  b._mount=(legend)=>{ if(legend) b.append(legend); b.append(cv);
+    if(footNote) b.append(el('div',{class:'foot'},footNote)); return b; };
+  return b;
+}
+
+/* ---------- 집계 ---------- */
+function maskName(name,mode,idx){
+  if(mode==='mask') return name.length<=1?name:name[0]+'○'.repeat(name.length-1);
+  if(mode==='code') return '관측자-'+String(idx+1).padStart(2,'0');
+  return name;
+}
+function vizAggregate(list){
+  const A={n:list.length,reach:0,rates:[],quizSecs:[],
+           byKlass:{},typeAgg:{},misAgg:{},itemAgg:{},
+           stagePass:[0,0,0,0], levels:{basic:0,adv:0}, essay:{A:0,B:0,C:0,none:0}};
+  list.forEach(s=>{
+    const S=summarize(s);
+    A.levels[S.level==='adv'?'adv':'basic']++;
+    if(S.reach) A.reach++;
+    if(S.n) A.rates.push(S.rate*100);
+    S.stages.forEach((v,i)=>{ if(v) A.stagePass[i]++; });
+    if(S.best){ A.stagePass[3]++; A.quizSecs.push(S.best.ms/1000);
+      (S.best.items||[]).forEach(it=>{
+        const k=it.typeName||TYPE_LABEL[it.type]||it.type;
+        A.itemAgg[k]=A.itemAgg[k]||{sum:0,n:0,wrong:0};
+        A.itemAgg[k].sum+=it.sec; A.itemAgg[k].n++; A.itemAgg[k].wrong+=(it.wrong||0);
+      });
+    }
+    const K=s.klass||'(학급 미입력)';
+    A.byKlass[K]=A.byKlass[K]||{n:0,pass:[0,0,0,0],rateSum:0,rateN:0};
+    const bk=A.byKlass[K]; bk.n++;
+    S.stages.forEach((v,i)=>{ if(v) bk.pass[i]++; });
+    if(S.best) bk.pass[3]++;
+    if(S.n){ bk.rateSum+=S.rate*100; bk.rateN++; }
+    (s.logs||[]).forEach(l=>{
+      if(!l.type||l.type==='essay'||l.type==='support') return;
+      A.typeAgg[l.type]=A.typeAgg[l.type]||{n:0,ok:0,sec:0};
+      A.typeAgg[l.type].n++; if(l.ok)A.typeAgg[l.type].ok++; A.typeAgg[l.type].sec+=(l.sec||0);
+    });
+    Object.entries(s.mis||{}).forEach(([k,v])=>A.misAgg[k]=(A.misAgg[k]||0)+v);
+    const g=S.essays.graph;
+    A.essay[g? (g.score>=85?'A':g.score>=65?'B':'C') : 'none']++;
+  });
+  A.rateAvg=A.rates.length?A.rates.reduce((a,b)=>a+b,0)/A.rates.length:0;
+  A.quizAvg=A.quizSecs.length?A.quizSecs.reduce((a,b)=>a+b,0)/A.quizSecs.length:0;
+  return A;
+}
+function histo(vals,bins){
+  const out=bins.map(b=>({label:b.label,value:0,lo:b.lo,hi:b.hi}));
+  vals.forEach(v=>{ const b=out.find(o=>v>=o.lo&&v<o.hi); if(b)b.value++; });
+  return out;
+}
+
+/* ---------- 대시보드 렌더 ---------- */
+function paintViz(list,allList){
+  const priv=$('#vizPriv').value;
+  const A=vizAggregate(list);
+  $('#vizScope').textContent=$('#tKlassFilter').value||'모든 학급';
+
+  // KPI 타일
+  const kp=$('#vizKpis'); kp.innerHTML='';
+  const tiles=[
+    {lab:'학생 수',val:A.n+'명',sub:`기본 ${A.levels.basic} · 발전 ${A.levels.adv}`},
+    {lab:'성취기준 도달',val:A.n?Math.round(A.reach/A.n*100)+'%':'—',
+      sub:`${A.reach}/${A.n}명 (3단계+방탈출)`,col:A.n?statusColor(A.reach/A.n*100):null},
+    {lab:'평균 정답률',val:A.rates.length?Math.round(A.rateAvg)+'%':'—',
+      sub:`문항 기록 있는 ${A.rates.length}명`,col:A.rates.length?statusColor(A.rateAvg):null},
+    {lab:'방탈출 완주',val:A.quizSecs.length+'명',
+      sub:A.quizSecs.length?`평균 ${fmtTime(A.quizAvg*1000)}`:'기록 없음'},
+    {lab:'최다 오개념',val:(()=>{const t=Object.entries(A.misAgg).sort((a,b)=>b[1]-a[1])[0];
+      return t?(MIS_LABEL[t[0]]||t[0]).split(' ')[0]+'…':'없음';})(),
+      sub:(()=>{const t=Object.entries(A.misAgg).sort((a,b)=>b[1]-a[1])[0];
+      return t?(MIS_LABEL[t[0]]||t[0])+` ${t[1]}회`:'집계된 오개념 없음';})(),col:VIZ.status.bad}
+  ];
+  tiles.forEach(t=>{
+    kp.append(el('div',{class:'kpi'},
+      el('div',{class:'lab'},t.lab),
+      el('div',{class:'val tab-num',style:t.col?'color:'+t.col:''},t.val),
+      el('div',{class:'sub2'},t.sub)));
+  });
+
+  const host=$('#vizCharts'); host.innerHTML='';
+  const more=$('#vizChartsMore'); if(more) more.innerHTML='';
+  const put=b=>{ (host.children.length<3?host:(more||host)).append(b); };
+
+  // ① 학급별 단계 통과율 (그룹 막대 · 항상 전체 학급)
+  const kNames=Object.keys(vizAggregate(allList).byKlass).sort();
+  const allA=vizAggregate(allList);
+  const series=[{name:'기초',color:VIZ.cat[0]},{name:'발전',color:VIZ.cat[1]},
+                {name:'심화',color:VIZ.cat[2]},{name:'방탈출',color:VIZ.cat[3]}];
+  const b1=chartBox('학급별 단계 통과율','학급 사이 진도 차이를 확인합니다. 막대에 마우스를 올리면 값이 보입니다.');
+  put(b1._mount(legendEl(series)));
+  chartGrouped(b1._cv,kNames.map(k=>{
+    const v=allA.byKlass[k];
+    return {label:k,sub:`${v.n}명`,values:v.pass.map(p=>p/v.n*100),note:`학생 ${v.n}명`};
+  }),series,{max:100});
+
+  // ② 단계 통과 퍼널
+  const b2=chartBox('학습 흐름에서 어디서 멈추나','단계별 통과 인원 — 급격히 줄어드는 구간이 병목입니다.');
+  put(b2._mount());
+  const stageLabs=['기초 통과','발전 통과','심화 통과','방탈출 성공'];
+  chartBarsH(b2._cv,A.stagePass.map((v,i)=>({
+    label:stageLabs[i],value:v,color:VIZ.ord[i],
+    disp:`${v}명`,
+    note:A.n?`전체의 ${Math.round(v/A.n*100)}%`:'',
+    tip:`<b>${stageLabs[i]}</b><br>${v}명 / ${A.n}명 (${A.n?Math.round(v/A.n*100):0}%)`
+  })),{max:A.n||1,rowH:30,axisNote:`전체 ${A.n}명 기준`});
+
+  // ③ 유형별 정답률 (낮은 순 = 재지도 우선)
+  const tRows=Object.entries(A.typeAgg).map(([t,v])=>{
+    const pct=Math.round(v.ok/v.n*100);
+    return {label:TYPE_LABEL[t]||t,value:pct,color:statusColor(pct),
+      disp:pct+'%',
+      tip:`<b>${TYPE_LABEL[t]||t}</b><br>정답률 ${pct}% (${v.ok}/${v.n})<br>상태: ${statusWord(pct)}<br>개념: ${TYPE_CONCEPT[t]||''}`,
+      note:statusWord(pct)};
+  }).sort((a,b)=>a.value-b.value);
+  const b3=chartBox('문제 유형별 정답률','아래쪽이 재지도 우선순위입니다. 60% 미만 = 재지도, 60~79% = 점검.');
+  put(b3._mount(legendEl([{name:'재지도(<60%)',color:VIZ.status.bad},
+    {name:'점검(60~79%)',color:VIZ.status.warn},{name:'안정(≥80%)',color:VIZ.status.good}])));
+  chartBarsH(b3._cv,tRows.length?tRows:[{label:'기록 없음',value:0,disp:'—'}],{max:100,rowH:24});
+
+  // ④ 정답률 분포
+  const b4=chartBox('학생 정답률 분포','한쪽으로 몰려 있는지, 격차가 큰지 확인합니다.');
+  put(b4._mount());
+  chartBarsV(b4._cv,histo(A.rates,[
+    {label:'0~39%',lo:0,hi:40},{label:'40~59%',lo:40,hi:60},{label:'60~79%',lo:60,hi:80},
+    {label:'80~89%',lo:80,hi:90},{label:'90~100%',lo:90,hi:101}
+  ]).map(b=>({...b,tip:`<b>${b.label}</b><br>${b.value}명`,
+      color:b.lo<60?VIZ.status.bad:b.lo<80?VIZ.status.warn:VIZ.status.good})),
+    {xLabel:'정답률 구간 · 세로축 인원(명)'});
+
+  // ⑤ 오개념 빈도
+  const misRows=Object.entries(A.misAgg).sort((a,b)=>b[1]-a[1])
+    .map(([k,v])=>({label:MIS_LABEL[k]||k,value:v,color:VIZ.accent2,disp:v+'회',
+      tip:`<b>${MIS_LABEL[k]||k}</b><br>${v}회 발생`}));
+  const b5=chartBox('오개념 발생 빈도','오답에서 추정한 오개념입니다. 가장 위쪽부터 다뤄 주세요.');
+  put(b5._mount());
+  chartBarsH(b5._cv,misRows.length?misRows:[{label:'집계 없음',value:0,disp:'—'}],{rowH:24});
+
+  // ⑥ 방탈출 문항 유형별 평균 해결 시간
+  const itRows=Object.entries(A.itemAgg).map(([k,v])=>({
+    label:k,value:Math.round(v.sum/v.n),color:VIZ.seq,
+    disp:fmtTime(v.sum/v.n*1000),
+    tip:`<b>${k}</b><br>평균 ${fmtTime(v.sum/v.n*1000)} · ${v.n}회 출제<br>누적 오답 ${v.wrong}회`
+  })).sort((a,b)=>b.value-a.value);
+  const b6=chartBox('방탈출 문항별 평균 해결 시간','오래 걸린 유형 = 절차가 아직 자동화되지 않은 개념입니다.');
+  put(b6._mount());
+  chartBarsH(b6._cv,itRows.length?itRows:[{label:'완주 기록 없음',value:0,disp:'—'}],{rowH:24});
+
+  // ⑦ 완주 소요 시간 분포
+  const b7=chartBox('방탈출 완주 소요 시간 분포','학습 페이스를 봅니다. 오래 걸린 학생은 개별 지원이 필요합니다.');
+  put(b7._mount());
+  chartBarsV(b7._cv,histo(A.quizSecs,[
+    {label:'<3분',lo:0,hi:180},{label:'3~6분',lo:180,hi:360},{label:'6~10분',lo:360,hi:600},
+    {label:'10~15분',lo:600,hi:900},{label:'15분+',lo:900,hi:1e9}
+  ]).map(b=>({...b,tip:`<b>${b.label}</b><br>${b.value}명`})),{xLabel:'구간 · 세로축 인원(명)'});
+
+  // ⑧ 서술형 등급 분포(도넛)
+  const b8=chartBox('그래프 해석 서술 등급','A: 근거까지 충실 · C: 보완 필요 · 미제출은 서술 활동 참여 독려 대상.');
+  const dParts=[{label:'A 매우 우수',value:A.essay.A,color:VIZ.cat[2]},
+                {label:'B 충실',value:A.essay.B,color:VIZ.cat[0]},
+                {label:'C 보완 필요',value:A.essay.C,color:VIZ.cat[3]},
+                {label:'미제출',value:A.essay.none,color:'#5b6b96'}];
+  put(b8._mount(legendEl(dParts.map(p=>({name:p.label,color:p.color})))));
+  chartDonut(b8._cv,dParts,{center:A.n+'명',centerLab:'전체'});
+
+  // 표로 보기 (접근성 · 인쇄)
+  const tv=$('#vizTableBody'); tv.innerHTML='';
+  const mk=(title,head,rows)=>{
+    tv.append(el('h4',{style:'margin:12px 0 4px;font-size:.92rem'},title));
+    const t=el('table',{});
+    t.append(el('thead',{},el('tr',{},...head.map(h=>el('th',{class:'left'},h)))));
+    const tb=el('tbody',{});
+    rows.forEach(r=>tb.append(el('tr',{},...r.map(c=>el('td',{class:'left tab-num'},String(c))))));
+    t.append(tb); tv.append(el('div',{class:'scrollx'},t));
+  };
+  mk('학급별 통과 인원',['학급','학생','기초','발전','심화','방탈출'],
+    kNames.map(k=>{const v=allA.byKlass[k];return [k,v.n+'명',...v.pass.map(p=>p+'명')];}));
+  mk('유형별 정답률',['유형','정답률','상태'],tRows.map(r=>[r.label,r.disp,r.note||'']));
+  mk('학생별 요약',['이름','학급','도달','정답률','방탈출','서술'],
+    list.map((s,i)=>{
+      const S=summarize(s);
+      return [maskName(s.name,priv,i),s.klass,S.reach?'도달':'미도달',
+        S.n?Math.round(S.rate*100)+'%':'—',
+        S.best?fmtTime(S.best.ms):'미완',
+        S.essays.graph?S.essays.graph.level:'미제출'];
+    }));
+}
+/* 학급 분석 리포트(규칙 기반) */
+function classReport(){
+  const k=$('#tKlassFilter').value;
+  const list=Object.values(DB.students).filter(s=>!k||s.klass===k);
+  if(!list.length){ toast('학생 기록이 없습니다.',true); return; }
+  const A=vizAggregate(list), priv=$('#vizPriv').value;
+  const weakTypes=Object.entries(A.typeAgg).map(([t,v])=>({t,pct:v.ok/v.n*100,n:v.n}))
+    .filter(o=>o.n>=2).sort((a,b)=>a.pct-b.pct).slice(0,3);
+  const slowest=Object.entries(A.itemAgg).map(([kk,v])=>({k:kk,avg:v.sum/v.n}))
+    .sort((a,b)=>b.avg-a.avg)[0];
+  const notReach=list.filter(s=>!summarize(s).reach);
+  const L=[];
+  L.push(`■ ${k||'전체 학급'} 연주시차 학습 분석 (학생 ${A.n}명)`);
+  L.push(`· 성취기준 도달 ${A.reach}명(${A.n?Math.round(A.reach/A.n*100):0}%) · 평균 정답률 ${Math.round(A.rateAvg)}%`);
+  L.push(`· 단계별 통과: 기초 ${A.stagePass[0]}명 → 발전 ${A.stagePass[1]}명 → 심화 ${A.stagePass[2]}명 → 방탈출 ${A.stagePass[3]}명`);
+  const drop=[0,1,2].map(i=>({i,d:A.stagePass[i]-A.stagePass[i+1]})).sort((a,b)=>b.d-a.d)[0];
+  if(drop&&drop.d>0) L.push(`· 가장 많이 이탈한 지점: ${['기초→발전','발전→심화','심화→방탈출'][drop.i]} (${drop.d}명)`);
+  if(A.quizSecs.length) L.push(`· 방탈출 완주 ${A.quizSecs.length}명, 평균 ${fmtTime(A.quizAvg*1000)}`);
+  L.push('');
+  L.push('■ 재지도 우선순위');
+  if(weakTypes.length) weakTypes.forEach((o,i)=>
+    L.push(`${i+1}. ${TYPE_LABEL[o.t]||o.t} — 정답률 ${Math.round(o.pct)}% (${o.n}문항) · 관련 개념: ${TYPE_CONCEPT[o.t]||''}`));
+  else L.push('· 자료가 부족합니다. 학생들이 문제를 더 풀도록 안내하세요.');
+  const misTop=Object.entries(A.misAgg).sort((a,b)=>b[1]-a[1]).slice(0,2);
+  misTop.forEach(([m,c])=>L.push(`· 오개념 「${MIS_LABEL[m]||m}」 ${c}회 — 전체 대상 짧은 발문으로 확인 권장`));
+  if(slowest) L.push(`· 시간이 가장 오래 걸린 유형: ${slowest.k} (평균 ${fmtTime(slowest.avg*1000)}) — 풀이 절차를 함께 정리`);
+  L.push('');
+  L.push('■ 다음 차시 제안');
+  if(A.stagePass[0]<A.n) L.push('· 도입 5분: 시뮬레이터를 함께 조작하며 거리–시차 반비례를 전체 확인');
+  if((A.typeAgg.unitPcLy&&A.typeAgg.unitPcLy.ok/A.typeAgg.unitPcLy.n<0.8)||
+     (A.typeAgg.unitAngle&&A.typeAgg.unitAngle.ok/A.typeAgg.unitAngle.n<0.8))
+    L.push('· 전개 10분: 단위 카드(1 pc = 3.26 ly = 206265 AU, 1° = 3600″) 짝 활동으로 반복');
+  if(A.stagePass[2]<A.stagePass[1]) L.push('· 전개 15분: 심화 단계 표–그래프 변환을 모둠으로 진행, 1/p 축 변환 시범');
+  L.push(`· 정리 5분: 방탈출 재도전(문항 수 ${cfg().quizCount}개) 후 기록 비교`);
+  L.push('');
+  L.push('■ 개별 지원 필요 학생');
+  L.push(notReach.length
+    ? notReach.map((s,i)=>{
+        const S=summarize(s);
+        const stuck=!S.stages[0]?'기초':!S.stages[1]?'발전':!S.stages[2]?'심화':'방탈출';
+        return `· ${maskName(s.name,priv,i)} — ${stuck} 단계 미완${S.mis.length?' / '+(MIS_LABEL[S.mis[0][0]]||''):''}`;
+      }).join('\n')
+    : '· 전원 도달했습니다.');
+  L.push('');
+  L.push('※ 이 리포트는 앱에 저장된 학습 기록만으로 자동 작성된 초안입니다.');
+  $('#classReportOut').value=L.join('\n');
+  toast('학급 분석 리포트를 만들었습니다.');
+}
+
+/* =========================================================
+   12-3. 학생용 리포트 — 성취기준 현황 + 세 영역(지식·이해/과정·기능/가치·태도)
+   모든 점수는 학생이 남긴 기록에서 규칙으로 계산합니다(비공개 전송 없음).
+   ========================================================= */
+const DOMAIN={know:'지식·이해',skill:'과정·기능',value:'가치·태도'};
+const DOMAIN_COLOR={know:VIZ.cat[0],skill:VIZ.cat[2],value:VIZ.cat[3]};
+/* 여섯 갈래 정의: 어떤 기록을 근거로 삼는지까지 명시 */
+const STRANDS=[
+  {k:'inverse',d:'know', n:'반비례 이해',  types:['compare','ratio','realStar','cause','half']},
+  {k:'unitCon',d:'know', n:'단위 개념',    types:['unitPcLy','unitAngle','unitAU','define','scale']},
+  {k:'calc',   d:'skill',n:'계산 수행',    types:['calcD','calcP']},
+  {k:'graph',  d:'skill',n:'그래프·자료 해석',types:['graphRead','graphShape','limit']},
+  {k:'express',d:'skill',n:'서술 표현',    types:[]},
+  {k:'attit',  d:'value',n:'참여와 끈기',  types:[]}
+];
+function reportData(rec){
+  const S=summarize(rec);
+  const logs=(rec.logs||[]).filter(l=>l.type&&l.type!=='essay'&&l.type!=='support');
+  const rateOf=types=>{
+    const ls=logs.filter(l=>types.indexOf(l.type)>=0);
+    if(!ls.length) return {score:null,n:0};
+    return {score:Math.round(ls.filter(l=>l.ok).length/ls.length*100),n:ls.length};
+  };
+  const st=rec.stages||{};
+  const out={strands:[],domains:{},S};
+  STRANDS.forEach(s=>{
+    let score=null,note='';
+    if(s.k==='express'){
+      const e=rec.essays||{};
+      const parts=['basic','graph','quiz'].map(k=>e[k]?e[k].score:null).filter(v=>v!==null);
+      score = parts.length? Math.round(parts.reduce((a,b)=>a+b,0)/parts.length) : null;
+      note = parts.length? `서술 ${parts.length}편 평균 ${score}점` : '서술 제출 없음';
+    }else if(s.k==='attit'){
+      let v=0; const why=[];
+      const stagesDone=[st.basic,st.calc,st.graph].filter(x=>x&&x.done).length;
+      v+=stagesDone*15; if(stagesDone) why.push(`단계 ${stagesDone}개 통과`);
+      const min=Math.round(S.ms/60000);
+      if(min>=25){v+=20;why.push('25분 이상 학습');} else if(min>=10){v+=12;why.push(`${min}분 학습`);} else if(min>0){v+=6;why.push(`${min}분 학습`);}
+      const retry=logs.filter(l=>!l.ok).length;
+      if(retry>0&&S.rate>=0.5){ v+=12; why.push(`오답 ${retry}회 후 재도전`); }
+      const essays=Object.keys(rec.essays||{}).length;
+      if(essays){ v+=essays*5; why.push(`서술 ${essays}편 제출`); }
+      if(S.best){ v+=10; why.push('방탈출 완주'); }
+      if(S.best&&S.best.team){ v+=8; why.push('모둠 협동 잠금 해제'); }
+      if(rec.supportUses){ why.push(`도움 카드 ${rec.supportUses}회 활용`); v+=4; }
+      score=clamp(Math.round(v),0,100);
+      note=why.join(' · ')||'아직 기록이 적습니다';
+    }else{
+      const r=rateOf(s.types);
+      score=r.score;
+      note=r.n? `관련 문항 ${r.n}개 · 정답률 ${r.score}%` : '아직 관련 문항 기록이 없습니다';
+      if(s.k==='graph'&&(st.graph&&st.graph.plot)) note+=` · 표 채우기 ${st.graph.plot}/${GRAPH_STARS.length}`;
+    }
+    out.strands.push({...s,score,note});
+  });
+  // 영역 점수 = 소속 갈래 평균(기록 없는 갈래는 제외)
+  Object.keys(DOMAIN).forEach(dk=>{
+    const vals=out.strands.filter(s=>s.d===dk&&s.score!==null).map(s=>s.score);
+    out.domains[dk]=vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):null;
+  });
+  return out;
+}
+/* 방사형(레이더) 그래프 */
+function chartRadar(cv,items){
+  const {x,W,H}=prep(cv,300);
+  const cx=W/2, cy=H/2+6, R=Math.min(W,H)/2-46;
+  const n=items.length;
+  // 눈금 원
+  [0.25,0.5,0.75,1].forEach(f=>{
+    x.strokeStyle=f===1?VIZ.axis:VIZ.grid; x.lineWidth=1;
+    x.beginPath();
+    for(let i=0;i<=n;i++){
+      const a=-Math.PI/2+(i%n)/n*Math.PI*2;
+      const px=cx+Math.cos(a)*R*f, py=cy+Math.sin(a)*R*f;
+      i?x.lineTo(px,py):x.moveTo(px,py);
+    }
+    x.closePath(); x.stroke();
+  });
+  x.fillStyle=VIZ.muted; x.font=VIZ.font(10);
+  x.fillText('100',cx+3,cy-R+2); x.fillText('50',cx+3,cy-R/2+2);
+  // 축 · 라벨
+  items.forEach((it,i)=>{
+    const a=-Math.PI/2+i/n*Math.PI*2;
+    x.strokeStyle=VIZ.grid;
+    x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R); x.stroke();
+    const lx=cx+Math.cos(a)*(R+22), ly=cy+Math.sin(a)*(R+18);
+    x.font=VIZ.font(11,'600'); x.fillStyle=it.color;
+    const tw=x.measureText(it.label).width;
+    x.fillText(it.label,clamp(lx-tw/2,2,W-tw-2),ly+4);
+    x.font=VIZ.font(10); x.fillStyle=VIZ.muted;
+    const vt=it.value===null?'기록 없음':it.value+'점';
+    const vw=x.measureText(vt).width;
+    x.fillText(vt,clamp(lx-vw/2,2,W-vw-2),ly+17);
+  });
+  // 값 다각형
+  const pts=items.map((it,i)=>{
+    const a=-Math.PI/2+i/n*Math.PI*2, f=(it.value===null?0:it.value)/100;
+    return [cx+Math.cos(a)*R*f, cy+Math.sin(a)*R*f];
+  });
+  x.beginPath(); pts.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1])); x.closePath();
+  x.fillStyle='rgba(94,234,212,.18)'; x.fill();
+  x.strokeStyle=VIZ.accent2; x.lineWidth=2; x.stroke();
+  pts.forEach((p,i)=>{
+    x.fillStyle=items[i].value===null?'#5b6b96':items[i].color;
+    x.beginPath(); x.arc(p[0],p[1],4.5,0,7); x.fill();
+    x.strokeStyle='#141c36'; x.lineWidth=2; x.stroke();
+    cv._hits.push({x:p[0]-14,y:p[1]-14,w:28,h:28,
+      text:`<b>${items[i].label}</b><br>${items[i].value===null?'기록 없음':items[i].value+'점'}<br>${items[i].note||''}`});
+  });
+}
+/* 성취기준 세부 지표 */
+function stdIndicators(rec){
+  const S=summarize(rec), st=rec.stages||{}, e=rec.essays||{};
+  const R=reportData(rec);
+  const g=k=>R.strands.find(s=>s.k===k).score;
+  return [
+    {n:'지구 공전 때문에 연주시차가 생김을 설명한다', ok:(g('inverse')||0)>=60&&!!(st.basic&&st.basic.done)},
+    {n:'거리와 연주시차가 반비례임을 안다',           ok:(g('inverse')||0)>=60},
+    {n:'d = 1/p 로 별까지의 거리를 구한다',           ok:(g('calc')||0)>=60&&!!(st.calc&&st.calc.done)},
+    {n:'각초(″)·pc·ly·AU 단위를 구분해 사용한다',     ok:(g('unitCon')||0)>=60},
+    {n:'자료를 그래프로 나타내고 해석한다',           ok:(g('graph')||0)>=60&&!!(st.graph&&st.graph.done)},
+    {n:'관측 결과를 근거로 서술한다',                 ok:!!(e.graph&&e.graph.score>=65)},
+    {n:'배운 내용을 새로운 문제에 적용한다',           ok:!!S.best}
+  ];
+}
+function paintReport(){
+  if(!ME) return;
+  const R=reportData(ME), S=R.S;
+  $('#repWho').textContent=`${ME.klass} · ${ME.name}${ME.team?' · '+ME.team:''}`;
+  const ind=stdIndicators(ME), got=ind.filter(i=>i.ok).length;
+  $('#repReach').textContent=`${got}/${ind.length} 항목`;
+  $('#repTime').textContent=`${Math.round(S.ms/60000)}분`;
+
+  // ① 성취기준 지표
+  const host=$('#repStd'); host.innerHTML='';
+  host.append(el('div',{class:'meter',style:'margin-bottom:8px'},
+    el('i',{style:`width:${Math.round(got/ind.length*100)}%`})));
+  host.append(el('p',{class:'mini'},
+    got===ind.length?'✅ 모든 지표에 도달했습니다. 스스로 설명할 수 있는지 친구에게 말해 보세요.'
+      :`${ind.length-got}개 항목이 남았습니다. 아래 ⑥에서 다음 활동을 고르세요.`));
+  ind.forEach(i=>host.append(el('div',{class:'mini',style:i.ok?'color:var(--good)':''},
+    (i.ok?'✅ ':'⬜ ')+i.n)));
+
+  // ② 레이더
+  const items=R.strands.map(s=>({label:s.n,value:s.score,note:s.note,color:DOMAIN_COLOR[s.d]}));
+  $('#repLegend').innerHTML='';
+  Object.keys(DOMAIN).forEach(dk=>$('#repLegend').append(
+    el('span',{},el('i',{style:'background:'+DOMAIN_COLOR[dk]}),DOMAIN[dk])));
+  chartRadar($('#cvRadar'),items);
+
+  // ③ 영역 점수 + 표
+  const dh=$('#repDomains'); dh.innerHTML='';
+  Object.keys(DOMAIN).forEach(dk=>{
+    const v=R.domains[dk];
+    dh.append(el('div',{style:'margin-bottom:10px'},
+      el('div',{class:'row'},
+        el('b',{},DOMAIN[dk]),
+        el('span',{class:'right tab-num',style:'font-weight:700;color:'+(v===null?'var(--muted)':statusColor(v))},
+          v===null?'기록 없음':v+'점')),
+      el('div',{class:'meter'},el('i',{style:`width:${v||0}%;background:${DOMAIN_COLOR[dk]}`})),
+      el('div',{class:'mini'},v===null?'관련 활동을 해 보면 점수가 생깁니다.'
+        :v>=80?'충분히 도달했습니다.':v>=60?'도달했지만 더 다질 수 있습니다.':'보완이 필요합니다.')));
+  });
+  const tb=$('#repTable tbody'); tb.innerHTML='';
+  R.strands.forEach(s=>tb.append(el('tr',{},
+    el('td',{class:'left'},s.n), el('td',{},DOMAIN[s.d]),
+    el('td',{class:'tab-num'},s.score===null?'—':s.score),
+    el('td',{class:'left mini'},s.note))));
+
+  // ④⑤ 강점·약점
+  const scored=R.strands.filter(s=>s.score!==null);
+  const strong=scored.slice().sort((a,b)=>b.score-a.score).slice(0,2);
+  const weak=scored.slice().sort((a,b)=>a.score-b.score).filter(s=>s.score<80).slice(0,2);
+  const sh=$('#repStrong'); sh.innerHTML='';
+  if(!scored.length) sh.append(el('p',{class:'mini'},'아직 기록이 적습니다. 기초 단계부터 해 보세요.'));
+  strong.forEach(s=>sh.append(el('div',{class:'qbox solved'},
+    el('b',{},`${s.n} · ${s.score}점`),
+    el('div',{class:'mini',style:'margin-top:4px'},s.note),
+    el('div',{class:'mini',style:'margin-top:4px;color:var(--good)'},
+      {inverse:'거리–시차 관계를 잘 잡고 있어요.',unitCon:'단위를 정확히 다루고 있어요.',
+       calc:'계산 절차가 몸에 익었어요.',graph:'자료를 읽어내는 힘이 좋아요.',
+       express:'근거를 들어 설명하는 힘이 좋아요.',attit:'끈기 있게 참여했어요.'}[s.k]))));
+  const wh=$('#repWeak'); wh.innerHTML='';
+  if(!weak.length) wh.append(el('p',{class:'mini'},'뚜렷한 약점이 없습니다. 발전 수준 문제에 도전해 보세요.'));
+  weak.forEach(s=>wh.append(el('div',{class:'qbox'},
+    el('b',{},`${s.n} · ${s.score===null?'기록 없음':s.score+'점'}`),
+    el('div',{class:'mini',style:'margin-top:4px'},s.note),
+    el('div',{class:'mini',style:'margin-top:4px;color:var(--warn)'},
+      {inverse:'“멀수록 시차는 작아진다”를 그림으로 다시 확인해요.',
+       unitCon:'1 pc = 3.26 ly = 206265 AU, 1° = 3600″ 를 외워요.',
+       calc:'d = 1 ÷ p 를 세 번만 소리 내어 계산해 봐요.',
+       graph:'가로축 → 곡선 → 세로축 순서로 읽는 연습을 해요.',
+       express:'“왜냐하면 ∼ 때문이다”를 넣어 다시 써 봐요.',
+       attit:'짧게라도 매일 한 단계씩 해 봐요.'}[s.k]))));
+
+  // ⑥ 다음 활동
+  const nx=$('#repNext'); nx.innerHTML='';
+  const acts=[];
+  if(!(ME.stages.basic&&ME.stages.basic.done)) acts.push({t:'기초 단계 마치기',d:'관찰 기록·결론·서술을 완성해요',go:'basic'});
+  if(!(ME.stages.calc&&ME.stages.calc.done)) acts.push({t:'발전 단계 도전',d:'계산 5문제 + 환산 4문제',go:'calc'});
+  if(!(ME.stages.graph&&ME.stages.graph.done)) acts.push({t:'심화 단계 도전',d:'표 채우고 그래프 해석 서술',go:'graph'});
+  const g=k=>R.strands.find(s=>s.k===k).score;
+  if((g('unitCon')||0)<80) acts.push({t:'단위 사전 다시 보기',d:'스케일 바로 규모 감각까지',go:'calc',tab:1});
+  if((g('calc')||0)<80) acts.push({t:'계산 연습 더 하기',d:'d=1/p 문제를 새로 뽑아요',go:'calc',tab:3});
+  if((g('graph')||0)<80) acts.push({t:'그래프 다시 그리기',d:'이론 곡선과 비교해요',go:'graph'});
+  if(!S.best) acts.push({t:'방탈출 도전',d:'모든 문제를 맞혀 누리호를 발사!',go:'quiz'});
+  else acts.push({t:'기록 단축 도전',d:`현재 ${fmtTime(S.best.ms)} — 발전 수준으로!`,go:'quiz'});
+  acts.slice(0,6).forEach(a=>{
+    nx.append(el('button',{class:'stagecard',onclick:()=>{
+      if(a.go==='quiz'){ show('quiz'); startQuiz(); return; }
+      show(a.go);
+      if(a.tab!==undefined){ const t=$$('#calcTabs .tab')[a.tab]; t&&t.click(); }
+    }},el('div',{class:'lv'},'추천'),el('h3',{},a.t),el('p',{},a.d)));
+  });
+}
+
+/* =========================================================
+   13. 교사 콘솔
+   ========================================================= */
+let tUnlocked=false;
+function paintTeacher(){
+  $('#teacherGate').classList.toggle('hidden',tUnlocked);
+  $('#teacherBody').classList.toggle('hidden',!tUnlocked);
+  if(!tUnlocked) return;
+  const all=Object.values(DB.students);
+  // 학급 필터
+  const sel=$('#tKlassFilter'), keep=sel.value;
+  const klasses=[...new Set(all.map(s=>s.klass))].sort();
+  sel.innerHTML='<option value="">모든 학급</option>'+klasses.map(k=>`<option>${k}</option>`).join('');
+  sel.value=keep||'';
+  const list=all.filter(s=>!sel.value||s.klass===sel.value)
+                .sort((a,b)=>(a.klass+a.name).localeCompare(b.klass+b.name));
+  $('#tStuCount').textContent=list.length;
+  $('#tReach').textContent=list.filter(s=>summarize(s).reach).length;
+  const susp=list.filter(s=>summarize(s).suspicious).length;
+  const ig=$('#tIntegrity');
+  ig.innerHTML= INTEGRITY==='ok'
+    ? `자료 상태 <b style="color:var(--good)">정상</b>${susp?` · 확인 필요 <b style="color:var(--warn)">${susp}명</b>`:''}`
+    : `자료 상태 <b style="color:var(--bad)">변조 의심</b> — 저장 자료가 앱 밖에서 수정되었습니다`;
+  ig.title = susp?'⚠ 표시 학생은 정답 응답이 비정상적으로 빨라 풀이 과정 확인을 권합니다.':'';
+  $('#tClassCode').textContent=cfg().classCode||'—';
+
+  // 시각화 대시보드 (학급 필터 반영 · 학급 비교 차트는 전체)
+  paintViz(list,all);
+
+  // 학생 표
+  const priv=$('#vizPriv').value;
+  const tb=$('#tTable tbody'); tb.innerHTML='';
+  list.forEach((s,si)=>{
+    const S=summarize(s);
+    const mark=b=>b?'<span class="tag ok">통과</span>':'<span class="tag no">진행중</span>';
+    const tr=el('tr',{});
+    // 이벤트가 살아 있도록 셀은 모두 el()로 만든다
+    tr.append(el('td',{class:'left'},el('button',{class:'btn small ghost',
+      onclick:()=>studentDetail(s)},maskName(s.name,priv,si))));
+    tr.append(el('td',{},s.klass));
+    S.stages.forEach(v=>tr.append(el('td',{html:mark(v)})));
+    tr.append(el('td',{html:S.best?`<span class="tag ok">성공 ${fmtTime(S.best.ms)}</span>`
+                                  :'<span class="tag no">미완</span>'}));
+    tr.append(el('td',{html:`${S.n?Math.round(S.rate*100)+'%':'—'}<div class="mini">${S.ok}/${S.n}</div>`}));
+    tr.append(el('td',{},Math.round(S.ms/60000)+'분'));
+    tr.append(el('td',{class:'left mini'},
+      S.mis.length?(MIS_LABEL[S.mis[0][0]]||S.mis[0][0])+` (${S.mis[0][1]}회)`:'—'));
+    tr.append(el('td',{title:S.suspicious?`정답 ${S.timed}건 중 ${S.fast}건이 1.5초 미만 — 풀이 과정 확인 권장`:''},
+      (S.reach?'✅':'⏳')+(S.suspicious?' ⚠':'')));
+    tb.append(tr);
+  });
+
+  // 유형별 통계
+  const agg={};
+  list.forEach(s=>(s.logs||[]).forEach(l=>{
+    if(!l.type||l.type==='essay'||l.type==='support') return;
+    agg[l.type]=agg[l.type]||{n:0,ok:0}; agg[l.type].n++; if(l.ok)agg[l.type].ok++;
+  }));
+  const tt=$('#tTypeTable tbody'); tt.innerHTML='';
+  Object.entries(agg).sort((a,b)=>(a[1].ok/a[1].n)-(b[1].ok/b[1].n)).forEach(([t,v])=>{
+    const pct=Math.round(v.ok/v.n*100);
+    tt.append(el('tr',{},
+      el('td',{class:'left'},TYPE_LABEL[t]||t), el('td',{},String(v.n)),
+      el('td',{},pct+'%'),
+      el('td',{class:'left',html:`<div class="bar" style="width:150px">
+        <i style="width:${pct}%;background:${pct<60?'#f87171':pct<80?'#fbbf24':'#4ade80'}"></i>
+        <i style="flex:1;background:rgba(255,255,255,.08)"></i></div>`}),
+      el('td',{class:'left mini'},TYPE_CONCEPT[t]||'')));
+  });
+  if(!Object.keys(agg).length) tt.append(el('tr',{},el('td',{colspan:'5',class:'mini'},'아직 풀이 기록이 없습니다.')));
+
+  // 오개념 빈도
+  const mis={};
+  list.forEach(s=>Object.entries(s.mis||{}).forEach(([k,v])=>mis[k]=(mis[k]||0)+v));
+  const mh=$('#tMiscon'); mh.innerHTML='';
+  const arr=Object.entries(mis).sort((a,b)=>b[1]-a[1]);
+  if(!arr.length) mh.append(el('p',{class:'mini'},'집계된 오개념이 없습니다.'));
+  const max=arr.length?arr[0][1]:1;
+  arr.forEach(([k,v])=>{
+    mh.append(el('div',{class:'row',style:'margin-bottom:6px'},
+      el('span',{class:'mini',style:'min-width:230px'},MIS_LABEL[k]||k),
+      el('div',{class:'bar',style:'width:200px'},
+        el('i',{style:`width:${Math.round(v/max*100)}%;background:#a78bfa`}),
+        el('i',{style:'flex:1;background:rgba(255,255,255,.08)'})),
+      el('span',{class:'mini'},v+'회')));
+  });
+  // 과세특 학생 목록
+  const opts=list.map(s=>`<option value="${s.id}">${s.klass} ${s.name}</option>`).join('');
+  ['#ntStu','#fbStu'].forEach(sel=>{
+    const n=$(sel), keep2=n.value;
+    n.innerHTML=opts; if(keep2) n.value=keep2;
+  });
+  // 설정값 반영
+  $('#cfgQuizCount').value=cfg().quizCount; $('#cfgHints').value=String(cfg().allowHints);
+  $('#cfgTol').value=cfg().tolPct; $('#cfgPin').value=cfg().teacherPin; $('#cfgSheet').value=cfg().sheetUrl||'';
+  $('#cfgTeam').value=String(cfg().teamLock); $('#cfgTeamSize').value=cfg().teamSize;
+}
+function studentDetail(s){
+  const S=summarize(s), b=el('div',{});
+  b.append(el('div',{class:'row'},
+    el('span',{class:'pill'},'모둠 ',el('b',{},s.team||'—')),
+    el('span',{class:'pill'},'협동 잠금 ',el('b',{},S.teamRun?'해제':'미해제')),
+    el('span',{class:'pill'},'수준 ',el('b',{},S.level==='adv'?'발전':'기본')),
+    el('span',{class:'pill'},'정답률 ',el('b',{},(S.n?Math.round(S.rate*100):0)+'%')),
+    el('span',{class:'pill'},'학습시간 ',el('b',{},Math.round(S.ms/60000)+'분')),
+    el('span',{class:'pill'},'방탈출 ',el('b',{},S.best?fmtTime(S.best.ms):'미완'))));
+  b.append(el('h3',{},'단계별 기록'));
+  ['basic','calc','graph'].forEach(k=>{
+    const st=s.stages[k]||{};
+    b.append(el('div',{class:'mini'},
+      `· ${STAGE_NAME[k]} — ${st.done?'통과':'진행중'} / 문항 ${st.correct||0}회 정답, 시도 ${st.tries||0}회, ${Math.round((st.ms||0)/60000)}분`));
+  });
+  if(S.best&&S.best.items&&S.best.items.length){
+    b.append(el('h3',{},'방탈출 문항별 해결 시간'));
+    b.append(el('div',{class:'scrollx'},itemTable(S.best.items)));
+  }
+  b.append(el('h3',{},'서술형 답안'));
+  const eKeys={basic:'관찰 서술',graph:'그래프 해석 서술',quiz:'탈출 보고서'};
+  let hasE=false;
+  Object.entries(eKeys).forEach(([k,label])=>{
+    const e=S.essays[k]; if(!e) return; hasE=true;
+    b.append(el('div',{class:'qbox'},el('b',{},`${label} — ${e.level}`),
+      el('div',{class:'mini',style:'margin-top:6px;white-space:pre-wrap'},e.text)));
+  });
+  if(!hasE) b.append(el('p',{class:'mini'},'제출된 서술형 답안이 없습니다.'));
+  b.append(el('h3',{},'맞춤 지도 제안'));
+  AI.advice(s).forEach(t=>b.append(el('div',{class:'mini'},t)));
+  b.append(el('h3',{},'최근 풀이 기록'));
+  (s.logs||[]).slice(-14).reverse().forEach(l=>{
+    b.append(el('div',{class:'mini'},
+      `${l.ok?'⭕':'❌'} ${TYPE_LABEL[l.type]||l.type} · 입력 ${l.given||'—'} (정답 ${l.ans||'—'})`));
+  });
+  modal(`${s.klass} ${s.name} 상세`,b,[
+    {label:'과세특 초안 만들기',cls:'primary',fn:()=>{$('#ntStu').value=s.id;makeNote();}},
+    {label:'닫기'}]);
+}
+function csvExport(){
+  const rows=[['이름','학급','모둠','수준','기초','발전','심화','방탈출성공','방탈출시간(초)','오답수','힌트수',
+               '모둠협동잠금','모둠열쇠조각',
+               '문항별해결시간','문항평균시간(초)','최장소요문항',
+               '문항수','정답수','정답률(%)','학습시간(분)','주요오개념','성취기준도달',
+               '관찰서술','그래프해석서술','탈출보고서']];
+  Object.values(DB.students).forEach(s=>{
+    const S=summarize(s), e=S.essays;
+    const items=(S.best&&S.best.items)||[], st=itemsStats(items);
+    const tm=S.teamRun?S.teamRun.team&&S.teamRun:null;
+    rows.push([s.name,s.klass,s.team||'',S.level==='adv'?'발전':'기본',
+      S.stages[0]?'통과':'진행중',S.stages[1]?'통과':'진행중',S.stages[2]?'통과':'진행중',
+      S.best?'성공':'미완', S.best?Math.round(S.best.ms/1000):'', S.best?S.best.wrong:'', S.best?S.best.hints:'',
+      tm?'해제':'', tm?tm.team.codes.join('+')+' = '+tm.team.total+' pc':'',
+      itemsToText(items), st.avg, st.slow,
+      S.n,S.ok,S.n?Math.round(S.rate*100):0,Math.round(S.ms/60000),
+      S.mis.length?(MIS_LABEL[S.mis[0][0]]||S.mis[0][0]):'', S.reach?'도달':'미도달',
+      (e.basic&&e.basic.text)||'',(e.graph&&e.graph.text)||'',(e.quiz&&e.quiz.text)||'']);
+  });
+  const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""').replace(/\n/g,' ')}"`).join(',')).join('\r\n');
+  const a=el('a',{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),
+                  download:'연주시차_학습결과.csv'});
+  document.body.append(a); a.click(); a.remove();
+  toast('CSV를 내려받았습니다. 구글 시트에서 [파일 › 가져오기]로 올리세요.');
+}
+
+/* =========================================================
+   14. 과세특 초안 생성기 (규칙 기반 문장 조합)
+   ========================================================= */
+function firstSentence(t,max=70){
+  if(!t) return '';
+  let s=String(t).split(/[.!?\n]/).map(x=>x.trim()).filter(x=>x.length>8)[0]||String(t).trim();
+  if(s.length>max) s=s.slice(0,max)+'…';
+  return s;
+}
+function makeNoteText(rec,opt){
+  const S=summarize(rec);
+  const tone=opt.tone==='detail';
+  const E=x=>tone?x.replace(/함\.$/,'하였음.').replace(/음\.$/,'었음.'):x;
+  const lv=S.level==='adv'?'발전 수준(실제 관측값·복합 환산)':'기본 수준';
+  const rate=S.n?Math.round(S.rate*100):0;
+  const parts=[];
+
+  // 도입 — 참여와 수준 선택
+  parts.push(`연주시차 탐구 활동에서 ${lv}의 문제를 선택하여 학습에 참여함.`);
+
+  // 기초 — 정성적 인식
+  if(S.stages[0]){
+    parts.push('지구 공전에 따른 별의 위치 변화를 시뮬레이션으로 관찰하여 별까지의 거리가 멀어질수록 연주시차가 작아지는 반비례 관계를 스스로 정리함.');
+    if(S.essays.basic) parts.push(`관찰 기록에 "${firstSentence(S.essays.basic.text,60)}"와 같이 자신의 언어로 결론을 서술함.`);
+  }else parts.push('시뮬레이션 관찰 단계에 참여하여 시차의 의미를 확인하는 중임.');
+
+  // 발전 — 계산과 단위
+  if(S.stages[1]){
+    parts.push('d = 1/p 관계를 이용해 연주시차로부터 거리를 계산하고, 각초(″)와 파섹·광년·천문단위의 관계를 환산 문제로 정확히 적용함.');
+  }
+  // 심화 — 그래프
+  if(S.stages[2]){
+    parts.push('연주시차–거리 자료를 표로 정리하고 그래프로 나타내어 반비례 곡선의 의미를 해석하였으며, 가로축을 1/p로 바꾸면 직선이 되는 까닭을 설명함.');
+    if(S.essays.graph) parts.push(`특히 "${firstSentence(S.essays.graph.text,70)}"와 같이 근거를 들어 해석함.`);
+  }
+  // 방탈출
+  if(S.best){
+    parts.push(S.best.ms>0
+      ? `무작위 문제로 구성된 방탈출 활동에서 ${S.best.total}개 문항을 모두 해결하여 ${fmtTime(S.best.ms)}에 과제를 완수함.`
+      : '무작위 문제로 구성된 방탈출 활동에서 제시된 문항을 모두 해결하여 과제를 완수함.');
+    if(S.best.wrong>0) parts.push(`오답이 발생한 문항은 즉시 새 문제로 재도전하여 ${S.best.wrong}회의 시행착오를 스스로 수정함.`);
+  }
+  // 강조점
+  if(opt.focus==='quant') parts.push(`계산 문항 정답률 ${rate}%로 단위를 붙여 값을 표현하는 습관이 정착됨.`);
+  if(opt.focus==='graph') parts.push('자료를 그래프로 변환하고 축의 의미를 따져 해석하는 능력이 우수함.');
+  if(opt.focus==='inquiry') parts.push('관찰–기록–결론 도출의 탐구 절차를 순서대로 수행하며 성실히 기록함.');
+  if(opt.focus==='growth'&&S.mis.length)
+    parts.push(`${MIS_LABEL[S.mis[0][0]]||''} 부분에서 어려움을 보였으나 반복 도전과 힌트 활용을 통해 스스로 개선해 나감.`);
+  // 마무리 · 처방
+  if(S.weak.length&&S.weak[0].rate<0.7)
+    parts.push(`${TYPE_LABEL[S.weak[0].type]||''} 유형의 추가 연습이 필요함.`);
+  if(S.essays.quiz) parts.push(`활동 후 "${firstSentence(S.essays.quiz.text,55)}"라고 성찰함.`);
+  if(S.reach) parts.push('별까지의 거리를 연주시차로 설명하는 성취기준에 도달함.');
+
+  let out=parts.map(E).join(' ');
+  const lim=+opt.len||400;
+  if(out.length>lim){                       // 분량 맞추기(문장 단위로 자름)
+    const ss=out.split(/(?<=\.)\s/); out='';
+    for(const s of ss){ if((out+s).length>lim) break; out+=(out?' ':'')+s; }
+    if(!out) out=parts[0];
+  }
+  return `[${rec.klass} ${rec.name}] ${out}`;
+}
+/* ---------- 학생별 피드백 (학생에게 전달하는 말투) ---------- */
+function makeFeedbackText(rec,tone){
+  const S=summarize(rec);
+  const warm=tone!=='coach';
+  const items=(S.best&&S.best.items)||[], st=itemsStats(items);
+  const good=[], grow=[], next=[];
+
+  // 잘한 점
+  if(S.stages[0]) good.push('시뮬레이터를 꼼꼼히 관찰해 거리와 연주시차가 반비례한다는 것을 스스로 찾아냈어요');
+  if(S.stages[1]) good.push('d = 1/p 계산과 ″·pc·ly 단위 환산을 정확하게 해냈어요');
+  if(S.stages[2]) good.push('표를 그래프로 옮기고 곡선의 의미까지 해석했어요');
+  if(S.best) good.push(`방탈출의 ${S.best.total}개 문항을 모두 해결해 누리호를 발사시켰어요${S.best.ms?` (기록 ${fmtTime(S.best.ms)})`:''}`);
+  if(S.essays.graph&&S.essays.graph.score>=85) good.push('그래프 해석 서술이 근거까지 잘 갖춰져 있었어요');
+  if(S.n>=10&&S.rate>=0.8) good.push(`전체 정답률 ${Math.round(S.rate*100)}%로 안정적이에요`);
+  if(!good.length) good.push('앱에 들어와 학습을 시작한 것이 좋은 출발이에요');
+
+  // 더 살펴볼 점
+  S.mis.slice(0,2).forEach(([m,c])=>grow.push(`${MIS_LABEL[m]||m} (${c}회)`));
+  S.weak.filter(w=>w.rate<0.7).slice(0,2)
+    .forEach(w=>grow.push(`${TYPE_LABEL[w.type]||w.type} 정답률 ${Math.round(w.rate*100)}%`));
+  if(st.slow) grow.push(`방탈출에서 ${st.slow}가 가장 오래 걸렸어요`);
+  if(!S.stages[2]&&S.stages[1]) grow.push('심화 단계(그래프)가 아직 남아 있어요');
+
+  // 다음 할 일
+  const fixMap={
+    'inverse-reverse':'기초 단계에서 거리 2 pc와 30 pc의 흔들림을 다시 비교해 보세요',
+    'formula-invert' :'발전 단계 “공식” 탭 계산기에 p를 3개 넣어 d를 확인해 보세요',
+    'unit-confuse'   :'단위 사전에서 1 pc = 3.26 ly = 206265 AU 를 외운 뒤 환산 연습을 다시 해 보세요',
+    'angle-unit'     :'1° = 60′ = 3600″ 를 표로 확인하고 환산 문제를 3개 더 풀어 보세요',
+    'half-angle'     :'“6개월 이동” 버튼을 눌러 이동각의 절반이 연주시차임을 다시 확인해 보세요',
+    'cause'          :'지구 공전과 시차의 관계를 시뮬레이터로 한 번 더 관찰해 보세요',
+    'limit'          :'심화 그래프에서 p가 0에 가까울 때 곡선이 치솟는 부분을 살펴보세요',
+    'graph-read'     :'이론 곡선을 켜고 값 읽는 연습을 3번 해 보세요'
+  };
+  S.mis.slice(0,2).forEach(([m])=>{ if(fixMap[m]) next.push(fixMap[m]); });
+  if(!S.stages[0]) next.push('기초 단계의 관찰 기록 3개와 결론 서술을 완성해 보세요');
+  else if(!S.stages[1]) next.push('발전 단계의 계산 5문제와 환산 4문제에 도전해 보세요');
+  else if(!S.stages[2]) next.push('심화 단계에서 표를 채워 점을 찍고 해석을 서술해 보세요');
+  else if(!S.best) next.push('방탈출에 도전해 배운 것을 확인해 보세요');
+  else next.push(`발전 수준으로 난이도를 올려 방탈출 기록(${S.best.ms?fmtTime(S.best.ms):'현재 기록'})을 단축해 보세요`);
+
+  const head = warm ? `${rec.name} 학생에게` : `${rec.name} · 피드백`;
+  const L = warm
+    ? ['🌟 잘한 점','🔍 더 살펴볼 점','🎯 다음에 할 일']
+    : ['[강점]','[보완]','[과제]'];
+  const tail = warm
+    ? (S.reach?'\n연주시차로 별까지의 거리를 설명하는 목표에 도달했어요. 훌륭합니다!'
+             :'\n조금만 더 하면 목표에 도달할 수 있어요. 다음 단계에서 만나요!')
+    : (S.reach?'\n성취기준 도달.':'\n성취기준 미도달 — 위 과제 수행 후 재확인.');
+  return [`[${head}]`,
+    `${L[0]}\n`+good.slice(0,3).map(t=>'· '+t+(warm?'.':'')).join('\n'),
+    `${L[1]}\n`+(grow.length?grow.slice(0,3).map(t=>'· '+t).join('\n'):'· 뚜렷한 약점이 보이지 않아요.'),
+    `${L[2]}\n`+next.slice(0,2).map(t=>'· '+t).join('\n')+tail
+  ].join('\n\n');
+}
+function makeFeedback(all){
+  const k=$('#tKlassFilter').value, tone=$('#fbTone').value;
+  const list = all
+    ? Object.values(DB.students).filter(s=>!k||s.klass===k)
+    : [DB.students[$('#fbStu').value]].filter(Boolean);
+  if(!list.length){ toast('학생을 선택하세요.',true); return; }
+  $('#fbOut').value=list.map(s=>makeFeedbackText(s,tone)).join('\n\n──────────\n\n');
+  if(all) toast(`${list.length}명 피드백을 생성했습니다.`);
+}
+function sendFeedback(){
+  const rec=DB.students[$('#fbStu').value];
+  if(!rec){ toast('학생을 선택하세요.',true); return; }
+  const txt=$('#fbOut').value.trim();
+  if(!txt){ toast('먼저 피드백을 생성하세요.',true); return; }
+  // 전체 생성분이 들어 있으면 해당 학생 부분만 저장
+  const mine=txt.split('\n\n──────────\n\n').find(t=>t.includes(rec.name))||txt;
+  rec.feedback={text:mine,at:Date.now()};
+  saveDB();
+  toast(`${rec.name} 학생의 허브에 피드백을 전달했습니다.`);
+}
+function makeNote(){
+  const id=$('#ntStu').value, rec=DB.students[id];
+  if(!rec){ toast('학생을 선택하세요.',true); return; }
+  const opt={len:$('#ntLen').value,focus:$('#ntFocus').value,tone:$('#ntTone').value};
+  const t=makeNoteText(rec,opt);
+  $('#ntOut').value=t; $('#ntCount').textContent=t.length;
+}
+function makeNoteAll(){
+  const k=$('#tKlassFilter').value;
+  const list=Object.values(DB.students).filter(s=>!k||s.klass===k);
+  if(!list.length){ toast('학생 기록이 없습니다.',true); return; }
+  const opt={len:$('#ntLen').value,focus:$('#ntFocus').value,tone:$('#ntTone').value};
+  const t=list.map(s=>makeNoteText(s,opt)).join('\n\n');
+  $('#ntOut').value=t; $('#ntCount').textContent=t.length;
+  toast(`${list.length}명 초안을 생성했습니다.`);
+}
+/* 구글 시트에서 복사한 표(TSV/CSV) → 임시 레코드 → 초안 일괄 생성 */
+function parseSheet(){
+  const raw=$('#sheetPaste').value.trim();
+  if(!raw){ $('#sheetMsg').textContent='붙여넣은 내용이 없습니다.'; return; }
+  const lines=raw.split(/\r?\n/).filter(l=>l.trim());
+  const split=l=>l.includes('\t')?l.split('\t'):l.split(',').map(c=>c.replace(/^"|"$/g,''));
+  const head=split(lines[0]).map(h=>h.trim());
+  const idx=n=>head.findIndex(h=>h.replace(/\s/g,'').includes(n));
+  const iName=idx('이름'), iK=idx('학급'),
+        iB=idx('기초'), iC=idx('발전'), iG=idx('심화'),
+        iQ=idx('방탈출'), iR=idx('정답률'),
+        iE1=idx('관찰'), iE2=idx('그래프'), iE3=idx('보고서');
+  if(iName<0){ $('#sheetMsg').textContent='머리글에 "이름" 열이 필요합니다.'; return; }
+  const pass=v=>/통과|완료|O|o|1|true|✓/.test(String(v||''));
+  const notes=[];
+  lines.slice(1).forEach(l=>{
+    const c=split(l); if(!c[iName]) return;
+    const rate=parseFloat(String(c[iR]||'').replace('%',''))||0;
+    const rec={name:c[iName].trim(),klass:(iK>=0?c[iK]:'')||'',level:'basic',
+      stages:{basic:{done:pass(c[iB]),ms:0},calc:{done:pass(c[iC]),ms:0},graph:{done:pass(c[iG]),ms:0}},
+      quiz:{best:pass(c[iQ])?{ms:0,total:6,wrong:0,hints:0}:null,runs:[]},
+      logs:rate?[{type:'calcD',ok:true},{type:'calcD',ok:rate>=50}]:[],
+      mis:{}, essays:{}};
+    if(iE1>=0&&c[iE1]) rec.essays.basic={text:c[iE1],level:''};
+    if(iE2>=0&&c[iE2]) rec.essays.graph={text:c[iE2],level:''};
+    if(iE3>=0&&c[iE3]) rec.essays.quiz={text:c[iE3],level:''};
+    // 정답률 표기용 보정
+    if(rate){ rec.logs=Array.from({length:10},(_,i)=>({type:'calcD',ok:i<Math.round(rate/10)})); }
+    notes.push(makeNoteText(rec,{len:$('#ntLen').value,focus:$('#ntFocus').value,tone:$('#ntTone').value}));
+  });
+  if(!notes.length){ $('#sheetMsg').textContent='읽을 수 있는 학생 행이 없습니다.'; return; }
+  $('#ntOut').value=notes.join('\n\n'); $('#ntCount').textContent=$('#ntOut').value.length;
+  $('#sheetMsg').textContent=`${notes.length}명 처리 완료 — 위 초안 칸을 확인하세요.`;
+  window.scrollTo({top:$('#ntOut').getBoundingClientRect().top+scrollY-120,behavior:'smooth'});
+}
+const APPS_SCRIPT=`// ① 구글 시트 › 확장 프로그램 › Apps Script 에 붙여넣기
+// ② 배포 › 새 배포 › 유형: 웹 앱 / 액세스: 링크가 있는 모든 사용자
+// ③ 만들어진 /exec URL을 앱의 [수업 설정 › Apps Script 웹앱 URL]에 등록
+function doPost(e){
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var d  = JSON.parse(e.postData.contents);
+  if(sh.getLastRow()===0){
+    sh.appendRow(['제출시각','학급','이름','모둠','수준','기초','발전','심화',
+                  '방탈출','방탈출시간(초)','문항별해결시간','문항평균시간(초)','최장소요문항',
+                  '모둠협동잠금','모둠열쇠조각',
+                  '정답률(%)','주요오개념','관찰서술','그래프해석서술','탈출보고서']);
+  }
+  sh.appendRow([new Date(), d.klass, d.name, d.team, d.level, d.basic, d.calc, d.graph,
+                d.quiz, d.quizSec, d.items, d.itemAvg, d.itemSlow,
+                d.teamLock, d.teamKeys,
+                d.rate, d.mis, d.e1, d.e2, d.e3]);
+  return ContentService.createTextOutput('ok');
+}`;
+function submitToSheet(){
+  const url=(cfg().sheetUrl||'').trim();
+  if(!url){ toast('선생님이 아직 시트 URL을 등록하지 않았습니다.',true); return; }
+  const S=summarize(ME);
+  const tm=S.teamRun||null;
+  const body={klass:ME.klass,name:ME.name,team:ME.team||'',
+    teamLock:tm?'해제':'',teamKeys:tm?tm.team.codes.join('+')+' = '+tm.team.total+' pc':'',
+    level:S.level==='adv'?'발전':'기본',
+    basic:S.stages[0]?'통과':'진행중',calc:S.stages[1]?'통과':'진행중',graph:S.stages[2]?'통과':'진행중',
+    quiz:S.best?'성공':'미완',quizSec:S.best?Math.round(S.best.ms/1000):'',
+    items:itemsToText((S.best&&S.best.items)||[]),
+    itemAvg:itemsStats((S.best&&S.best.items)||[]).avg,
+    itemSlow:itemsStats((S.best&&S.best.items)||[]).slow,
+    rate:S.n?Math.round(S.rate*100):0,
+    mis:S.mis.length?(MIS_LABEL[S.mis[0][0]]||''):'',
+    e1:(S.essays.basic&&S.essays.basic.text)||'',
+    e2:(S.essays.graph&&S.essays.graph.text)||'',
+    e3:(S.essays.quiz&&S.essays.quiz.text)||''};
+  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+             body:JSON.stringify(body)})
+    .then(()=>toast('선생님 시트로 제출했습니다.'))
+    .catch(()=>toast('전송에 실패했습니다. 결과 코드를 대신 제출하세요.',true));
+}
+
+/* =========================================================
+   15. 결과 코드 (기기 간 이동)
+   ========================================================= */
+function b64enc(s){ return btoa(String.fromCharCode(...new TextEncoder().encode(s))); }
+function b64dec(s){ return new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0))); }
+function makeMyCode(){
+  const code='PLX1:'+b64enc(JSON.stringify(ME));
+  $('#myCode').textContent=code; return code;
+}
+function importCode(){
+  const ta=el('textarea',{rows:'6',placeholder:'PLX1:… 형태의 결과 코드를 붙여넣으세요 (여러 개는 줄바꿈으로 구분)'});
+  const b=el('div',{},el('p',{class:'mini'},'학생 기기에서 만든 결과 코드를 붙여넣으면 이 기기의 명단에 추가됩니다.'),ta);
+  modal('결과 코드 가져오기',b,[
+    {label:'가져오기',cls:'primary',fn:()=>{
+      let n=0;
+      ta.value.split(/\s+/).filter(x=>x.startsWith('PLX1:')).forEach(c=>{
+        try{
+          const rec=JSON.parse(b64dec(c.slice(5)));
+          if(rec&&rec.name){ DB.students[rec.id||(rec.klass+'|'+rec.name)]=rec; n++; }
+        }catch(e){}
+      });
+      saveDB(); paintTeacher();
+      toast(n?`${n}명 기록을 가져왔습니다.`:'읽을 수 있는 코드가 없습니다.',!n);
+    }},{label:'취소'}]);
+}
+
+/* =========================================================
+   16. 허브 화면
+   ========================================================= */
+function paintHome(){
+  const S=summarize(ME);
+  const done=S.stages.filter(Boolean).length;
+  $('#homeMeter').style.width=Math.round((done+(S.best?1:0))/4*100)+'%';
+  $('#homeProgressTxt').textContent=
+    `학습 단계 ${done}/3 통과 · 방탈출 ${S.best?'성공 ('+fmtTime(S.best.ms)+')':'미완'} · 총 학습시간 ${Math.round(S.ms/60000)}분`;
+  $('#quizBest').textContent=S.best?`${fmtTime(S.best.ms)} · 오답 ${S.best.wrong}`:'기록 없음';
+
+  const defs=[
+    {k:'basic',lv:'STEP 1 · 기초',t:'시차를 눈으로 확인',d:'시뮬레이터로 거리와 시차의 반비례를 관찰하고 관찰 내용을 서술합니다.',open:true},
+    {k:'calc', lv:'STEP 2 · 발전',t:'계산과 단위',d:'d = 1/p 계산, ″·pc·ly·AU 단위 환산을 익힙니다.',open:S.stages[0]},
+    {k:'graph',lv:'STEP 3 · 심화',t:'그래프 그리기·해석',d:'표를 채워 점을 찍고, 곡선의 의미를 해석해 서술합니다.',open:S.stages[1]}
+  ];
+  const host=$('#stageCards'); host.innerHTML='';
+  defs.forEach(d=>{
+    const okd=ME.stages[d.k].done;
+    const b=el('button',{class:'stagecard'+(d.open?'':' locked'),onclick:()=>{
+      if(!d.open){ toast('앞 단계를 먼저 통과하세요.',true); return; }
+      show(d.k);
+    }});
+    b.append(el('div',{class:'lv'},d.lv),el('h3',{},d.t),el('p',{},d.d),
+      el('span',{class:'tag '+(okd?'ok':'no')},okd?'통과 ✓':d.open?'도전 가능':'🔒 잠김'));
+    host.append(b);
+  });
+  paintMyKey();
+  // 학습 코치
+  const cb=$('#coachBody'); cb.innerHTML='';
+  if(ME.feedback&&ME.feedback.text){
+    cb.append(el('div',{class:'qbox',style:'white-space:pre-wrap'},
+      el('b',{style:'color:var(--accent)'},'📮 선생님 피드백\n'),ME.feedback.text));
+  }
+  AI.advice(ME).forEach(t=>cb.append(el('div',{},t)));
+  const nextT=AI.pickTypes(ALL_TYPES,1)[0];
+  cb.append(el('div',{class:'note',style:'margin-top:10px'},
+    `추천 연습: ${TYPE_LABEL[nextT]||nextT} — 방탈출에서 이 유형이 더 자주 나옵니다.`));
+}
+
+/* =========================================================
+   17. 부팅 · 이벤트 연결
+   ========================================================= */
+function boot(){
+  loadDB();
+  // 난이도 버튼
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('.lvbtn'); if(!b) return;
+    setLevel(b.dataset.lv);
+    toast(b.dataset.lv==='adv'?'발전 수준으로 바꿨습니다.':'기본 수준으로 바꿨습니다.');
+  });
+  // 로그인
+  $('#btnStart').addEventListener('click',()=>{
+    const name=$('#inName').value.trim(), klass=$('#inKlass').value.trim();
+    if(!name||!klass){ toast('학급과 이름을 입력하세요.',true); return; }
+    enterStudent(name,klass);
+    setLevel(ME.level||LV);
+    show('home');
+  });
+  $('#inName').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#btnStart').click(); });
+  $('#btnLoginTeacher').addEventListener('click',()=>show('teacher'));
+  $('#btnHome').addEventListener('click',()=>{ if(!ME){ show('login'); return; } show('home'); });
+  $('#btnTeacher').addEventListener('click',()=>show('teacher'));
+  // 허브
+  $('#btnQuiz').addEventListener('click',()=>{
+    if(!ME.stages.basic.done){
+      modal('먼저 학습을 해요',el('p',{},'기초 단계를 통과한 뒤 방탈출에 도전하면 훨씬 잘 풀립니다. 그래도 지금 들어갈까요?'),
+        [{label:'그래도 도전',cls:'primary',fn:()=>{show('quiz');startQuiz();}},{label:'학습하러 가기',fn:()=>show('basic')}]);
+      return;
+    }
+    show('quiz'); startQuiz();
+  });
+  $('#teamName').addEventListener('input',paintMyKey);
+  $('#btnKeyCopy').addEventListener('click',async()=>{
+    const f=paintMyKey();
+    const t=`${ME.name}(${ME.team}) 열쇠 조각 ${f.code} · p=${f.p}″`;
+    try{ await navigator.clipboard.writeText(t); toast('조각을 복사했습니다. 조원에게 전달하세요.'); }
+    catch(e){ toast('조각: '+f.code); }
+  });
+  $('#btnReport').addEventListener('click',()=>show('report'));
+  $('#repBack').addEventListener('click',()=>show('home'));
+  $('#repPrint').addEventListener('click',()=>window.print());
+  $('#btnMakeCode').addEventListener('click',()=>{ makeMyCode(); toast('결과 코드를 만들었습니다.'); });
+  $('#btnCopyCode').addEventListener('click',async()=>{
+    const t=$('#myCode').textContent;
+    if(!t.startsWith('PLX1:')){ toast('먼저 결과 코드를 만드세요.',true); return; }
+    try{ await navigator.clipboard.writeText(t); toast('복사했습니다.'); }
+    catch(e){
+      const r=document.createRange(); r.selectNodeContents($('#myCode'));
+      const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+      toast('직접 복사(Ctrl+C)하세요.');
+    }
+  });
+  // 퀴즈
+  $('#quizBack').addEventListener('click',()=>{
+    clearInterval(quizS.timer); cancelAnimationFrame(quizS.anim);
+    if(quizS.run&&!quizS.run.done){
+      ME.quiz.runs.push({at:Date.now(),ms:Date.now()-quizS.run.start,total:quizS.run.total,
+                         wrong:quizS.run.wrong,hints:quizS.run.hints,level:quizS.run.level,success:false});
+      saveDB();
+    }
+    show('home');
+  });
+  // 교사 콘솔
+  $('#btnPin').addEventListener('click',()=>{
+    if($('#inPin').value.trim()===String(cfg().teacherPin)){
+      tUnlocked=true; $('#pinFb').textContent=''; paintTeacher();
+    }else{ $('#pinFb').className='fb no'; $('#pinFb').textContent='PIN이 맞지 않습니다.'; }
+  });
+  $('#inPin').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#btnPin').click(); });
+  $('#btnTeacherOut').addEventListener('click',()=>{ tUnlocked=false; show(ME?'home':'login'); });
+  $('#tKlassFilter').addEventListener('change',paintTeacher);
+  $('#vizPriv').addEventListener('change',paintTeacher);
+  $('#vizMoreWrap').addEventListener('toggle',()=>{ if($('#vizMoreWrap').open) paintTeacher(); });
+  $('#btnClassReport').addEventListener('click',classReport);
+  $('#btnClassCopy').addEventListener('click',async()=>{
+    const t=$('#classReportOut').value; if(!t){ toast('먼저 리포트를 생성하세요.',true); return; }
+    try{ await navigator.clipboard.writeText(t); toast('복사했습니다.'); }
+    catch(e){ $('#classReportOut').select(); toast('Ctrl+C로 복사하세요.'); }
+  });
+  addEventListener('resize',()=>{ if(curScreen==='teacher'&&tUnlocked) paintTeacher(); });
+  $('#btnCsv').addEventListener('click',csvExport);
+  $('#btnImport').addEventListener('click',importCode);
+  $('#btnNoteOne').addEventListener('click',makeNote);
+  $('#btnNoteAll').addEventListener('click',makeNoteAll);
+  $('#btnNoteCopy').addEventListener('click',async()=>{
+    const t=$('#ntOut').value; if(!t){ toast('먼저 초안을 생성하세요.',true); return; }
+    try{ await navigator.clipboard.writeText(t); toast('복사했습니다.'); }
+    catch(e){ $('#ntOut').select(); toast('Ctrl+C로 복사하세요.'); }
+  });
+  $('#btnFbOne').addEventListener('click',()=>makeFeedback(false));
+  $('#btnFbAll').addEventListener('click',()=>makeFeedback(true));
+  $('#btnFbSend').addEventListener('click',sendFeedback);
+  $('#btnFbCopy').addEventListener('click',async()=>{
+    const t=$('#fbOut').value; if(!t){ toast('먼저 피드백을 생성하세요.',true); return; }
+    try{ await navigator.clipboard.writeText(t); toast('복사했습니다.'); }
+    catch(e){ $('#fbOut').select(); toast('Ctrl+C로 복사하세요.'); }
+  });
+  $('#btnSheetParse').addEventListener('click',parseSheet);
+  $('#btnScript').addEventListener('click',()=>{
+    const pre=el('div',{class:'code',style:'max-height:320px'},APPS_SCRIPT);
+    modal('구글 시트 자동 수집 코드',el('div',{},pre,
+      el('p',{class:'mini',style:'margin-top:8px'},'※ 이 방식은 선생님 소유의 시트에만 기록됩니다. 학교 정책에 따라 사용 여부를 판단하세요.')),
+      [{label:'코드 복사',cls:'primary',fn:()=>navigator.clipboard&&navigator.clipboard.writeText(APPS_SCRIPT)},{label:'닫기'}]);
+  });
+  $('#btnCfgSave').addEventListener('click',()=>{
+    DB.cfg.quizCount=clamp(+$('#cfgQuizCount').value||6,3,15);
+    DB.cfg.allowHints=+$('#cfgHints').value;
+    DB.cfg.tolPct=clamp(+$('#cfgTol').value||2,1,10);
+    DB.cfg.teacherPin=$('#cfgPin').value.trim()||'1234';
+    DB.cfg.sheetUrl=$('#cfgSheet').value.trim();
+    DB.cfg.teamLock=+$('#cfgTeam').value;
+    DB.cfg.teamSize=clamp(+$('#cfgTeamSize').value||3,2,4);
+    saveDB();
+    $('#cfgFb').className='fb ok'; $('#cfgFb').textContent='저장했습니다. 다음 문제부터 적용됩니다.';
+  });
+  $('#btnWipe').addEventListener('click',()=>{
+    modal('모든 학생 기록 삭제',el('p',{},'이 기기에 저장된 모든 학생 기록이 지워집니다. 되돌릴 수 없습니다. 계속할까요?'),
+      [{label:'삭제',cls:'violet',fn:()=>{DB.students={};ME=null;saveDB();paintTeacher();paintWho();toast('삭제했습니다.');}},
+       {label:'취소'}]);
+  });
+  // 학생 제출(시트)
+  const submitBtn=el('button',{class:'btn small violet',onclick:submitToSheet},'선생님 시트로 제출');
+  $('#btnMakeCode').parentElement.append(submitBtn);
+  setLevel('basic');
+  openDevBridge();
+  show('login');
+}
+/* 개발·점검용 접근 지점 — 주소에 ?dev=<교사PIN> 이 있을 때만 열린다.
+   학생 화면에서는 window.PLX 가 존재하지 않으므로 콘솔로 정답을 캐낼 수 없다. */
+function openDevBridge(){
+  if(!DEV_ARG || DEV_ARG!==String(cfg().teacherPin)) return;
+  window.PLX={
+    GEN,ALL_TYPES,STARS,GRAPH_STARS,RUBRICS,BUILD,AI,SCALE,VIZ,
+    genQ,gradeText,summarize,near,builtCount,makeNoteText,makeFeedbackText,
+    itemsToText,itemsStats,vizAggregate,histo,maskName,classReport,
+    keyFragment,parseKey,paintMyKey,niceNum,unitVal,reportData,stdIndicators,paintReport,
+    show,startQuiz,setLevel,enterStudent,paintBuildLog,paintItemTimes,finishQuiz,
+    makeMyCode,b64dec,
+    dec:decStr, hshOf:hsh, bucketOf,                 // 점검용
+    solve:q=>({text:decStr(q._s),explain:decStr(q._e),hint:decStr(q._h)}),
+    onQuestion:null,
+    get DB(){return DB;}, get ME(){return ME;}, set ME(v){ME=v;}, get LV(){return LV;},
+    get quizS(){return quizS;}, get basic(){return basic;}, get graphS(){return graphS;},
+    get integrity(){return INTEGRITY;}
+  };
+  console.info('[연주시차 탐구소] 점검 모드가 열렸습니다.');
+}
+document.addEventListener('DOMContentLoaded',boot);
+})();
+
+</script>
+</body>
+</html>
