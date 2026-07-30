@@ -175,6 +175,19 @@ details.fold>summary::before{content:'▸';font-size:.9rem;color:var(--muted);tr
 details.fold[open]>summary::before{content:'▾';color:var(--accent)}
 details.fold>summary:hover{filter:brightness(1.15)}
 details.fold[open]>summary{margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+/* 단계 진행(방탈출식 관문) */
+.stepbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.stepdot{
+  font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;
+  padding:7px 13px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(0,0,0,.25);color:var(--muted);transition:.15s;
+}
+.stepdot:hover{border-color:var(--accent)}
+.stepdot.on{background:linear-gradient(135deg,#5eead4,#7dd3fc);color:#06213a;border-color:transparent}
+.stepdot.done{color:var(--good);border-color:rgba(74,222,128,.5);background:rgba(74,222,128,.1)}
+.stepdot.locked{opacity:.45;cursor:not-allowed}
+.stepnav{margin-top:12px}
+.stepnav .fill{margin-left:auto}
 details.tableview{margin-top:12px}
 details.tableview summary{cursor:pointer;color:var(--accent);font-size:.85rem}
 .tab-num{font-variant-numeric:tabular-nums}
@@ -258,6 +271,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
       <div class="row">
         <button class="btn primary" id="btnQuiz">방탈출 입장</button>
         <button class="btn violet" id="btnReport">📊 내 학습 리포트</button>
+        <button class="btn" id="btnAI">🤖 AI 활용 활동</button>
         <span class="pill">최근 결과 <b id="quizBest">기록 없음</b></span>
       </div>
     </div>
@@ -299,6 +313,8 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
         </div>
         <button class="btn small ghost right" id="basicBack">← 허브</button>
       </div>
+      <div class="stepbar" id="basicSteps"></div>
+      <div class="row stepnav" id="basicNav"></div>
     </div>
 
     <div class="card">
@@ -344,7 +360,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 
     <div class="card">
       <h3 style="margin-top:0">③ 관찰 기록표</h3>
-      <p class="sub">거리를 <b>2 pc / 10 pc / 30 pc</b>로 맞추고 각각 <b>기록</b> 버튼을 누르세요. (3개 모두 필요)</p>
+      <p class="sub">거리를 <b>자유롭게 바꾸며 3번</b> 기록하세요. 가까운 값과 먼 값을 골고루 넣으면 관계가 잘 보입니다.</p>
       <div class="row" style="margin-bottom:10px">
         <button class="btn small" id="btnRec">현재 값 기록</button>
         <button class="btn small ghost" id="btnRecClear">기록 지우기</button>
@@ -404,6 +420,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
       <button class="tab" data-t="t3">3. 단위 환산 연습</button>
       <button class="tab" data-t="t4">4. 거리 계산 연습</button>
     </div>
+    <div class="row stepnav" id="calcNav" style="margin:-4px 0 14px"></div>
 
     <div id="t1" class="tabpane">
       <div class="card">
@@ -520,6 +537,8 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
         </div>
         <button class="btn small ghost right" id="graphBack">← 허브</button>
       </div>
+      <div class="stepbar" id="graphSteps"></div>
+      <div class="row stepnav" id="graphNav"></div>
     </div>
 
     <div class="card">
@@ -574,6 +593,79 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
         <button class="btn primary" id="btnGraphDone" disabled>심화 단계 통과하기</button>
         <span class="pill">정답 <b id="graphScore">0</b>/4</span>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ AI 활용 활동 ============ -->
+  <section id="screen-ai" class="screen hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2 style="margin:0">🤖 AI 활용 활동</h2>
+          <p class="sub" style="margin:0">AI가 준 답을 <b>내 손으로 검산</b>하고, <b>질문을 고쳐 가며</b> 답이 어떻게 좋아지는지 기록합니다.</p>
+        </div>
+        <button class="btn small ghost right" id="aiBack">← 허브</button>
+      </div>
+      <div class="warnbox" style="margin-bottom:0">AI는 그럴듯하게 <b>틀린 답</b>을 말할 수 있습니다. 이 활동의 목표는
+        “AI가 준 값을 믿을지 판단하는 힘”을 기르는 것입니다. 이 앱은 AI에 연결되어 있지 않으니,
+        선생님이 안내한 AI 도구에서 답을 받아 <b>붙여넣기</b> 하세요.</div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">활동 1 · AI 답변 검증하기</h3>
+      <div class="grid g2">
+        <div>
+          <label class="fld"><b>① 검증할 별 고르기</b>
+            <select id="aiStar"></select></label>
+          <div class="qbox" id="aiStarInfo"></div>
+          <label class="fld" style="margin-top:12px"><b>② AI에게 물어볼 질문 (복사해서 사용)</b>
+            <textarea id="aiPromptBase" rows="3" readonly></textarea></label>
+          <button class="btn small" id="aiCopyPrompt">질문 복사</button>
+        </div>
+        <div>
+          <label class="fld"><b>③ AI가 말한 거리</b>
+            <div class="numrow">
+              <input id="aiVal" type="text" inputmode="decimal" placeholder="예: 8.6">
+              <select id="aiUnit" style="width:auto">
+                <option value="ly">광년(ly)</option><option value="pc">파섹(pc)</option><option value="au">AU</option>
+              </select>
+            </div></label>
+          <label class="fld"><b>④ AI 답변 원문 붙여넣기</b>
+            <textarea id="aiAnswer" rows="5" placeholder="AI가 답한 내용을 그대로 붙여넣으세요. 근거·계산 과정이 있으면 함께."></textarea></label>
+          <div class="row">
+            <button class="btn primary small" id="aiCheck">내 자료로 검산하기</button>
+            <span class="pill">판정 <b id="aiVerdict">—</b></span>
+          </div>
+          <div id="aiCheckOut"></div>
+        </div>
+      </div>
+      <h3>⑤ 검증 결과 서술 <span class="tag">주관식</span></h3>
+      <p class="sub">AI 답변에서 <b>맞은 점 / 틀린 점 / 그렇게 판단한 근거</b>를 쓰세요. (내 계산값과 비교해서)</p>
+      <textarea id="aiEssay" rows="4" placeholder="예) AI는 8.6광년이라고 했다. 시차 0.379″로 계산하면 2.64 pc = 8.6광년이므로 값은 맞다. 다만 …"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn small" id="aiEssaySubmit">서술 제출·자기점검</button>
+        <span class="pill">글자 <b id="aiEssayCnt">0</b></span>
+      </div>
+      <div id="aiEssayOut"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">활동 2 · 프롬프트 개선 기록장</h3>
+      <p class="sub">같은 것을 묻되 <b>질문을 세 번 고쳐</b> 보세요. 앱이 질문에 무엇이 빠졌는지 짚어 줍니다.</p>
+      <div id="aiPromptRows"></div>
+      <div class="row">
+        <button class="btn primary small" id="aiPromptSave">3회 기록 점검하기</button>
+        <span class="pill">질문 품질 <b id="aiPromptScore">—</b></span>
+      </div>
+      <div id="aiPromptOut"></div>
+      <h3>개선 요약 서술 <span class="tag">주관식</span></h3>
+      <p class="sub">어떤 조건을 <b>덧붙였을 때</b> 답이 좋아졌는지, 왜 그런지 쓰세요.</p>
+      <textarea id="aiPromptEssay" rows="4" placeholder="예) 처음에는 별 이름만 물어서 단위가 뒤섞인 답이 왔다. 두 번째로 연주시차 값을 함께 주고 pc로 답하라고 했더니 …"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn small" id="aiPromptEssaySubmit">서술 제출·자기점검</button>
+        <span class="pill">글자 <b id="aiPromptEssayCnt">0</b></span>
+      </div>
+      <div id="aiPromptEssayOut"></div>
     </div>
   </section>
 
@@ -1061,7 +1153,7 @@ const TYPE_CONCEPT={
 /* =========================================================
    2. 화면 전환
    ========================================================= */
-const SCREENS=['login','home','basic','calc','graph','report','quiz','teacher'];
+const SCREENS=['login','home','basic','calc','graph','report','ai','quiz','teacher'];
 let curScreen='login', screenEnterAt=Date.now();
 const STAGE_OF={basic:'basic',calc:'calc',graph:'graph'};
 
@@ -1076,6 +1168,7 @@ function show(name){
   if(name==='calc')  initCalc();
   if(name==='graph') initGraph();
   if(name==='report') paintReport();
+  if(name==='ai') initAI();
   if(name==='teacher') paintTeacher();
 }
 function paintWho(){
@@ -1734,7 +1827,11 @@ function questionCard(q,opts){
       toast(auto?'천천히 해도 괜찮아요 — 핵심 도움을 열었습니다.':'핵심 도움을 열었습니다.');
     }
   }
-  supTimer=setTimeout(()=>openSupport(true),SUPPORT_MS);
+  // 5분 타이머는 "이 문제가 실제로 화면에 열린 뒤"부터 센다
+  box._armSupport=()=>{
+    if(supTimer||supOn||solved) return;
+    supTimer=setTimeout(()=>openSupport(true),SUPPORT_MS);
+  };
 
   const btnRow=el('div',{class:'row',style:'margin-top:10px'});
   const bOk=el('button',{class:'btn small primary',onclick:()=>submit()},'확인');
@@ -1800,27 +1897,131 @@ function questionCard(q,opts){
   return box;
 }
 
-/* 여러 문제를 묶어 "모두 맞히면 통과" 로 관리 */
+/* 화면에 보이는 문제 카드의 지원 타이머를 켠다 (단계가 열린 뒤부터 5분 계산) */
+function armSupport(root){
+  if(!root) return;
+  const boxes=(root.classList&&root.classList.contains('qbox'))?[root]:$$('.qbox',root);
+  boxes.forEach(b=>{ if(typeof b._armSupport==='function') b._armSupport(); });
+}
+
+/* 여러 문제를 "한 문제씩" 제시하고 모두 맞히면 통과 (방탈출과 같은 방식) */
 function makeQuizList(host,pool,n,stageKey,onCount){
   host.innerHTML='';
   const types=AI.pickTypes(pool,n);
   let solved=0;
   const state={solved:0,total:n};
-  types.forEach((t,i)=>{
-    host.append(questionCard(genQ(t),{
-      label:`문제 ${i+1}`, stage:stageKey,
+  const prog=el('div',{class:'row',style:'margin-bottom:8px'});
+  const slot=el('div',{});
+  host.append(prog,slot);
+  function paintProg(){
+    prog.innerHTML='';
+    for(let i=0;i<n;i++){
+      prog.append(el('span',{class:'stepdot '+(i<solved?'done':i===solved?'on':'locked'),
+        style:'pointer-events:none'}, i<solved?'✔':String(i+1)));
+    }
+    prog.append(el('span',{class:'mini fill'},`맞힌 문제 ${solved} / ${n}`));
+  }
+  function render(){
+    paintProg();
+    slot.innerHTML='';
+    if(solved>=n){
+      slot.append(el('div',{class:'qbox solved'},
+        el('b',{},`⭕ ${n}문제를 모두 해결했습니다!`),
+        el('div',{class:'mini',style:'margin-top:4px'},'아래 통과 버튼으로 다음 단계로 넘어가세요.')));
+      return;
+    }
+    const card=questionCard(genQ(types[solved]),{
+      label:`문제 ${solved+1}/${n}`, stage:stageKey,
       onResult:ok=>{
-        if(ok){ solved++; state.solved=solved; }
-        onCount&&onCount(solved,n);
         if(ME&&ME.stages[stageKey]){
-          const st=ME.stages[stageKey]; st.tries++; if(ok) st.correct++;
-          saveDB();
+          const st=ME.stages[stageKey]; st.tries++; if(ok) st.correct++; saveDB();
+        }
+        if(ok){
+          solved++; state.solved=solved;
+          onCount&&onCount(solved,n);
+          setTimeout(render,1100);        // 정답 확인 문구를 잠시 보여 준 뒤 다음 문제
         }
       }
-    }));
-  });
+    });
+    slot.append(card);
+    armSupport(slot);
+  }
   onCount&&onCount(0,n);
+  render();
+  state.render=render;
   return state;
+}
+
+/* =========================================================
+   6-3. 단계 진행기(Stepper) — 방탈출처럼 한 관문씩 열린다
+   steps: [{el, name, ready?:()=>bool|string, onShow?:fn}]
+   ready()가 true가 아니면 다음 관문이 잠기고, 문자열이면 안내 문구로 쓴다.
+   ========================================================= */
+function makeStepper(opts){
+  const {barSel,navSel,steps,onChange,key}=opts;
+  const bar=$(barSel), nav=$(navSel);
+  let cur=0;
+  /* 통과 조건이 없는 관문(읽기·관찰)은 "한 번 열어 본 적이 있으면" 완료로 본다 */
+  const seenList=()=>{
+    if(!ME||!key) return [];
+    ME.seen=ME.seen||{}; ME.seen[key]=ME.seen[key]||[];
+    return ME.seen[key];
+  };
+  const markSeen=i=>{
+    const l=seenList();
+    if(l.indexOf(i)<0){ l.push(i); saveDB(); }
+  };
+  const readyOf=i=>{
+    const r=steps[i].ready;
+    if(!r) return seenList().indexOf(i)>=0;
+    const v=r();
+    return v===true||v===undefined;
+  };
+  const reasonOf=i=>{
+    const r=steps[i].ready; if(!r) return '';
+    const v=r(); return (typeof v==='string')?v:'';
+  };
+  const bPrev=el('button',{class:'btn small ghost',onclick:()=>go(cur-1)},'← 이전');
+  const bNext=el('button',{class:'btn primary small',onclick:()=>{
+    if(!readyOf(cur)){ toast(reasonOf(cur)||'이 관문을 먼저 완료해야 다음으로 갈 수 있어요.',true); return; }
+    go(cur+1);
+  }},'다음 →');
+  const info=el('span',{class:'mini fill'});
+  nav.innerHTML=''; nav.append(bPrev,bNext,info);
+
+  function paintBar(){
+    bar.innerHTML='';
+    steps.forEach((s,i)=>{
+      const done=readyOf(i);
+      const locked=i>0&&!readyOf(i-1)&&i>cur;
+      bar.append(el('button',{class:'stepdot '+(i===cur?'on':done?'done':'')+(locked?' locked':''),
+        title:locked?'앞 관문을 먼저 완료하세요':'',
+        onclick:()=>{ if(locked){ toast('앞 관문을 먼저 완료하세요.',true); return; } go(i); }},
+        `${i+1}. ${s.name}${done&&i!==cur?' ✔':''}`));
+    });
+  }
+  function go(i){
+    i=clamp(i,0,steps.length-1);
+    if(i>cur && !readyOf(cur)){ toast(reasonOf(cur)||'이 관문을 먼저 완료하세요.',true); return; }
+    cur=i; markSeen(i);
+    steps.forEach((s,k)=>s.el.classList.toggle('hidden',k!==cur));
+    bPrev.disabled=(cur===0);
+    bNext.classList.toggle('hidden',cur===steps.length-1);
+    info.textContent=`관문 ${cur+1} / ${steps.length}`;
+    paintBar();
+    const s=steps[cur];
+    if(s.onShow) requestAnimationFrame(()=>s.onShow());
+    armSupport(s.el);
+    onChange&&onChange(cur);
+    const top=s.el.getBoundingClientRect().top+window.scrollY-90;
+    window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  }
+  const api={go,refresh:()=>{paintBar();bNext.classList.toggle('hidden',cur===steps.length-1);},
+             get cur(){return cur;},
+             /* 아직 완료되지 않은 첫 관문으로 이동 (처음 오는 학생은 1번 관문부터) */
+             resume:()=>{ let i=0; while(i<steps.length-1&&readyOf(i)) i++; go(i); }};
+  api.resume();
+  return api;
 }
 
 /* =========================================================
@@ -1833,12 +2034,14 @@ function pOf(d){ return 1/d; }                       // p(″) = 1/d(pc)
 function drawSpace(){
   const c=$('#cvSpace'), x=c.getContext('2d'), W=c.width, H=c.height;
   x.clearRect(0,0,W,H);
-  const cx=W*.26, cy=H/2, R=54;                      // 태양 위치, 궤도 반지름(픽셀)
+  const cx=W*.22, cy=H/2, R=54;                      // 태양 위치, 궤도 반지름(픽셀)
   const ang=basic.month/12*Math.PI*2;
   const ex=cx+R*Math.cos(ang), ey=cy+R*Math.sin(ang)*.42;
-  // 별 위치: 거리에 따라 화면 오른쪽에서의 위치(로그 스케일로 압축)
-  const t=(Math.log(basic.dist)-Math.log(1))/(Math.log(40)-Math.log(1));
-  const sx=cx+W*(.35+t*.55), sy=cy;
+  // 별 위치: 거리에 따라 로그 스케일로 압축하되, 어떤 거리에서도 화면 안(오른쪽 여백 확보)에 머문다
+  const dMin=1, dMax=+($('#rgDist')&&$('#rgDist').max)||40;
+  const t=clamp((Math.log(basic.dist)-Math.log(dMin))/(Math.log(dMax)-Math.log(dMin)),0,1);
+  const sxMin=cx+R+70, sxMax=W-52;
+  const sx=sxMin+t*(sxMax-sxMin), sy=cy;
 
   x.strokeStyle='rgba(255,255,255,.12)'; x.setLineDash([4,4]);
   x.beginPath(); x.ellipse(cx,cy,R,R*.42,0,0,7); x.stroke(); x.setLineDash([]);
@@ -1867,12 +2070,17 @@ function drawSpace(){
   // 라벨
   x.font='13px system-ui'; x.fillStyle='#9fb3d9';
   x.fillText('태양',cx-14,cy+30); x.fillText('지구',ex-14,ey-12);
-  x.fillStyle='#e8eefb'; x.fillText(`별 (d = ${fx(basic.dist,1)} pc)`,sx-46,sy-22);
-  // 시차각 표시
+  // 별 라벨: 글자 폭을 재어 화면 안으로 밀어 넣는다
+  x.fillStyle='#e8eefb';
+  const sLab=`별 (d = ${fx(basic.dist,1)} pc)`, sw=x.measureText(sLab).width;
+  x.fillText(sLab,clamp(sx-sw/2,4,W-sw-4),sy-22);
+  // 시차각 표시 — 호는 태양과 별 사이에, 라벨도 화면 안에 유지
+  const arcR=clamp(26+2200/basic.dist,26,Math.max(30,sx-cx-46));
   x.strokeStyle='rgba(251,191,36,.9)'; x.lineWidth=1.4;
-  x.beginPath(); x.arc(sx,sy,Math.min(120,26+2200/basic.dist),Math.PI-0.09,Math.PI+0.09); x.stroke();
+  x.beginPath(); x.arc(sx,sy,arcR,Math.PI-0.09,Math.PI+0.09); x.stroke();
   x.fillStyle='#fbbf24'; x.font='bold 13px system-ui';
-  x.fillText(`p = ${fx(pOf(basic.dist),3)}″`,sx-Math.min(150,60+2200/basic.dist),sy-8);
+  const pLab=`p = ${fx(pOf(basic.dist),3)}″`, pw=x.measureText(pLab).width;
+  x.fillText(pLab,clamp(sx-arcR-pw-6,4,W-pw-4),sy-8);
   x.fillStyle='#93a3c4'; x.font='12px system-ui';
   x.fillText('반년 뒤 지구 위치는 궤도 반대편(연한 점)',12,H-12);
 }
@@ -1946,7 +2154,7 @@ function initBasic(){
     toast('기초 단계 통과! 발전 단계가 열렸습니다.');
     show('home');
   });
-  makeQuizList($('#basicQuiz'),['compare','ratio','cause','realStar','half'],4,'basic',(s,n)=>{
+  basic.quiz=makeQuizList($('#basicQuiz'),['compare','ratio','cause','realStar','half'],4,'basic',(s,n)=>{
     basic.solved=s; $('#basicScore').textContent=s; checkBasicDone();
   });
   bindEssay('basic','#txtBasic','#btnTxtBasic','#cntBasic','#rubBasic',g=>{
@@ -1954,6 +2162,21 @@ function initBasic(){
   });
   if(ME.essays&&ME.essays.basic&&ME.essays.basic.score>=65) basic.essayOk=true;
   paintRec(); basicPaint();
+  // 관문 구성: 체험 → 시뮬레이터 → 기록 → 결론·서술 → 확인 문제
+  const cards=$$('#screen-basic > .card').slice(1);
+  basic.stepper=makeStepper({
+    barSel:'#basicSteps', navSel:'#basicNav', key:'basic',
+    steps:[
+      {el:cards[0],name:'손가락 체험'},
+      {el:cards[1],name:'시뮬레이터',onShow:basicPaint},
+      {el:cards[2],name:'관찰 기록',
+        ready:()=>recSpreadOk()||'거리를 바꿔 3번 기록해야 합니다(가장 먼 값이 가장 가까운 값의 2배 이상).'},
+      {el:cards[3],name:'결론과 서술',
+        ready:()=>(basic.concl&&basic.essayOk)||'결론 문장 확인과 관찰 서술 제출을 마쳐야 합니다.'},
+      {el:cards[4],name:'확인 문제',
+        ready:()=>basic.solved>=4||'확인 문제 4개를 모두 맞혀야 합니다.'}
+    ]
+  });
 }
 function paintRec(){
   const tb=$('#recTable tbody'); tb.innerHTML='';
@@ -1961,12 +2184,24 @@ function paintRec(){
     tb.append(el('tr',{},el('td',{},fx(r.d,1)),el('td',{},fx(r.p,3)),el('td',{},r.w)));
   });
   $('#recCount').textContent=basic.rec.length;
-  const need=[2,10,30], has=need.every(v=>basic.rec.some(r=>Math.abs(r.d-v)<1.1));
   const fb=$('#recFb');
-  if(basic.rec.length>=3&&has){ fb.className='fb ok'; fb.textContent='좋아요! 거리가 커질수록 p가 작아지는 것이 표에 그대로 보입니다.'; }
-  else if(basic.rec.length>=3){ fb.className='fb'; fb.textContent='2 pc · 10 pc · 30 pc 근처의 값을 각각 기록해 보세요.'; }
-  else{ fb.className='fb'; fb.textContent=''; }
+  if(recSpreadOk()){
+    const a=basic.rec[0], b=basic.rec[basic.rec.length-1];   // 정렬돼 있으므로 최소·최대
+    const k=b.d/a.d;
+    fb.className='fb ok';
+    fb.innerHTML=`좋아요! 거리가 <b>${fx(a.d,1)} pc → ${fx(b.d,1)} pc</b> 로 약 <b>${fx(k,1)}배</b> 멀어지자 `+
+      `연주시차는 <b>${fx(a.p,3)}″ → ${fx(b.p,3)}″</b>, 즉 약 <b>${fx(1/k,2)}배</b>(≈ ${fx(k,1)}분의 1)로 작아졌습니다.`;
+  }else if(basic.rec.length>=3){
+    fb.className='fb';
+    fb.textContent='기록한 거리들이 서로 비슷합니다. 가장 먼 값이 가장 가까운 값의 2배 이상이 되도록 한 번 더 기록해 보세요.';
+  }else{ fb.className='fb'; fb.textContent=''; }
   checkBasicDone();
+}
+/* 3개 이상 · 서로 다른 거리 · 최대/최소 2배 이상이면 관계를 볼 수 있다고 판단 */
+function recSpreadOk(){
+  if(basic.rec.length<3) return false;
+  const ds=basic.rec.map(r=>r.d);
+  return Math.max(...ds)/Math.min(...ds)>=2;
 }
 function checkConcl(){
   const a=$('#selA').value, b=$('#selB').value, fb=$('#conclFb');
@@ -1977,8 +2212,8 @@ function checkConcl(){
   checkBasicDone();
 }
 function checkBasicDone(){
-  const need=[2,10,30];
-  const recOk=need.every(v=>basic.rec.some(r=>Math.abs(r.d-v)<1.1));
+  if(basic.stepper) basic.stepper.refresh();
+  const recOk=recSpreadOk();
   const ok=recOk&&basic.concl&&basic.essayOk&&basic.solved>=4;
   const b=$('#btnBasicDone'); if(!b) return;
   b.disabled=!ok;
@@ -2011,6 +2246,26 @@ const RUBRICS={
       {k:'논리 연결어',    any:['따라서','때문','그러므로','왜냐','즉','그래서'],    tip:'문장을 근거로 연결해 보세요.'}
     ],
     minLen:80, minSent:3
+  },
+  aiverify:{
+    title:'AI 답변 검증 서술 채점 기준',
+    items:[
+      {k:'AI 답과 내 계산 비교', any:['AI','계산','비교','검산','참값','내가'], tip:'AI가 말한 값과 내가 구한 값을 나란히 쓰세요.'},
+      {k:'수치와 단위 제시',    any:['pc','파섹','광년','ly','AU','″','각초'],  tip:'값에는 단위를 붙여 쓰세요.'},
+      {k:'맞은 점·틀린 점 구분', any:['맞','틀','정확','잘못','오류','다르'],   tip:'어디까지 맞고 어디가 틀렸는지 나누어 쓰세요.'},
+      {k:'판단 근거',           any:['때문','따라서','근거','왜냐','므로','확인'], tip:'“∼때문에 믿을 수 있다/없다”처럼 근거를 밝히세요.'}
+    ],
+    minLen:60, minSent:2
+  },
+  aiprompt:{
+    title:'프롬프트 개선 서술 채점 기준',
+    items:[
+      {k:'질문을 고친 과정',   any:['질문','물어','프롬프트','조건','추가','고쳐','바꿔'], tip:'1차·2차·3차 질문이 어떻게 달라졌는지 쓰세요.'},
+      {k:'덧붙인 조건',       any:['단위','시차','자료','근거','과정','계산','pc','광년'], tip:'어떤 조건(단위·자료·근거)을 넣었는지 쓰세요.'},
+      {k:'답변의 변화',       any:['좋아','정확','달라','바뀌','개선','애매','틀'],       tip:'답이 어떻게 달라졌는지 쓰세요.'},
+      {k:'까닭 설명',         any:['때문','따라서','왜냐','므로','그래서'],              tip:'왜 그렇게 되었는지 이유를 붙이세요.'}
+    ],
+    minLen:60, minSent:2
   },
   quiz:{
     title:'탈출 보고서 채점 기준',
@@ -2074,11 +2329,49 @@ const calcS={inited:false,unit:0,calc:0};
 function initCalc(){
   if(calcS.inited){ paintStarTable(); refreshCalcDone(); return; }
   calcS.inited=true;
-  // 탭
-  $$('#calcTabs .tab').forEach(b=>b.addEventListener('click',()=>{
-    $$('#calcTabs .tab').forEach(x=>x.classList.remove('on')); b.classList.add('on');
-    ['t1','t2','t3','t4'].forEach(id=>$('#'+id).classList.toggle('hidden',id!==b.dataset.t));
-  }));
+  // 탭을 관문처럼 — 한 번에 하나만 열리고, 앞 관문을 마치면 다음이 열린다
+  const tabs=$$('#calcTabs .tab');
+  const paneOf=i=>$('#'+tabs[i].dataset.t);
+  const calcReady=[
+    ()=>true,
+    ()=>true,
+    ()=>calcS.unit>=4||'단위 환산 4문제를 모두 맞혀야 합니다.',
+    ()=>calcS.calc>=5||'거리 계산 5문제를 모두 맞혀야 합니다.'
+  ];
+  const okOf=i=>{ const v=calcReady[i](); return v===true; };
+  let calcCur=0;
+  function paintTabs(){
+    tabs.forEach((t,i)=>{
+      const locked=i>0&&!okOf(i-1);
+      t.classList.toggle('on',i===calcCur);
+      t.classList.toggle('locked',locked&&i!==calcCur);
+      t.style.opacity=(locked&&i!==calcCur)?'.45':'';
+    });
+  }
+  function goTab(i){
+    i=clamp(i,0,3);
+    if(i>calcCur&&!okOf(calcCur)){ toast(calcReady[calcCur]()||'앞 관문을 먼저 완료하세요.',true); return; }
+    if(i>0&&!okOf(i-1)&&i!==calcCur){ toast('앞 관문을 먼저 완료하세요.',true); return; }
+    calcCur=i;
+    tabs.forEach((t,k)=>paneOf(k).classList.toggle('hidden',k!==i));
+    paintTabs();
+    if(i===1) requestAnimationFrame(drawScaleBar);
+    armSupport(paneOf(i));
+    cNext.classList.toggle('hidden',i===3);
+    cPrev.disabled=(i===0);
+    cInfo.textContent=`관문 ${i+1} / 4`;
+    const top=paneOf(i).getBoundingClientRect().top+window.scrollY-90;
+    window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+  }
+  const cPrev=el('button',{class:'btn small ghost',onclick:()=>goTab(calcCur-1)},'← 이전');
+  const cNext=el('button',{class:'btn primary small',onclick:()=>{
+    if(!okOf(calcCur)){ toast(calcReady[calcCur]()||'이 관문을 먼저 완료하세요.',true); return; }
+    goTab(calcCur+1);
+  }},'다음 →');
+  const cInfo=el('span',{class:'mini fill'});
+  $('#calcNav').innerHTML=''; $('#calcNav').append(cPrev,cNext,cInfo);
+  tabs.forEach((b,i)=>b.addEventListener('click',()=>goTab(i)));
+  calcS.goTab=goTab; calcS.paintTabs=paintTabs;
   $('#calcBack').addEventListener('click',()=>show('home'));
   // 공식 계산기
   const cp=$('#calcP');
@@ -2104,7 +2397,7 @@ function initCalc(){
   paintScaleTable(); paintScaleInfo(); drawScaleBar();
   $('#scaleUnit').addEventListener('change',e=>{ scaleS.unit=e.target.value; drawScaleBar(); });
   // 단위 환산 4문제 (스케일 감각 문항 포함)
-  const newUnit=()=>makeQuizList($('#unitQuiz'),['unitPcLy','unitAngle','unitAU','define','scale'],4,'calc',(s,n)=>{
+  const newUnit=()=>calcS.unitQuiz=makeQuizList($('#unitQuiz'),['unitPcLy','unitAngle','unitAU','define','scale'],4,'calc',(s,n)=>{
     calcS.unit=s; $('#unitScore').textContent=s;
     ME.stages.calc.unitCorrect=s; ME.stages.calc.unitsDone=(s>=4); saveDB();
     $('#calcUnitState').textContent = s>=4?'완료 ✓':`${s}/4`;
@@ -2113,7 +2406,7 @@ function initCalc(){
   newUnit();
   $('#btnUnitNew').addEventListener('click',newUnit);
   // 거리 계산 5문제
-  makeQuizList($('#calcQuiz'),['calcD','calcP','half','limit','calcD'],5,'calc',(s,n)=>{
+  calcS.quiz=makeQuizList($('#calcQuiz'),['calcD','calcP','half','limit','calcD'],5,'calc',(s,n)=>{
     calcS.calc=s; $('#calcScore').textContent=s; refreshCalcDone();
   });
   $('#btnCalcDone').addEventListener('click',()=>{
@@ -2133,6 +2426,7 @@ function paintStarTable(){
   });
 }
 function refreshCalcDone(){
+  if(calcS.paintTabs) calcS.paintTabs();
   const ok = calcS.calc>=5 && calcS.unit>=4;
   const b=$('#btnCalcDone'); if(!b) return;
   b.disabled=!ok;
@@ -2375,7 +2669,7 @@ function initGraph(){
     b.append(el('div',{class:'note'},`${RUBRICS.graph.minLen}자 이상, ${RUBRICS.graph.minSent}문장 이상이면 분량 점수를 받습니다.`));
     modal(RUBRICS.graph.title,b);
   });
-  makeQuizList($('#graphQuiz'),['graphRead','graphShape','limit','ratio'],4,'graph',(s,n)=>{
+  graphS.quiz=makeQuizList($('#graphQuiz'),['graphRead','graphShape','limit','ratio'],4,'graph',(s,n)=>{
     graphS.solved=s; $('#graphScore').textContent=s; refreshGraphDone();
   });
   bindEssay('graph','#txtGraph','#btnTxtGraph','#cntGraph','#rubGraph',g=>{
@@ -2387,8 +2681,23 @@ function initGraph(){
     toast('심화 단계 통과! 방탈출에 도전하세요.'); show('home');
   });
   paintGraphs(); refreshGraphDone();
+  // 관문 구성: 표 채우기 → 그래프 비교 → 해석 문제 → 서술과 통과
+  const gc=$$('#screen-graph > .card').slice(1);
+  graphS.stepper=makeStepper({
+    barSel:'#graphSteps', navSel:'#graphNav', key:'graph',
+    steps:[
+      {el:gc[0],name:'표 채우기',
+        ready:()=>((ME.stages.graph.plot||0)>=GRAPH_STARS.length)||'5개 별의 거리를 모두 정확히 입력해야 합니다.'},
+      {el:gc[1],name:'두 그래프 비교',onShow:paintGraphs},
+      {el:gc[2],name:'해석 문제',
+        ready:()=>graphS.solved>=4||'해석 문제 4개를 모두 맞혀야 합니다.'},
+      {el:gc[3],name:'해석 서술',
+        ready:()=>graphS.essayOk||'그래프 해석 서술을 제출해야 합니다.'}
+    ]
+  });
 }
 function refreshGraphDone(){
+  if(graphS.stepper) graphS.stepper.refresh();
   const plotOk=(ME.stages.graph.plot||0)>=GRAPH_STARS.length;
   const ok=plotOk&&graphS.solved>=4&&graphS.essayOk;
   const b=$('#btnGraphDone'); if(!b) return;
@@ -2645,6 +2954,7 @@ function askRoom(){
   }));
   card.append(holder);
   area.append(card);
+  armSupport(holder);
 }
 /* =========================================================
    11-2. 모둠 협동 잠금 — 조원들의 열쇠 조각을 모아야 열리는 최종 자물쇠
@@ -3344,6 +3654,161 @@ function classReport(){
 }
 
 /* =========================================================
+   12-2b. AI 활용 활동
+   ① AI가 준 답을 자료(연주시차)로 검산 → 오차·원인 진단
+   ② 같은 질문을 세 번 고쳐 쓰며 프롬프트 품질을 규칙으로 점검
+   ※ 앱은 어떤 AI 서비스에도 연결되지 않습니다(비용·계정·개인정보 전송 없음).
+   ========================================================= */
+const AI_ACT={inited:false};
+/* 프롬프트 품질 점검 규칙 */
+const PROMPT_CHECKS=[
+  {k:'무엇을 묻는지 분명한가', re:/거리|얼마|몇|구해|계산/,             tip:'“∼까지의 거리는 얼마인가”처럼 묻는 대상을 분명히 쓰세요.'},
+  {k:'대상(별)을 지정했는가', re:/프록시마|시리우스|베가|알타이르|폴라리스|데네브|베텔게우스|백조|별\s*[A-Za-z가나다]|이 별/,
+                                                                        tip:'별 이름을 넣으세요. (예: 시리우스)'},
+  {k:'자료(연주시차)를 함께 주었는가', re:/연주시차|시차|0\.\d|″|각초/, tip:'“연주시차가 0.379″일 때”처럼 자료를 함께 주면 검산이 쉬워집니다.'},
+  {k:'답의 단위를 지정했는가', re:/pc|파섹|광년|ly|AU|천문단위/,        tip:'“pc로 답해 줘”처럼 단위를 지정하세요.'},
+  {k:'근거·계산 과정을 요구했는가', re:/근거|과정|어떻게|왜|계산|출처|단계|풀이/, tip:'“계산 과정을 단계별로 보여 줘”를 덧붙이세요.'}
+];
+function gradePrompt(t){
+  const s=String(t||'');
+  const hits=PROMPT_CHECKS.map(c=>({k:c.k,ok:c.re.test(s),tip:c.tip}));
+  const got=hits.filter(h=>h.ok).length;
+  return {hits,got,total:PROMPT_CHECKS.length,score:Math.round(got/PROMPT_CHECKS.length*100),len:s.trim().length};
+}
+function aiStarNow(){ return STARS[clamp(+($('#aiStar')&&$('#aiStar').value)||0,0,STARS.length-1)]; }
+function paintAiStar(){
+  const s=aiStarNow(), d=1/s.p, ly=d*LY_PER_PC;
+  $('#aiStarInfo').innerHTML=
+    `<b>${s.n}</b> <span class="tag">교과서 관측 자료</span>
+     <div class="mini" style="margin-top:6px">
+       · 연주시차 p = <b>${s.p}″</b><br>
+       · 내가 계산할 값: d = 1 ÷ ${s.p} = <b>?</b> pc (직접 계산해 보세요)<br>
+       · 검산은 앱이 함께 해 줍니다. AI 답을 먼저 받아 적으세요.</div>`;
+  $('#aiPromptBase').value=
+    `${s.n}까지의 거리는 얼마인가요? 연주시차는 ${s.p}″입니다. 파섹(pc)과 광년(ly)으로 각각 알려주고, 계산 과정을 단계별로 보여 주세요.`;
+}
+function aiCheck(){
+  const s=aiStarNow(), truePc=1/s.p;
+  const raw=($('#aiVal').value||'').trim().replace(/,/g,'');
+  const v=Number(raw), u=$('#aiUnit').value;
+  const out=$('#aiCheckOut');
+  if(!raw||!isFinite(v)||v<=0){
+    out.innerHTML='<div class="fb no">AI가 말한 거리 값을 숫자로 입력하세요.</div>';
+    $('#aiVerdict').textContent='—'; return;
+  }
+  const asPc = u==='pc'? v : u==='ly'? v/LY_PER_PC : v/AU_PER_PC;
+  const err=(asPc-truePc)/truePc*100;
+  const ae=Math.abs(err);
+  const verdict = ae<=5?'값 일치' : ae<=20?'조금 다름' : '크게 다름';
+  $('#aiVerdict').textContent=verdict;
+  // 오차 원인 자동 진단
+  const causes=[];
+  if(ae>20){
+    if(Math.abs(asPc-truePc*LY_PER_PC)/(truePc*LY_PER_PC)<0.1) causes.push('pc와 광년을 <b>바꿔</b> 말한 것 같습니다(×3.26 관계 확인).');
+    if(Math.abs(asPc-truePc/LY_PER_PC)/(truePc/LY_PER_PC)<0.1) causes.push('광년을 pc로 <b>한 번 더 나눈</b> 것 같습니다.');
+    if(Math.abs(asPc-s.p)/s.p<0.1) causes.push('거리 대신 <b>연주시차 값</b>을 그대로 말했습니다(d = 1/p 미적용).');
+    if(!causes.length) causes.push('출처가 다른 시차 값을 썼거나, 계산이 틀렸을 수 있습니다. AI 답변의 계산 과정을 확인해 보세요.');
+  }
+  const ansTxt=$('#aiAnswer').value||'';
+  const hasProcess=/=|÷|\/|나누|곱|계산|단계/.test(ansTxt);
+  const hasUnit=/pc|파섹|광년|ly|AU/.test(ansTxt);
+  out.innerHTML=
+    `<div class="qbox${ae<=5?' solved':''}" style="margin-top:10px">
+      <b>검산 결과 · ${verdict}</b>
+      <div class="mini" style="margin-top:6px">
+        · 내 자료로 계산한 참값: d = 1 ÷ ${s.p} = <b>${fx(truePc,2)} pc</b> = ${fx(truePc*LY_PER_PC,1)} ly
+          = ${Math.round(truePc*AU_PER_PC).toLocaleString()} AU<br>
+        · AI가 말한 값: ${raw} ${unitName(u)} → <b>${fx(asPc,2)} pc</b><br>
+        · 차이: <b style="color:${ae<=5?'var(--good)':ae<=20?'var(--warn)':'var(--bad)'}">${err>0?'+':''}${fx(err,1)}%</b><br>
+        ${causes.length?'· 예상 원인: '+causes.join(' / ')+'<br>':''}
+        · AI 답변 점검: 계산 과정 ${hasProcess?'✅ 있음':'⬜ 없음(근거를 더 요구해 보세요)'} ·
+          단위 표기 ${hasUnit?'✅ 있음':'⬜ 없음'}
+      </div>
+    </div>`;
+  ME.ai=ME.ai||{};
+  ME.ai.verify={star:s.n,p:s.p,given:raw,unit:u,asPc:+fx(asPc,3),err:+fx(err,1),
+                verdict,hasProcess,hasUnit,at:Date.now()};
+  saveDB();
+  logAnswer({stage:'ai',type:'aiVerify',tag:'AI검증',ok:ae<=5,given:raw+unitName(u),ans:fx(truePc,2)+' pc'});
+}
+function paintPromptRows(){
+  const host=$('#aiPromptRows'); host.innerHTML='';
+  const saved=(ME.ai&&ME.ai.prompts)||[];
+  const guide=['1차 — 떠오르는 대로 물어보기',
+               '2차 — 자료(시차)와 단위를 지정해 물어보기',
+               '3차 — 근거·계산 과정까지 요구하기'];
+  for(let i=0;i<3;i++){
+    const s=saved[i]||{};
+    const box=el('div',{class:'qbox'});
+    box.append(el('div',{class:'qhead'},guide[i]));
+    const ta=el('textarea',{rows:'2',id:'aiP'+i,placeholder:'AI에게 실제로 보낸 질문을 그대로 적어 주세요'});
+    ta.value=s.p||'';
+    const ans=el('textarea',{rows:'2',id:'aiA'+i,placeholder:'AI 답변을 한두 줄로 요약'});
+    ans.value=s.ans||'';
+    const rate=el('select',{id:'aiR'+i,style:'width:auto'});
+    [['good','정확했다'],['vague','애매했다'],['bad','틀렸다']].forEach(([v,t])=>
+      rate.append(el('option',{value:v,...(s.rate===v?{selected:'selected'}:{})},t)));
+    box.append(ta,el('div',{style:'height:6px'}),ans,
+      el('div',{class:'row',style:'margin-top:8px'},el('span',{class:'mini'},'내 평가'),rate,
+        el('span',{class:'mini',id:'aiPS'+i})));
+    host.append(box);
+  }
+}
+function savePrompts(){
+  const rows=[];
+  for(let i=0;i<3;i++){
+    rows.push({p:$('#aiP'+i).value.trim(),ans:$('#aiA'+i).value.trim(),rate:$('#aiR'+i).value});
+  }
+  const filled=rows.filter(r=>r.p);
+  const out=$('#aiPromptOut'); out.innerHTML='';
+  if(filled.length<3){
+    out.innerHTML=`<div class="fb no">질문 3개를 모두 적어야 비교할 수 있습니다. (지금 ${filled.length}개)</div>`;
+    return;
+  }
+  const grades=rows.map(r=>gradePrompt(r.p));
+  rows.forEach((r,i)=>{ grades[i].score; $('#aiPS'+i).textContent=`질문 품질 ${grades[i].score}점 (${grades[i].got}/${grades[i].total})`; });
+  const best=Math.max(...grades.map(g=>g.score));
+  $('#aiPromptScore').textContent=best+'점';
+  const box=el('div',{class:'qbox'+(best>=80?' solved':''),style:'margin-top:10px'});
+  box.append(el('b',{},`가장 좋은 질문 품질 ${best}점 · 3회 기록 완료`));
+  grades.forEach((g,i)=>{
+    box.append(el('div',{class:'mini',style:'margin-top:6px'},
+      `${i+1}차 (${g.score}점): `+g.hits.map(h=>(h.ok?'✅':'⬜')+h.k).join(' · ')));
+  });
+  const missing=grades[2].hits.filter(h=>!h.ok);
+  box.append(el('div',{class:'mini',style:'margin-top:8px;color:'+(missing.length?'var(--warn)':'var(--accent)')},
+    missing.length? '3차 질문에서 더 넣으면 좋은 것: '+missing.map(m=>m.tip).join(' ')
+                  : '세 번째 질문에 필요한 조건이 모두 들어 있습니다. 훌륭합니다!'));
+  const better=rows.filter(r=>r.rate==='good').length;
+  box.append(el('div',{class:'mini',style:'margin-top:6px'},
+    `내 평가: 정확 ${better}회 · 애매 ${rows.filter(r=>r.rate==='vague').length}회 · 틀림 ${rows.filter(r=>r.rate==='bad').length}회`
+    +(grades[2].score>grades[0].score?' → 질문을 고칠수록 조건이 늘었습니다.':'')));
+  out.append(box);
+  ME.ai=ME.ai||{};
+  ME.ai.prompts=rows.map((r,i)=>({...r,score:grades[i].score}));
+  ME.ai.promptBest=best;
+  saveDB();
+  logAnswer({stage:'ai',type:'aiPrompt',tag:'프롬프트',ok:best>=60,given:String(best),ans:'60+'});
+}
+function initAI(){
+  paintAiStar(); paintPromptRows();
+  if(AI_ACT.inited) return;
+  AI_ACT.inited=true;
+  $('#aiStar').innerHTML=STARS.map((s,i)=>`<option value="${i}">${s.n} (p = ${s.p}″)</option>`).join('');
+  $('#aiStar').addEventListener('change',()=>{ paintAiStar(); $('#aiCheckOut').innerHTML=''; $('#aiVerdict').textContent='—'; });
+  paintAiStar();
+  $('#aiBack').addEventListener('click',()=>show('home'));
+  $('#aiCopyPrompt').addEventListener('click',async()=>{
+    try{ await navigator.clipboard.writeText($('#aiPromptBase').value); toast('질문을 복사했습니다. AI 도구에 붙여넣으세요.'); }
+    catch(e){ $('#aiPromptBase').select(); toast('Ctrl+C로 복사하세요.'); }
+  });
+  $('#aiCheck').addEventListener('click',aiCheck);
+  $('#aiPromptSave').addEventListener('click',savePrompts);
+  bindEssay('aiverify','#aiEssay','#aiEssaySubmit','#aiEssayCnt','#aiEssayOut');
+  bindEssay('aiprompt','#aiPromptEssay','#aiPromptEssaySubmit','#aiPromptEssayCnt','#aiPromptEssayOut');
+}
+
+/* =========================================================
    12-3. 학생용 리포트 — 성취기준 현황 + 세 영역(지식·이해/과정·기능/가치·태도)
    모든 점수는 학생이 남긴 기록에서 규칙으로 계산합니다(비공개 전송 없음).
    ========================================================= */
@@ -3675,8 +4140,26 @@ function studentDetail(s){
     b.append(el('h3',{},'방탈출 문항별 해결 시간'));
     b.append(el('div',{class:'scrollx'},itemTable(S.best.items)));
   }
+  // AI 활용 활동
+  if(s.ai&&(s.ai.verify||s.ai.prompts)){
+    b.append(el('h3',{},'🤖 AI 활용 활동'));
+    if(s.ai.verify){
+      const v=s.ai.verify;
+      b.append(el('div',{class:'mini'},
+        `· 답변 검증: ${v.star} (p=${v.p}″) — AI 답 ${v.given} ${unitName(v.unit)} → ${v.asPc} pc, `+
+        `참값과 차이 ${v.err>0?'+':''}${v.err}% · 판정 ${v.verdict}`));
+      b.append(el('div',{class:'mini'},
+        `· AI 답변 점검: 계산 과정 ${v.hasProcess?'있음':'없음'} · 단위 표기 ${v.hasUnit?'있음':'없음'}`));
+    }
+    if(s.ai.prompts&&s.ai.prompts.length){
+      b.append(el('div',{class:'mini'},`· 프롬프트 개선: ${s.ai.prompts.map((p,i)=>`${i+1}차 ${p.score}점`).join(' → ')}`));
+      s.ai.prompts.forEach((p,i)=>b.append(el('div',{class:'mini',style:'color:var(--muted)'},
+        `  ${i+1}차 질문: ${p.p||'(비어 있음)'} / 자기평가: ${({good:'정확',vague:'애매',bad:'틀림'})[p.rate]||'-'}`)));
+    }
+  }
   b.append(el('h3',{},'서술형 답안'));
-  const eKeys={basic:'관찰 서술',graph:'그래프 해석 서술',quiz:'탈출 보고서'};
+  const eKeys={basic:'관찰 서술',graph:'그래프 해석 서술',quiz:'탈출 보고서',
+               aiverify:'AI 검증 서술',aiprompt:'프롬프트 개선 서술'};
   let hasE=false;
   Object.entries(eKeys).forEach(([k,label])=>{
     const e=S.essays[k]; if(!e) return; hasE=true;
@@ -3700,7 +4183,8 @@ function csvExport(){
                '모둠협동잠금','모둠열쇠조각',
                '문항별해결시간','문항평균시간(초)','최장소요문항',
                '문항수','정답수','정답률(%)','학습시간(분)','주요오개념','성취기준도달',
-               '관찰서술','그래프해석서술','탈출보고서']];
+               'AI검증판정','AI검증오차(%)','프롬프트최고점수',
+               '관찰서술','그래프해석서술','탈출보고서','AI검증서술','프롬프트개선서술']];
   Object.values(DB.students).forEach(s=>{
     const S=summarize(s), e=S.essays;
     const items=(S.best&&S.best.items)||[], st=itemsStats(items);
@@ -3712,7 +4196,10 @@ function csvExport(){
       itemsToText(items), st.avg, st.slow,
       S.n,S.ok,S.n?Math.round(S.rate*100):0,Math.round(S.ms/60000),
       S.mis.length?(MIS_LABEL[S.mis[0][0]]||S.mis[0][0]):'', S.reach?'도달':'미도달',
-      (e.basic&&e.basic.text)||'',(e.graph&&e.graph.text)||'',(e.quiz&&e.quiz.text)||'']);
+      (s.ai&&s.ai.verify&&s.ai.verify.verdict)||'', (s.ai&&s.ai.verify&&s.ai.verify.err)??'',
+      (s.ai&&s.ai.promptBest)??'',
+      (e.basic&&e.basic.text)||'',(e.graph&&e.graph.text)||'',(e.quiz&&e.quiz.text)||'',
+      (e.aiverify&&e.aiverify.text)||'',(e.aiprompt&&e.aiprompt.text)||'']);
   });
   const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""').replace(/\n/g,' ')}"`).join(',')).join('\r\n');
   const a=el('a',{href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),
@@ -4058,6 +4545,7 @@ function boot(){
     catch(e){ toast('조각: '+f.code); }
   });
   $('#btnReport').addEventListener('click',()=>show('report'));
+  $('#btnAI').addEventListener('click',()=>show('ai'));
   $('#repBack').addEventListener('click',()=>show('home'));
   $('#repPrint').addEventListener('click',()=>window.print());
   $('#btnMakeCode').addEventListener('click',()=>{ makeMyCode(); toast('결과 코드를 만들었습니다.'); });
@@ -4155,13 +4643,14 @@ function openDevBridge(){
     genQ,gradeText,summarize,near,builtCount,makeNoteText,makeFeedbackText,
     itemsToText,itemsStats,vizAggregate,histo,maskName,classReport,
     keyFragment,parseKey,paintMyKey,niceNum,unitVal,reportData,stdIndicators,paintReport,
+    gradePrompt,initAI,aiCheck,savePrompts,recSpreadOk,armSupport,makeStepper,questionCard,
     show,startQuiz,setLevel,enterStudent,paintBuildLog,paintItemTimes,finishQuiz,
     makeMyCode,b64dec,
     dec:decStr, hshOf:hsh, bucketOf,                 // 점검용
     solve:q=>({text:decStr(q._s),explain:decStr(q._e),hint:decStr(q._h)}),
     onQuestion:null,
     get DB(){return DB;}, get ME(){return ME;}, set ME(v){ME=v;}, get LV(){return LV;},
-    get quizS(){return quizS;}, get basic(){return basic;}, get graphS(){return graphS;},
+    get quizS(){return quizS;}, get basic(){return basic;}, get graphS(){return graphS;}, get calcS(){return calcS;},
     get integrity(){return INTEGRITY;}
   };
   console.info('[연주시차 탐구소] 점검 모드가 열렸습니다.');
