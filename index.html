@@ -1961,6 +1961,8 @@ function makeStepper(opts){
   const {barSel,navSel,steps,onChange,key}=opts;
   const bar=$(barSel), nav=$(navSel);
   let cur=0;
+  /* 한 관문에 카드 여러 장을 함께 둘 수 있다 (예: 시뮬레이터 + 관찰 기록) */
+  const elsOf=s=>Array.isArray(s.el)?s.el:[s.el];
   /* 통과 조건이 없는 관문(읽기·관찰)은 "한 번 열어 본 적이 있으면" 완료로 본다 */
   const seenList=()=>{
     if(!ME||!key) return [];
@@ -2004,16 +2006,16 @@ function makeStepper(opts){
     i=clamp(i,0,steps.length-1);
     if(i>cur && !readyOf(cur)){ toast(reasonOf(cur)||'이 관문을 먼저 완료하세요.',true); return; }
     cur=i; markSeen(i);
-    steps.forEach((s,k)=>s.el.classList.toggle('hidden',k!==cur));
+    steps.forEach((s,k)=>elsOf(s).forEach(e=>e.classList.toggle('hidden',k!==cur)));
     bPrev.disabled=(cur===0);
     bNext.classList.toggle('hidden',cur===steps.length-1);
     info.textContent=`관문 ${cur+1} / ${steps.length}`;
     paintBar();
     const s=steps[cur];
     if(s.onShow) requestAnimationFrame(()=>s.onShow());
-    armSupport(s.el);
+    elsOf(s).forEach(e=>armSupport(e));
     onChange&&onChange(cur);
-    const top=s.el.getBoundingClientRect().top+window.scrollY-90;
+    const top=elsOf(s)[0].getBoundingClientRect().top+window.scrollY-90;
     window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
   }
   const api={go,refresh:()=>{paintBar();bNext.classList.toggle('hidden',cur===steps.length-1);},
@@ -2079,8 +2081,9 @@ function drawSpace(){
   x.strokeStyle='rgba(251,191,36,.9)'; x.lineWidth=1.4;
   x.beginPath(); x.arc(sx,sy,arcR,Math.PI-0.09,Math.PI+0.09); x.stroke();
   x.fillStyle='#fbbf24'; x.font='bold 13px system-ui';
+  // 시차 라벨은 호의 안쪽(별 방향)에 두어 태양·지구 라벨과 겹치지 않게 한다
   const pLab=`p = ${fx(pOf(basic.dist),3)}″`, pw=x.measureText(pLab).width;
-  x.fillText(pLab,clamp(sx-arcR-pw-6,4,W-pw-4),sy-8);
+  x.fillText(pLab,clamp(sx-arcR+8,4,W-pw-4),sy+22);
   x.fillStyle='#93a3c4'; x.font='12px system-ui';
   x.fillText('반년 뒤 지구 위치는 궤도 반대편(연한 점)',12,H-12);
 }
@@ -2108,7 +2111,7 @@ function drawSky(){
   x.fillStyle=g; x.beginPath(); x.arc(px,py,18,0,7); x.fill();
   x.fillStyle='#fff'; x.beginPath(); x.arc(px,py,4.2,0,7); x.fill();
   x.font='12px system-ui'; x.fillStyle='#fbbf24';
-  x.fillText('← 반년 동안 이 폭만큼 움직여 보임 →',W/2-amp-4,H/2+26);
+  x.fillText('← 반년 동안 이 폭만큼 움직여 보임 →',W/2-amp-4,H/2+46);
   x.fillStyle='#93a3c4';
   x.fillText(`${['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'][basic.month]} 관측`,12,20);
 }
@@ -2168,8 +2171,8 @@ function initBasic(){
     barSel:'#basicSteps', navSel:'#basicNav', key:'basic',
     steps:[
       {el:cards[0],name:'손가락 체험'},
-      {el:cards[1],name:'시뮬레이터',onShow:basicPaint},
-      {el:cards[2],name:'관찰 기록',
+      // 시뮬레이터와 기록표는 같은 화면에 — 슬라이더를 움직이며 바로 기록할 수 있어야 한다
+      {el:[cards[1],cards[2]],name:'시뮬레이터와 관찰 기록',onShow:basicPaint,
         ready:()=>recSpreadOk()||'거리를 바꿔 3번 기록해야 합니다(가장 먼 값이 가장 가까운 값의 2배 이상).'},
       {el:cards[3],name:'결론과 서술',
         ready:()=>(basic.concl&&basic.essayOk)||'결론 문장 확인과 관찰 서술 제출을 마쳐야 합니다.'},
@@ -2686,9 +2689,9 @@ function initGraph(){
   graphS.stepper=makeStepper({
     barSel:'#graphSteps', navSel:'#graphNav', key:'graph',
     steps:[
-      {el:gc[0],name:'표 채우기',
+      // 표에 입력한 점이 곧바로 그래프에 찍히는 것을 봐야 하므로 함께 표시
+      {el:[gc[0],gc[1]],name:'표 채우고 그래프 보기',onShow:paintGraphs,
         ready:()=>((ME.stages.graph.plot||0)>=GRAPH_STARS.length)||'5개 별의 거리를 모두 정확히 입력해야 합니다.'},
-      {el:gc[1],name:'두 그래프 비교',onShow:paintGraphs},
       {el:gc[2],name:'해석 문제',
         ready:()=>graphS.solved>=4||'해석 문제 4개를 모두 맞혀야 합니다.'},
       {el:gc[3],name:'해석 서술',
