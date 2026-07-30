@@ -6,7 +6,8 @@
       "Bash(cp 연주시차_학습앱.html index.html)",
       "Bash(node --check _check.js)",
       "Bash(rm -f _check.js)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(node \"C:/Users/부여여~1/AppData/Local/Temp/claude/c--project-a260729star/b36ca467-499d-4c68-86b3-e84777c4c452/scratchpad/patch_auto2.js\")"
     ]
   }
 }
