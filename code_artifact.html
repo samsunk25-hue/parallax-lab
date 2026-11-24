@@ -146,9 +146,11 @@
             <div class="w-full max-w-xs mb-8 flex flex-col gap-3">
                 <input type="text" id="student-id" placeholder="학번 (예: 3101)" class="scifi-input w-full py-2 px-4 rounded text-center">
                 <input type="text" id="student-name" placeholder="이름 (예: 홍길동)" class="scifi-input w-full py-2 px-4 rounded text-center">
+                <input type="password" id="student-pw" placeholder="비밀번호 (4자 이상, 직접 정하기)" autocomplete="new-password" class="scifi-input w-full py-2 px-4 rounded text-center" onkeypress="if(event.key==='Enter') startGame()">
+                <p class="text-xs text-gray-400 leading-relaxed">학번·비밀번호가 같으면 이 기기에 저장된 이전 기록을 이어서 불러옵니다.<br>비밀번호는 어디에도 저장되지 않으니 꼭 기억하세요.</p>
             </div>
 
-            <button onclick="startGame()" class="scifi-btn font-bold py-3 px-8 rounded text-lg w-full max-w-xs mb-6">
+            <button id="start-btn" onclick="startGame()" class="scifi-btn font-bold py-3 px-8 rounded text-lg w-full max-w-xs mb-6">
                 시스템 복구 시작
             </button>
             
@@ -257,13 +259,54 @@
                 </div>
             </div>
 
+            <!-- 학생용 링크 + 복구 키 -->
+            <div class="mb-8 bg-gray-900/80 p-5 rounded-lg border border-gray-600">
+                <h3 class="text-lg font-bold text-[#64ffda] mb-2">2. 다른 기기 이어하기 · 교사 복구 키</h3>
+                <ol class="text-sm text-gray-400 mb-4 list-decimal pl-5 space-y-1 leading-relaxed">
+                    <li><b class="text-gray-200">복구 키 만들기</b>를 누르면 복구 키 파일이 내려받아지고, 아래에 Apps Script 코드가 나타납니다.</li>
+                    <li>구글 시트 › 확장 프로그램 › Apps Script에 그 코드를 <b class="text-gray-200">통째로 붙여넣고</b> 웹 앱으로 배포(액세스: 모든 사용자)한 뒤, 그 URL을 위 1번에 저장하세요.</li>
+                    <li>아래 <b class="text-gray-200">학생용 링크</b>를 나눠 주면 학생은 어느 기기에서든 같은 학번·비밀번호로 이어서 할 수 있습니다.</li>
+                </ol>
+                <p class="text-xs text-yellow-400 mb-4">※ 복구 키 파일이 있으면 모든 학생 기록을 열 수 있습니다. 학교 PC 공용 폴더·메신저에 두지 말고 안전하게 보관하세요. 키를 새로 만들면 이전 키로 잠긴 기록은 새 키로 열리지 않습니다(학생이 한 번 더 접속하면 새 키로 다시 잠깁니다).</p>
+                <div class="flex flex-wrap gap-3 mb-3">
+                    <button onclick="createRecoveryKey()" class="scifi-btn py-2 px-5 rounded font-bold text-sm">🔑 복구 키 만들기</button>
+                    <label class="border border-[#64ffda]/60 text-[#64ffda] hover:bg-[#64ffda]/10 py-2 px-5 rounded font-bold text-sm cursor-pointer">
+                        📂 복구 키 파일 불러오기<input type="file" accept=".json,application/json" class="hidden" onchange="loadRecoveryKey(this)">
+                    </label>
+                    <button onclick="copyStudentLink()" class="border border-gray-500 text-gray-300 hover:bg-gray-800 py-2 px-5 rounded font-bold text-sm">🔗 학생용 링크 복사</button>
+                </div>
+                <div id="recovery-status" class="text-sm text-gray-300 mb-3"></div>
+                <div id="script-code-box" class="hidden mb-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm text-gray-300">Apps Script 코드 (복구 키 전용 — 그대로 붙여넣기)</span>
+                        <button onclick="copyScriptCode()" class="text-xs text-[#64ffda] underline">코드 복사</button>
+                    </div>
+                    <textarea id="script-code" rows="8" readonly class="scifi-input w-full p-3 rounded text-xs font-mono text-gray-200"></textarea>
+                </div>
+                <div id="recovery-panel" class="hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-300">선생님 시트에 보관된 학생 기록 (복구 키로 열람)</span>
+                        <button onclick="loadRecoveryList()" class="text-xs text-[#64ffda] underline">새로고침</button>
+                    </div>
+                    <div class="overflow-x-auto border border-gray-700 rounded-md">
+                        <table class="w-full text-sm text-left text-gray-300 whitespace-nowrap">
+                            <thead class="text-xs text-[#64ffda] bg-gray-800"><tr>
+                                <th class="px-4 py-2">학번</th><th class="px-4 py-2">이름</th><th class="px-4 py-2">진행 상태</th>
+                                <th class="px-4 py-2 text-center">완료/최고점</th><th class="px-4 py-2">마지막 저장</th><th class="px-4 py-2"></th>
+                            </tr></thead>
+                            <tbody id="recovery-body" class="divide-y divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- 로컬 데이터 기록 -->
             <div class="flex-1 flex flex-col bg-gray-900/80 p-5 rounded-lg border border-gray-600 overflow-hidden">
                 <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
                     <div>
                         <h3 class="text-lg font-bold text-[#64ffda] flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            2. 기기 내 로컬 기록 목록
+                            3. 기기 내 로컬 기록 목록
                         </h3>
                         <p class="text-sm text-gray-400 mt-1">이 기기(브라우저)에서 완료된 학생들의 기록입니다. 오프라인이나 시트 연동 전에도 열람 가능합니다.</p>
                     </div>
@@ -330,7 +373,165 @@
 
         // 교사용 URL 및 로컬 데이터
         let appsScriptUrl = localStorage.getItem('parallax_script_url') || '';
-        let localRecords = JSON.parse(localStorage.getItem('parallax_local_records') || '[]');
+        /* ---------- 개인정보 보호 저장소 ----------
+           · 학생 기록: 학번+비밀번호로 PBKDF2 키를 만들어 AES-GCM으로 암호화해 보관.
+             비밀번호와 키는 저장하지 않으며, 같은 학번+비밀번호를 넣어야만 슬롯을 찾고 풀 수 있다.
+           · 교사 대시보드 목록: 학번과 가린 이름(홍○동)만 보관. 실명은 교사 시트로만 전송된다. */
+        const TEACHER_KEY = 'parallax_teacher_records';
+        const SLOT_PREFIX = 'plx_s_';
+        const enc = new TextEncoder(), dec = new TextDecoder();
+        const toB64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const fromB64 = (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+        const toHex = (buf) => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+        const escHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        function maskName(n) {
+            const a = [...String(n || '')];
+            if (!a.length) return '';
+            if (a.length <= 2) return a[0] + '○';
+            return a[0] + '○'.repeat(a.length - 2) + a[a.length - 1];
+        }
+        function readTeacherRecords() {
+            try { return JSON.parse(localStorage.getItem(TEACHER_KEY) || '[]'); } catch (e) { return []; }
+        }
+        // 이전 버전의 평문 기록(실명 포함)은 가린 이름으로 옮기고 원본은 지운다
+        (function migrateLegacy() {
+            const raw = localStorage.getItem('parallax_local_records');
+            if (raw === null) return;
+            let old = [];
+            try { old = JSON.parse(raw) || []; } catch (e) {}
+            const list = readTeacherRecords().concat(old.map(r => ({ ...r, studentName: maskName(r.studentName) })));
+            localStorage.setItem(TEACHER_KEY, JSON.stringify(list));
+            localStorage.removeItem('parallax_local_records');
+        })();
+        let localRecords = readTeacherRecords();
+
+        /* 학생 기록 봉투(envelope) 구조
+           { v:2, iv, ct          ← 데이터 키(DK)로 암호화한 학생 기록
+             w:{iv,ct}            ← DK를 '학번+비밀번호' 키로 잠근 것 (학생용 자물쇠)
+             t, kid               ← DK를 교사 공개키(RSA-OAEP)로 잠근 것 (교사 복구용 자물쇠)
+             u }                  ← 마지막 저장 시각(어느 쪽이 최신인지 비교용)
+           봉투는 이 기기와 교사 시트(기록보관 탭)에 똑같이 저장되며, 시트에는 알아볼 수 없는 문자열만 남는다. */
+        const SLOT_RE = /^plx_s_[0-9a-f]{32}$/;
+        const TPUB_KEY = 'plx_tpub';
+        const HISTORY_MAX = 30;
+        let session = null;   // { slot, pwKey, dkRaw, dk, data, pub, kid, prevT, prevKid } — 메모리에만 존재
+
+        async function deriveSession(studentId, password) {
+            const base = await crypto.subtle.importKey('raw', enc.encode(studentId + '\u0000' + password), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits(
+                { name: 'PBKDF2', hash: 'SHA-256', salt: enc.encode('parallax-escape-v1|' + studentId), iterations: 150000 }, base, 512);
+            const pwKey = await crypto.subtle.importKey('raw', bits.slice(0, 32), 'AES-GCM', false, ['encrypt', 'decrypt']);
+            return { slot: SLOT_PREFIX + toHex(bits.slice(32)).slice(0, 32), pwKey };
+        }
+        async function aesEnc(key, bytes) {
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, bytes);
+            return { iv: toB64(iv), ct: toB64(ct) };
+        }
+        async function aesDec(key, box) {
+            return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(box.iv) }, key, fromB64(box.ct)));
+        }
+        const importDK = (raw) => crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
+        async function openEnvelope(env, pwKey) {
+            try {
+                const dkRaw = await aesDec(pwKey, env.w);
+                const dk = await importDK(dkRaw);
+                const data = JSON.parse(dec.decode(await aesDec(dk, env)));
+                return { dkRaw, dk, data };
+            } catch (e) { return null; }   // 비밀번호가 다르면 여기서 실패
+        }
+        async function sealEnvelope(s) {
+            const body = await aesEnc(s.dk, enc.encode(JSON.stringify(s.data)));
+            const env = { v: 2, ...body, w: await aesEnc(s.pwKey, s.dkRaw), u: Date.now(), t: s.prevT || null, kid: s.prevKid || null };
+            if (s.pub) {
+                env.t = toB64(await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, s.pub, s.dkRaw));
+                env.kid = s.kid;
+            }
+            return env;
+        }
+        function readLocalEnv(slot) {
+            try { const e = JSON.parse(localStorage.getItem(slot) || 'null'); return e && e.v === 2 ? e : null; } catch (e) { return null; }
+        }
+
+        /* ---- 교사 시트 통신 ---- */
+        async function fetchJSON(url, opt = {}, ms = 6000) {
+            const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), ms);
+            try { const r = await fetch(url, { ...opt, signal: ac.signal, redirect: 'follow' }); return await r.json(); }
+            finally { clearTimeout(tm); }
+        }
+        const withQuery = (base, q) => base + (base.includes('?') ? '&' : '?') + new URLSearchParams(q).toString();
+        async function fetchRemoteEnv(slot) {
+            if (!appsScriptUrl) return null;
+            try {
+                const r = await fetchJSON(withQuery(appsScriptUrl, { action: 'get', slot }));
+                const e = r && r.blob ? JSON.parse(r.blob) : null;
+                return e && e.v === 2 ? e : null;
+            } catch (e) { return null; }   // 오프라인이면 기기 기록만 사용
+        }
+        function pushRemoteEnv(slot, env) {
+            if (!appsScriptUrl) return;
+            fetch(appsScriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'put', slot, blob: JSON.stringify(env) }) }).catch(() => {});
+        }
+        async function getTeacherPub() {
+            let cache = null;
+            try { cache = JSON.parse(localStorage.getItem(TPUB_KEY) || 'null'); } catch (e) {}
+            if (appsScriptUrl) {
+                try {
+                    const r = await fetchJSON(withQuery(appsScriptUrl, { action: 'pubkey' }), {}, 4000);
+                    if (r && r.pub) { cache = { url: appsScriptUrl, pub: r.pub, kid: r.kid }; localStorage.setItem(TPUB_KEY, JSON.stringify(cache)); }
+                } catch (e) {}
+            }
+            if (!cache || !cache.pub || cache.url !== appsScriptUrl) return null;
+            try {
+                const key = await crypto.subtle.importKey('spki', fromB64(cache.pub), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['encrypt']);
+                return { key, kid: cache.kid };
+            } catch (e) { return null; }
+        }
+
+        let pushTimer = null;
+        async function saveSlot(immediate) {
+            if (!session) return;
+            try {
+                session.data.updated = Date.now();
+                if (session.data.history.length > HISTORY_MAX) session.data.history = session.data.history.slice(-HISTORY_MAX);
+                const env = await sealEnvelope(session);
+                localStorage.setItem(session.slot, JSON.stringify(env));
+                clearTimeout(pushTimer);
+                const slot = session.slot;
+                if (immediate) pushRemoteEnv(slot, env);
+                else pushTimer = setTimeout(() => pushRemoteEnv(slot, env), 1500);   // 잦은 저장은 모아서 전송
+            } catch (e) { console.warn('저장 실패'); }
+        }
+        function saveProgress() {
+            if (!session) return;
+            session.data.name = gameState.studentName;
+            session.data.progress = {
+                currentStage: gameState.currentStage,
+                mistakesTotal: gameState.mistakesTotal,
+                mistakesPerStage: [...gameState.mistakesPerStage],
+                elapsedMs: Date.now() - gameState.startTime,
+                variables: gameState.variables
+            };
+            return saveSlot();
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && session && session.data.progress) {
+                saveProgress();
+                setTimeout(() => saveSlot(true), 0);   // 화면을 떠날 때는 바로 시트로
+            }
+        });
+
+        // 학생용 링크(?s=<Apps Script URL>)로 들어오면 연동 주소를 이 기기에 저장하고 주소창은 깨끗이
+        (function applyStudentLink() {
+            const q = new URLSearchParams(location.search);
+            const s = (q.get('s') || '').trim();
+            if (/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(s)) {
+                appsScriptUrl = s;
+                localStorage.setItem('parallax_script_url', s);
+            }
+            if (q.has('s')) history.replaceState(null, '', location.pathname);
+        })();
 
         // [핵심] 문제 난수 생성 함수 (반비례 관계 중심)
         function generateRandomVariables() {
@@ -426,17 +627,56 @@
             ];
         };
 
-        function startGame() {
+        let starting = false;
+        async function startGame() {
+            if (starting) return;
             const idInput = document.getElementById('student-id').value.trim();
             const nameInput = document.getElementById('student-name').value.trim();
+            const pwEl = document.getElementById('student-pw');
+            const pwInput = pwEl.value;
 
-            if (!idInput || !nameInput) {
-                showModal("입력 오류", "학번과 이름을 모두 입력해주세요.", "warning");
+            if (!idInput || !nameInput || !pwInput) {
+                showModal("입력 오류", "학번, 이름, 비밀번호를 모두 입력해주세요.", "warning");
                 return;
+            }
+            if (pwInput.length < 4) {
+                showModal("입력 오류", "비밀번호는 4자 이상으로 정해주세요.", "warning");
+                return;
+            }
+            if (!(window.crypto && crypto.subtle)) {
+                showModal("실행 불가", "이 브라우저에서는 기록을 안전하게 저장할 수 없습니다. 최신 크롬·엣지에서 https 주소로 열어주세요.", "error");
+                return;
+            }
+
+            starting = true;
+            let saved = null, from = '';
+            const startBtn = document.getElementById('start-btn');
+            if (startBtn) { startBtn.disabled = true; startBtn.textContent = '기록 확인 중…'; }
+            try {
+                const s = await deriveSession(idInput, pwInput);
+                const [loc, rem, tp] = await Promise.all([Promise.resolve(readLocalEnv(s.slot)), fetchRemoteEnv(s.slot), getTeacherPub()]);
+                // 기기와 시트 중 더 최근 것을 먼저 열어 본다
+                const order = [rem && { e: rem, f: '선생님 시트' }, loc && { e: loc, f: '이 기기' }].filter(Boolean).sort((a, b) => (b.e.u || 0) - (a.e.u || 0));
+                let opened = null, env = null;
+                for (const c of order) { opened = await openEnvelope(c.e, s.pwKey); if (opened) { env = c.e; from = c.f; break; } }
+                const dkRaw = opened ? opened.dkRaw : crypto.getRandomValues(new Uint8Array(32));
+                session = {
+                    slot: s.slot, pwKey: s.pwKey, dkRaw, dk: opened ? opened.dk : await importDK(dkRaw),
+                    data: opened ? opened.data : { studentId: idInput, name: nameInput, progress: null, history: [] },
+                    pub: tp ? tp.key : null, kid: tp ? tp.kid : null,
+                    prevT: env ? env.t : null, prevKid: env ? env.kid : null
+                };
+                session.data.history = session.data.history || [];
+                saved = opened ? opened.data : null;
+            } finally {
+                if (startBtn) { startBtn.disabled = false; startBtn.textContent = '시스템 복구 시작'; }
+                starting = false;
+                pwEl.value = '';   // 비밀번호는 화면에도 남기지 않는다
             }
 
             gameState.studentId = idInput;
             gameState.studentName = nameInput;
+            const resume = saved && saved.progress;
             
             screens.start.classList.add('hidden');
             screens.stage.classList.remove('hidden');
@@ -446,16 +686,37 @@
             elements.timerDisplay.classList.add('neon-text');
             elements.timerDisplay.innerText = "00:00";
 
-            generateRandomVariables();
-            gameState.currentStage = 0;
-            gameState.mistakesTotal = 0;
-            gameState.mistakesPerStage = [0, 0, 0, 0];
-            elements.mistakeDisplay.innerText = "0";
-            
-            gameState.startTime = Date.now();
+            if (resume) {
+                gameState.variables = resume.variables;
+                gameState.currentStage = resume.currentStage;
+                gameState.mistakesTotal = resume.mistakesTotal;
+                gameState.mistakesPerStage = [...resume.mistakesPerStage];
+                gameState.startTime = Date.now() - (resume.elapsedMs || 0);
+            } else {
+                generateRandomVariables();
+                gameState.currentStage = 0;
+                gameState.mistakesTotal = 0;
+                gameState.mistakesPerStage = [0, 0, 0, 0];
+                gameState.startTime = Date.now();
+            }
+            elements.mistakeDisplay.innerText = String(gameState.mistakesTotal);
+
+            updateTimer();
             gameState.timerInterval = setInterval(updateTimer, 1000);
-            
+            await saveProgress();
+
             loadStage();
+
+            const hist = session.data.history || [];
+            const where = appsScriptUrl ? '' : ' (선생님 시트 미연결 — 이 기기에만 저장됩니다)';
+            if (resume) {
+                showModal("기록 복구", `${from}에 저장된 기록을 불러와 STAGE ${gameState.currentStage + 1}부터 이어서 진행합니다.${where}`, "success");
+            } else if (hist.length) {
+                const best = hist.reduce((a, b) => (b.score > a.score ? b : a));
+                showModal("기록 복구", `${from}에서 이전 완료 기록 ${hist.length}회를 불러왔습니다. (최고 ${best.score}점 · ${best.time}) 새 임무를 시작합니다.${where}`, "success");
+            } else {
+                showModal("새 기록", `저장된 기록이 없어 새로 시작합니다. 전에 했었다면 학번·비밀번호를 다시 확인하세요.${where}`, "info");
+            }
         }
 
         function loadStage() {
@@ -487,6 +748,7 @@
             if (stageData.validate(input)) {
                 showModal("승인됨", "정확한 데이터입니다. 다음 섹터로 이동합니다.", "success");
                 gameState.currentStage++;
+                if (gameState.currentStage < stages.length) saveProgress();
                 setTimeout(() => {
                     closeModal();
                     loadStage();
@@ -495,6 +757,7 @@
                 gameState.mistakesTotal++;
                 gameState.mistakesPerStage[gameState.currentStage]++;
                 elements.mistakeDisplay.innerText = gameState.mistakesTotal;
+                saveProgress();
                 showModal("오류", "데이터가 일치하지 않습니다. 다시 계산해주십시오.", "error");
             }
         }
@@ -542,8 +805,15 @@
                 m3: gameState.mistakesPerStage[2],
                 m4: gameState.mistakesPerStage[3]
             };
-            localRecords.push(newRecord);
-            localStorage.setItem('parallax_local_records', JSON.stringify(localRecords));
+            // 학생 본인 슬롯(암호화): 진행 중 상태를 지우고 완료 기록 추가
+            if (session) {
+                session.data.progress = null;
+                session.data.history = (session.data.history || []).concat([newRecord]);
+                await saveSlot(true);
+            }
+            // 교사 대시보드 목록: 실명 대신 가린 이름만 보관
+            localRecords.push({ ...newRecord, studentName: maskName(newRecord.studentName) });
+            localStorage.setItem(TEACHER_KEY, JSON.stringify(localRecords));
 
             document.getElementById('agent-name').innerText = `${gameState.studentId} ${gameState.studentName}`;
             document.getElementById('final-time').innerText = finalTime;
@@ -561,7 +831,7 @@
             statusDiv.innerHTML = `<div class="loader"></div> <span class="text-[#64ffda]">관제 센터로 데이터를 전송 중입니다...</span>`;
 
             try {
-                const formData = new FormData();
+                const formData = new URLSearchParams();   // e.parameter로 바로 읽히는 형식
                 formData.append('studentId', gameState.studentId);
                 formData.append('studentName', gameState.studentName);
                 formData.append('score', calculatedScore);
@@ -661,6 +931,13 @@
 
         function closeTeacherConsole() {
             consoleScreen.classList.add('hidden');
+            // 콘솔을 닫으면 복구 키와 열람한 학생 기록을 메모리에서 지운다
+            teacherKey = null; recoveryRows = [];
+            document.getElementById('recovery-body').innerHTML = '';
+            document.getElementById('recovery-panel').classList.add('hidden');
+            document.getElementById('script-code-box').classList.add('hidden');
+            document.getElementById('script-code').value = '';
+            setRecoveryStatus('');
         }
 
         function saveScriptUrl() {
@@ -681,16 +958,16 @@
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-gray-800 transition';
                 tr.innerHTML = `
-                    <td class="px-4 py-3">${record.timestamp}</td>
-                    <td class="px-4 py-3 font-bold text-white">${record.studentId}</td>
-                    <td class="px-4 py-3 text-white">${record.studentName}</td>
-                    <td class="px-4 py-3 text-center text-green-400 font-bold">${record.score}</td>
-                    <td class="px-4 py-3 text-center text-[#64ffda]">${record.time}</td>
-                    <td class="px-4 py-3 text-center text-red-400 font-bold">${record.totalMistakes}</td>
-                    <td class="px-3 py-3 text-center text-xs text-gray-400">${record.m1}</td>
-                    <td class="px-3 py-3 text-center text-xs text-gray-400">${record.m2}</td>
-                    <td class="px-3 py-3 text-center text-xs text-gray-400">${record.m3}</td>
-                    <td class="px-3 py-3 text-center text-xs text-gray-400">${record.m4}</td>
+                    <td class="px-4 py-3">${escHtml(record.timestamp)}</td>
+                    <td class="px-4 py-3 font-bold text-white">${escHtml(record.studentId)}</td>
+                    <td class="px-4 py-3 text-white">${escHtml(record.studentName)}</td>
+                    <td class="px-4 py-3 text-center text-green-400 font-bold">${escHtml(record.score)}</td>
+                    <td class="px-4 py-3 text-center text-[#64ffda]">${escHtml(record.time)}</td>
+                    <td class="px-4 py-3 text-center text-red-400 font-bold">${escHtml(record.totalMistakes)}</td>
+                    <td class="px-3 py-3 text-center text-xs text-gray-400">${escHtml(record.m1)}</td>
+                    <td class="px-3 py-3 text-center text-xs text-gray-400">${escHtml(record.m2)}</td>
+                    <td class="px-3 py-3 text-center text-xs text-gray-400">${escHtml(record.m3)}</td>
+                    <td class="px-3 py-3 text-center text-xs text-gray-400">${escHtml(record.m4)}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -698,9 +975,222 @@
 
         function clearLocalRecords() {
             localRecords = [];
+            localStorage.removeItem(TEACHER_KEY);
             localStorage.removeItem('parallax_local_records');
+            Object.keys(localStorage).filter(k => k.startsWith(SLOT_PREFIX)).forEach(k => localStorage.removeItem(k));
             renderRecordsTable();
             showModal("초기화 완료", "기기 내 모든 로컬 데이터가 삭제되었습니다.", "success");
+        }
+
+        /* =========================================================
+           교사 복구 키 (RSA-OAEP) — 개인키는 파일로만 존재하고 이 앱 어디에도 저장되지 않는다
+           ========================================================= */
+        const DEPLOYED_URL = 'https://samsunk25-hue.github.io/parallax-lab/code_artifact.html';
+        let teacherKey = null;      // { priv, pub, kid, token } — 콘솔이 열려 있는 동안 메모리에만
+        let recoveryRows = [];
+        const setRecoveryStatus = (html) => { document.getElementById('recovery-status').innerHTML = html; };
+
+        function buildScriptCode(pub, kid, token) {
+            return [
+                '// 연주시차 방탈출 — 결과 수집 + 암호화 기록 보관 (자동 생성 코드, 그대로 붙여넣기)',
+                "var PUB = '" + pub + "';",
+                "var KID = '" + kid + "';",
+                "var TOKEN = '" + token + "';   // 교사 복구 키 파일에만 들어 있는 비밀값",
+                "var SLOT_RE = /^plx_s_[0-9a-f]{32}$/;",
+                '',
+                'function sheet_(name, header) {',
+                '  var ss = SpreadsheetApp.getActiveSpreadsheet();',
+                '  var sh = ss.getSheetByName(name);',
+                '  if (!sh) { sh = ss.insertSheet(name); sh.appendRow(header); }',
+                '  return sh;',
+                '}',
+                'function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }',
+                'function slots_() { return sheet_(\'기록보관\', [\'slot\', \'blob(암호화)\', \'updated\']); }',
+                'function findRow_(sh, slot) {',
+                '  var v = sh.getRange(1, 1, sh.getLastRow(), 1).getValues();',
+                '  for (var i = 1; i < v.length; i++) if (v[i][0] === slot) return i + 1;',
+                '  return -1;',
+                '}',
+                '',
+                'function doGet(e) {',
+                '  var p = e.parameter || {};',
+                "  if (p.action === 'pubkey') return out_({ pub: PUB, kid: KID });",
+                "  if (p.action === 'get' && SLOT_RE.test(p.slot || '')) {",
+                '    var sh = slots_(), r = findRow_(sh, p.slot);',
+                '    return out_({ blob: r > 0 ? sh.getRange(r, 2).getValue() : null });',
+                '  }',
+                '  return out_({ ok: true });',
+                '}',
+                '',
+                'function doPost(e) {',
+                '  var lock = LockService.getScriptLock();',
+                '  lock.waitLock(10000);',
+                '  try {',
+                '    var p = e.parameter || {};',
+                '    if (p.studentId) {   // 임무 완료 결과',
+                "      sheet_('결과', ['제출시각', '학번', '이름', '점수', '소요시간', '총오답', 'S1', 'S2', 'S3', 'S4'])",
+                '        .appendRow([new Date(), p.studentId, p.studentName, p.score, p.time, p.totalMistakes, p.m1, p.m2, p.m3, p.m4]);',
+                '      return out_({ ok: true });',
+                '    }',
+                '    var d = JSON.parse(e.postData.contents);',
+                '    var sh = slots_();',
+                "    if (d.action === 'put') {   // 학생 기록 보관(암호화된 문자열만)",
+                '      if (!SLOT_RE.test(d.slot || \'\') || String(d.blob).length > 45000) return out_({ ok: false });',
+                '      var r = findRow_(sh, d.slot), row = [d.slot, d.blob, new Date()];',
+                '      if (r > 0) sh.getRange(r, 1, 1, 3).setValues([row]); else sh.appendRow(row);',
+                '      return out_({ ok: true });',
+                '    }',
+                "    if (d.token !== TOKEN) return out_({ ok: false, err: 'token' });",
+                "    if (d.action === 'list') {",
+                '      var v = sh.getDataRange().getValues(), rows = [];',
+                '      for (var i = 1; i < v.length; i++) rows.push({ slot: v[i][0], blob: v[i][1] });',
+                '      return out_({ ok: true, rows: rows });',
+                '    }',
+                "    if (d.action === 'del') {",
+                '      var r2 = findRow_(sh, d.slot);',
+                '      if (r2 > 0) sh.deleteRow(r2);',
+                '      return out_({ ok: true });',
+                '    }',
+                '    return out_({ ok: false });',
+                '  } finally { lock.releaseLock(); }',
+                '}'
+            ].join('\n');
+        }
+        function showScriptCode() {
+            if (!teacherKey) return;
+            document.getElementById('script-code').value = buildScriptCode(teacherKey.pub, teacherKey.kid, teacherKey.token);
+            document.getElementById('script-code-box').classList.remove('hidden');
+        }
+        async function copyText(text, okMsg) {
+            try { await navigator.clipboard.writeText(text); showModal('복사 완료', okMsg, 'success'); }
+            catch (e) { window.prompt('아래 내용을 복사하세요.', text); }
+        }
+        function copyScriptCode() { copyText(document.getElementById('script-code').value, 'Apps Script 코드를 복사했습니다.'); }
+        function copyStudentLink() {
+            if (!appsScriptUrl) { showModal('URL 필요', '먼저 1번에 Apps Script 웹 앱 URL을 저장하세요.', 'warning'); return; }
+            const base = location.protocol.startsWith('http') ? location.origin + location.pathname : DEPLOYED_URL;
+            copyText(base + '?s=' + encodeURIComponent(appsScriptUrl), '학생용 링크를 복사했습니다. 이 링크로 접속한 기기는 자동으로 선생님 시트와 연결됩니다.');
+        }
+
+        async function createRecoveryKey() {
+            if (teacherKey && !confirm('이미 불러온 복구 키가 있습니다. 새 키를 만들면 Apps Script 코드도 다시 배포해야 합니다. 계속할까요?')) return;
+            const pair = await crypto.subtle.generateKey(
+                { name: 'RSA-OAEP', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['encrypt', 'decrypt']);
+            const spki = await crypto.subtle.exportKey('spki', pair.publicKey);
+            const pkcs8 = await crypto.subtle.exportKey('pkcs8', pair.privateKey);
+            const kid = toHex(await crypto.subtle.digest('SHA-256', spki)).slice(0, 12);
+            const token = toHex(crypto.getRandomValues(new Uint8Array(24)));
+            const file = { type: 'parallax-recovery-key', v: 1, kid, token, pub: toB64(spki), priv: toB64(pkcs8), created: new Date().toISOString() };
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 1)], { type: 'application/json' }));
+            a.download = `연주시차_복구키_${kid}.json`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+            teacherKey = { priv: pair.privateKey, pub: file.pub, kid, token };
+            showScriptCode();
+            setRecoveryStatus(`🔑 복구 키 <b>${kid}</b>를 만들었습니다. 내려받은 파일을 안전하게 보관하고, 아래 코드를 Apps Script에 배포하세요.`);
+        }
+
+        function loadRecoveryKey(input) {
+            const f = input.files && input.files[0];
+            input.value = '';
+            if (!f) return;
+            const rd = new FileReader();
+            rd.onload = async () => {
+                try {
+                    const file = JSON.parse(rd.result);
+                    if (file.type !== 'parallax-recovery-key') throw new Error('형식');
+                    const priv = await crypto.subtle.importKey('pkcs8', fromB64(file.priv), { name: 'RSA-OAEP', hash: 'SHA-256' }, false, ['decrypt']);
+                    teacherKey = { priv, pub: file.pub, kid: file.kid, token: file.token };
+                    showScriptCode();
+                    setRecoveryStatus(`🔑 복구 키 <b>${escHtml(file.kid)}</b>를 불러왔습니다.`);
+                    loadRecoveryList();
+                } catch (e) { showModal('불러오기 실패', '올바른 복구 키 파일이 아닙니다.', 'error'); }
+            };
+            rd.readAsText(f);
+        }
+
+        async function loadRecoveryList() {
+            if (!teacherKey) return;
+            if (!appsScriptUrl) { showModal('URL 필요', '먼저 1번에 Apps Script 웹 앱 URL을 저장하세요.', 'warning'); return; }
+            setRecoveryStatus('선생님 시트에서 기록을 불러오는 중…');
+            let res;
+            try {
+                res = await fetchJSON(appsScriptUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'list', token: teacherKey.token }) }, 15000);
+            } catch (e) { setRecoveryStatus('<span class="text-red-400">시트에 연결하지 못했습니다. URL과 배포 설정(모든 사용자)을 확인하세요.</span>'); return; }
+            if (!res || !res.ok) {
+                setRecoveryStatus('<span class="text-red-400">시트가 이 복구 키를 거부했습니다. 이 키로 만든 Apps Script 코드가 배포되어 있는지 확인하세요.</span>');
+                return;
+            }
+            recoveryRows = [];
+            for (const r of res.rows || []) {
+                let env = null, open = null;
+                try { env = JSON.parse(r.blob); } catch (e) {}
+                if (env && env.t && env.kid === teacherKey.kid) {
+                    try {
+                        const dkRaw = new Uint8Array(await crypto.subtle.decrypt({ name: 'RSA-OAEP' }, teacherKey.priv, fromB64(env.t)));
+                        const data = JSON.parse(dec.decode(await aesDec(await importDK(dkRaw), env)));
+                        open = { dkRaw, data };
+                    } catch (e) {}
+                }
+                recoveryRows.push({ slot: r.slot, env, open });
+            }
+            renderRecoveryList();
+            const locked = recoveryRows.filter(r => !r.open).length;
+            setRecoveryStatus(`학생 기록 ${recoveryRows.length}건을 불러왔습니다.` + (locked ? ` <span class="text-yellow-400">(${locked}건은 다른 키로 잠겨 있어 열 수 없습니다 — 학생이 다시 접속하면 현재 키로 갱신됩니다)</span>` : ''));
+        }
+
+        function renderRecoveryList() {
+            document.getElementById('recovery-panel').classList.remove('hidden');
+            const body = document.getElementById('recovery-body');
+            body.innerHTML = '';
+            if (!recoveryRows.length) {
+                body.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">시트에 보관된 학생 기록이 없습니다.</td></tr>';
+                return;
+            }
+            const rows = [...recoveryRows].sort((a, b) => String(a.open ? a.open.data.studentId : '~').localeCompare(String(b.open ? b.open.data.studentId : '~')));
+            rows.forEach(r => {
+                const tr = document.createElement('tr');
+                if (!r.open) {
+                    tr.innerHTML = `<td class="px-4 py-2 text-gray-500" colspan="6">🔒 열 수 없는 기록 (${escHtml(r.slot.slice(6, 14))}…)</td>`;
+                } else {
+                    const d = r.open.data, h = d.history || [];
+                    const best = h.length ? Math.max(...h.map(x => Number(x.score) || 0)) : '-';
+                    const prog = d.progress ? `STAGE ${d.progress.currentStage + 1} 진행 중` : (h.length ? '완료' : '시작 전');
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 font-bold text-white">${escHtml(d.studentId)}</td>
+                        <td class="px-4 py-2 text-white">${escHtml(d.name)}</td>
+                        <td class="px-4 py-2">${prog}</td>
+                        <td class="px-4 py-2 text-center">${h.length}회 / ${best}</td>
+                        <td class="px-4 py-2 text-xs text-gray-400">${d.updated ? new Date(d.updated).toLocaleString() : ''}</td>
+                        <td class="px-4 py-2"><button class="text-xs text-[#64ffda] underline" data-slot="${escHtml(r.slot)}">비밀번호 재설정</button></td>`;
+                    tr.querySelector('button').onclick = () => resetStudentPassword(r.slot);
+                }
+                body.appendChild(tr);
+            });
+        }
+
+        async function resetStudentPassword(slot) {
+            const r = recoveryRows.find(x => x.slot === slot);
+            if (!r || !r.open) return;
+            const d = r.open.data;
+            const pw = window.prompt(`${d.studentId} ${d.name} 학생의 새 비밀번호를 입력하세요 (4자 이상).\n학생에게 이 비밀번호를 알려 주면 이전 기록을 그대로 이어서 할 수 있습니다.`);
+            if (pw === null) return;
+            if (pw.length < 4) { showModal('입력 오류', '비밀번호는 4자 이상이어야 합니다.', 'warning'); return; }
+            try {
+                const s = await deriveSession(String(d.studentId), pw);
+                const env = { ...r.env, w: await aesEnc(s.pwKey, r.open.dkRaw), u: Date.now() };
+                const post = (o) => fetchJSON(appsScriptUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(o) }, 15000);
+                const put = await post({ action: 'put', slot: s.slot, blob: JSON.stringify(env) });
+                if (!put || !put.ok) throw new Error('put');
+                if (s.slot !== slot) {
+                    await post({ action: 'del', token: teacherKey.token, slot });
+                    localStorage.removeItem(slot);
+                }
+                showModal('재설정 완료', `${escHtml(d.studentId)} 학생의 비밀번호를 바꿨습니다. 학생에게 새 비밀번호를 알려 주세요. (새 비밀번호는 저장되지 않습니다)`, 'success');
+                loadRecoveryList();
+            } catch (e) { showModal('재설정 실패', '시트에 저장하지 못했습니다. 잠시 후 다시 시도하세요.', 'error'); }
         }
 
         function initStarBackground() {
