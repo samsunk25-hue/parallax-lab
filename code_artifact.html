@@ -145,7 +145,7 @@
             
             <div class="w-full max-w-xs mb-8 flex flex-col gap-3">
                 <input type="text" id="student-id" placeholder="학번 (예: 3101)" class="scifi-input w-full py-2 px-4 rounded text-center">
-                <input type="text" id="student-name" placeholder="이름 (예: 홍길동)" class="scifi-input w-full py-2 px-4 rounded text-center">
+                <input type="text" id="student-name" placeholder="별명 (실명 대신, 예: 별빛고래)" maxlength="12" class="scifi-input w-full py-2 px-4 rounded text-center">
                 <input type="password" id="student-pw" placeholder="비밀번호 (4자 이상, 직접 정하기)" autocomplete="new-password" class="scifi-input w-full py-2 px-4 rounded text-center" onkeypress="if(event.key==='Enter') startGame()">
                 <p class="text-xs text-gray-400 leading-relaxed">학번·비밀번호가 같으면 이 기기에 저장된 이전 기록을 이어서 불러옵니다.<br>비밀번호는 어디에도 저장되지 않으니 꼭 기억하세요.</p>
             </div>
@@ -291,7 +291,7 @@
                     <div class="overflow-x-auto border border-gray-700 rounded-md">
                         <table class="w-full text-sm text-left text-gray-300 whitespace-nowrap">
                             <thead class="text-xs text-[#64ffda] bg-gray-800"><tr>
-                                <th class="px-4 py-2">학번</th><th class="px-4 py-2">이름</th><th class="px-4 py-2">진행 상태</th>
+                                <th class="px-4 py-2">학번</th><th class="px-4 py-2">별명</th><th class="px-4 py-2">진행 상태</th>
                                 <th class="px-4 py-2 text-center">완료/최고점</th><th class="px-4 py-2">마지막 저장</th><th class="px-4 py-2"></th>
                             </tr></thead>
                             <tbody id="recovery-body" class="divide-y divide-gray-700"></tbody>
@@ -322,7 +322,7 @@
                             <tr>
                                 <th class="px-4 py-3">완료 시간</th>
                                 <th class="px-4 py-3">학번</th>
-                                <th class="px-4 py-3">이름</th>
+                                <th class="px-4 py-3">별명</th>
                                 <th class="px-4 py-3 text-center">최종 점수</th>
                                 <th class="px-4 py-3 text-center">경과 시간</th>
                                 <th class="px-4 py-3 text-center">총 오답</th>
@@ -636,7 +636,7 @@
             const pwInput = pwEl.value;
 
             if (!idInput || !nameInput || !pwInput) {
-                showModal("입력 오류", "학번, 이름, 비밀번호를 모두 입력해주세요.", "warning");
+                showModal("입력 오류", "학번, 별명, 비밀번호를 모두 입력해주세요.", "warning");
                 return;
             }
             if (pwInput.length < 4) {
@@ -1028,7 +1028,7 @@
                 '  try {',
                 '    var p = e.parameter || {};',
                 '    if (p.studentId) {   // 임무 완료 결과',
-                "      sheet_('결과', ['제출시각', '학번', '이름', '점수', '소요시간', '총오답', 'S1', 'S2', 'S3', 'S4'])",
+                "      sheet_('결과', ['제출시각', '학번', '별명', '점수', '소요시간', '총오답', 'S1', 'S2', 'S3', 'S4'])",
                 '        .appendRow([new Date(), p.studentId, p.studentName, p.score, p.time, p.totalMistakes, p.m1, p.m2, p.m3, p.m4]);',
                 '      return out_({ ok: true });',
                 '    }',

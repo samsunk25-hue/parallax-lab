@@ -219,7 +219,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
       <div class="grid g2">
         <div>
           <label class="fld"><b>학급</b><input id="inKlass" placeholder="예: 3학년 2반" autocomplete="off"></label>
-          <label class="fld"><b>이름</b><input id="inName" placeholder="예: 김하늘" autocomplete="off"></label>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:8px">
+            <label class="fld"><b>번호</b><input id="inNo" type="number" inputmode="numeric" min="1" max="60" placeholder="예: 12" autocomplete="off"></label>
+            <label class="fld"><b>별명</b><input id="inName" placeholder="예: 별빛고래 (실명 대신)" maxlength="12" autocomplete="off"></label>
+          </div>
           <p class="mini" style="margin:0 0 6px">문제 수준 (학습 중에도 바꿀 수 있어요)</p>
           <div class="row" style="margin-bottom:14px">
             <button type="button" class="btn small lvbtn on" data-lv="basic">기본 — 딱 떨어지는 수로 개념 익히기</button>
@@ -229,7 +232,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
             <button class="btn primary" id="btnStart">학습 시작</button>
             <button class="btn ghost" id="btnLoginTeacher">교사용 들어가기</button>
           </div>
-          <p class="mini" style="margin-top:10px">같은 이름·학급으로 다시 들어오면 이전 기록이 이어집니다.</p>
+          <p class="mini" style="margin-top:10px"><b>실명 대신 별명</b>을 쓰고, 출석 <b>번호</b>를 함께 적어요(별명이 겹쳐도 번호로 구분). 같은 학급·번호·별명으로 다시 들어오면 이전 기록이 이어집니다.</p>
         </div>
         <div class="card" style="margin:0;background:var(--panel2)">
           <h3 style="margin-top:0">이 앱에서 하는 일</h3>
@@ -797,11 +800,11 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 
       <div class="card">
         <h3 style="margin-top:0">📈 학생 데이터 시각화</h3>
-        <p class="sub">모든 계산은 이 기기 안에서 이루어집니다(외부 전송 없음). 학급별로 나누어 보고, 개인정보 보호가 필요하면 이름 표시를 바꾸세요.</p>
+        <p class="sub">모든 계산은 이 기기 안에서 이루어집니다(외부 전송 없음). 학급별로 나누어 보고, 개인정보 보호가 필요하면 별명 표시를 바꾸세요.</p>
         <div class="row" style="margin-bottom:6px">
-          <span class="mini">이름 표시</span>
+          <span class="mini">별명 표시</span>
           <select id="vizPriv" style="width:auto">
-            <option value="real">실명</option>
+            <option value="real">별명 그대로</option>
             <option value="mask">마스킹 (김○○)</option>
             <option value="code">관측 코드명 (관측자-01)</option>
           </select>
@@ -826,10 +829,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 
       <div class="card">
         <h3 style="margin-top:0">학생 현황</h3>
-        <p class="sub">도달 기준: 기초·발전·심화 3단계 통과 + 방탈출 성공. 이름을 누르면 상세 기록이 열립니다.</p>
+        <p class="sub">도달 기준: 기초·발전·심화 3단계 통과 + 방탈출 성공. 별명을 누르면 상세 기록이 열립니다.</p>
         <div class="scrollx"><table id="tTable">
           <thead><tr>
-            <th class="left">이름</th><th>학급</th><th>기초</th><th>발전</th><th>심화</th>
+            <th class="left">별명</th><th>학급</th><th>기초</th><th>발전</th><th>심화</th>
             <th>방탈출</th><th>정답률</th><th>학습시간</th><th>주요 오개념</th><th>도달</th>
           </tr></thead><tbody></tbody></table></div>
       </div>
@@ -899,10 +902,10 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
             선생님 계정의 Apps Script 웹앱 URL을 등록하고 <b>학생용 링크</b>를 배포하면, 학생이 아무것도 누르지 않아도 단계 통과·서술 제출·방탈출 완주 때마다 시트에 자동 기록됩니다.
             <button class="btn small ghost" id="btnScript" style="margin-top:6px">Apps Script 코드 보기</button></span></div>
           <div class="qbox"><b>수집 항목</b><br><span class="mini">
-            학급·이름·단계 통과·정답률·오개념·방탈출 기록·서술 답안. 주민번호 등 민감정보는 다루지 않습니다.</span></div>
+            학급·별명·단계 통과·정답률·오개념·방탈출 기록·서술 답안. 주민번호 등 민감정보는 다루지 않습니다.</span></div>
         </div>
         <label class="fld" style="margin-top:12px"><b>시트에서 복사한 표 붙여넣기 (첫 줄은 머리글)</b>
-          <textarea id="sheetPaste" rows="5" placeholder="이름	학급	기초	발전	심화	방탈출	정답률	서술요약"></textarea></label>
+          <textarea id="sheetPaste" rows="5" placeholder="별명	학급	기초	발전	심화	방탈출	정답률	서술요약"></textarea></label>
         <div class="row">
           <button class="btn small" id="btnSheetParse">붙여넣은 표로 과세특 일괄 생성</button>
           <span class="mini" id="sheetMsg"></span>
@@ -3711,7 +3714,7 @@ function paintViz(list,allList){
   mk('학급별 통과 인원',['학급','학생','기초','발전','심화','방탈출'],
     kNames.map(k=>{const v=allA.byKlass[k];return [k,v.n+'명',...v.pass.map(p=>p+'명')];}));
   mk('유형별 정답률',['유형','정답률','상태'],tRows.map(r=>[r.label,r.disp,r.note||'']));
-  mk('학생별 요약',['이름','학급','도달','정답률','방탈출','서술'],
+  mk('학생별 요약',['별명','학급','도달','정답률','방탈출','서술'],
     list.map((s,i)=>{
       const S=summarize(s);
       return [maskName(s.name,priv,i),s.klass,S.reach?'도달':'미도달',
@@ -4298,7 +4301,7 @@ function studentDetail(s){
     {label:'닫기'}]);
 }
 function csvExport(){
-  const rows=[['이름','학급','모둠','수준','기초','발전','심화','방탈출성공','방탈출시간(초)','오답수','힌트수',
+  const rows=[['별명','학급','모둠','수준','기초','발전','심화','방탈출성공','방탈출시간(초)','오답수','힌트수',
                '모둠협동잠금','모둠열쇠조각',
                '문항별해결시간','문항평균시간(초)','최장소요문항',
                '문항수','정답수','정답률(%)','학습시간(분)','주요오개념','성취기준도달',
@@ -4489,11 +4492,11 @@ function parseSheet(){
   const split=l=>l.includes('\t')?l.split('\t'):l.split(',').map(c=>c.replace(/^"|"$/g,''));
   const head=split(lines[0]).map(h=>h.trim());
   const idx=n=>head.findIndex(h=>h.replace(/\s/g,'').includes(n));
-  const iName=idx('이름'), iK=idx('학급'),
+  const iName=idx('별명')>=0?idx('별명'):idx('이름'), iK=idx('학급'),
         iB=idx('기초'), iC=idx('발전'), iG=idx('심화'),
         iQ=idx('방탈출'), iR=idx('정답률'),
         iE1=idx('관찰'), iE2=idx('그래프'), iE3=idx('보고서');
-  if(iName<0){ $('#sheetMsg').textContent='머리글에 "이름" 열이 필요합니다.'; return; }
+  if(iName<0){ $('#sheetMsg').textContent='머리글에 "별명"(또는 "이름") 열이 필요합니다.'; return; }
   const pass=v=>/통과|완료|O|o|1|true|✓/.test(String(v||''));
   const notes=[];
   lines.slice(1).forEach(l=>{
@@ -4523,7 +4526,7 @@ function doPost(e){
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   var d  = JSON.parse(e.postData.contents);
   if(sh.getLastRow()===0){
-    sh.appendRow(['제출시각','학급','이름','모둠','수준','기초','발전','심화',
+    sh.appendRow(['제출시각','학급','별명','모둠','수준','기초','발전','심화',
                   '방탈출','방탈출시간(초)','문항별해결시간','문항평균시간(초)','최장소요문항',
                   '모둠협동잠금','모둠열쇠조각',
                   '정답률(%)','주요오개념','관찰서술','그래프해석서술','탈출보고서','최근전송사유']);
@@ -4668,14 +4671,19 @@ function boot(){
   });
   // 로그인
   $('#btnStart').addEventListener('click',()=>{
-    const name=$('#inName').value.trim(), klass=$('#inKlass').value.trim();
-    if(!name||!klass){ toast('학급과 이름을 입력하세요.',true); return; }
+    const nick=$('#inName').value.trim(), klass=$('#inKlass').value.trim();
+    const noRaw=$('#inNo').value.trim(), no=+noRaw;
+    if(!klass||!noRaw||!nick){ toast('학급, 번호, 별명을 모두 입력하세요.',true); return; }
+    if(!/^\d{1,2}$/.test(noRaw)||no<1||no>60){ toast('번호는 1~60 사이 숫자로 입력하세요.',true); return; }
+    // 번호를 앞에 붙여 저장 → 같은 반에서 별명이 겹쳐도 기록이 섞이지 않는다
+    const name=`${no}번 ${nick}`;
     enterStudent(name,klass);
+    ME.no=no; ME.nick=nick; saveDB();
     setLevel(ME.level||LV);
     paintAutoStatus(); queueAutoSubmit('학습 시작');
     show('home');
   });
-  $('#inName').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#btnStart').click(); });
+  ['#inName','#inNo'].forEach(s=>$(s).addEventListener('keydown',e=>{ if(e.key==='Enter') $('#btnStart').click(); }));
   $('#btnLoginTeacher').addEventListener('click',()=>show('teacher'));
   $('#btnHome').addEventListener('click',()=>{ if(!ME){ show('login'); return; } show('home'); });
   $('#btnTeacher').addEventListener('click',()=>show('teacher'));
