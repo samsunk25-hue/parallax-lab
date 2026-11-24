@@ -1055,7 +1055,7 @@ const GRAPH_STARS = STARS.slice(0,5);   // 심화 단계 표에 쓰는 가까운
    1. 저장소 (localStorage)
    ========================================================= */
 const DB_KEY='parallax_lab_v1';
-const DEFAULT_CFG={teacherPin:'1111',quizCount:6,allowHints:1,tolPct:2,sheetUrl:'',
+const DEFAULT_CFG={teacherPin:'7777',quizCount:6,allowHints:1,tolPct:2,sheetUrl:'',
                    teamLock:1,teamSize:3,autoSubmit:1,classCode:'0000',sheetCsvUrl:'',
                    aiOpen:0};                // AI 활용 활동: 기본 잠금, 교사가 열어 준다
 let DB, ME=null;                      // ME: 현재 학생 레코드
@@ -1132,7 +1132,7 @@ function loadDB(){
   DB.cfg={...DEFAULT_CFG,...(DB.cfg||{})};
   DB.students=DB.students||{};
   if(!DB.cfg.classCode) DB.cfg.classCode='0000';   // 기기마다 같아야 모둠 열쇠가 맞는다
-  if(DB.cfg.teacherPin==='1234') DB.cfg.teacherPin='1111';   // 이전 기본값 자동 이관
+  if(DB.cfg.teacherPin==='1234'||DB.cfg.teacherPin==='1111') DB.cfg.teacherPin='7777';   // 이전 기본값 자동 이관
   return DB;
 }
 function saveDB(){
@@ -4784,7 +4784,7 @@ function boot(){
     DB.cfg.quizCount=clamp(+$('#cfgQuizCount').value||6,3,15);
     DB.cfg.allowHints=+$('#cfgHints').value;
     DB.cfg.tolPct=clamp(+$('#cfgTol').value||2,1,10);
-    DB.cfg.teacherPin=$('#cfgPin').value.trim()||'1234';
+    DB.cfg.teacherPin=$('#cfgPin').value.trim()||'7777';
     DB.cfg.sheetUrl=$('#cfgSheet').value.trim();
     DB.cfg.teamLock=+$('#cfgTeam').value;
     DB.cfg.teamSize=clamp(+$('#cfgTeamSize').value||3,2,6);
