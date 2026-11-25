@@ -935,7 +935,7 @@
         }
 
         function verifyTeacherLogin() {
-            if (passwordInput.value === '7777') {
+            if (passwordInput.value.trim().normalize('NFC') === '7777테스트'.normalize('NFC')) {
                 closeTeacherLogin();
                 openTeacherConsole();
             } else {

@@ -197,6 +197,62 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
   .card{padding:14px}
   .big{font-size:1.25rem}
 }
+/* 문제 수준(기본/도전) 선택 버튼: 고른 쪽은 채우고 ✓, 안 고른 쪽은 흐리게 */
+.lvbtn{opacity:.6;border-color:var(--line);color:var(--muted);background:transparent}
+.lvbtn.on{opacity:1;background:linear-gradient(135deg,#5eead4,#7dd3fc);color:#06213a;border-color:transparent;
+  box-shadow:0 0 0 2px rgba(94,234,212,.35)}
+.lvbtn.on::before{content:'✓ ';font-weight:900}
+/* 시뮬레이터: 우주 시점(위) + 밤하늘(아래) */
+.simstack{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+
+/* ---------- 태블릿·터치 화면 ----------
+   손가락으로 누르기 쉬운 크기(44~48px), 입력칸 16px 이상(아이패드 확대 방지),
+   상단 막대 고정(학습 허브·로그아웃을 언제든 누를 수 있게) */
+@media (pointer:coarse), (max-width:1180px){
+  body{font-size:17px}
+  header.top{position:sticky;top:6px;z-index:50}
+  .btn{min-height:48px;padding:12px 20px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .btn.small{min-height:44px;padding:10px 16px;font-size:.95rem}
+  .stepdot{min-height:44px;padding:10px 16px;font-size:.92rem;touch-action:manipulation}
+  input,select{font-size:17px;min-height:48px}
+  textarea{font-size:17px}
+  .row{gap:12px}
+  .pill{padding:8px 14px;font-size:.92rem}
+  .sub{font-size:.95rem}
+  .mini{font-size:.88rem}
+  table{font-size:.95rem}
+  .numrow{max-width:none}
+  .stagecard{padding:20px}
+  /* 슬라이더: 손가락 크기 손잡이 */
+  input[type=range]{-webkit-appearance:none;appearance:none;height:44px;min-height:44px;background:transparent}
+  input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:rgba(255,255,255,.18)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-11px;border-radius:50%;
+    background:var(--accent);border:3px solid #06213a;box-shadow:0 0 0 2px var(--accent)}
+  input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:rgba(255,255,255,.18)}
+  input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--accent);border:3px solid #06213a}
+}
+/* 터치 기기에서는 눌렀을 때 들썩이는 hover 효과를 끈다 */
+@media (hover:none){
+  .btn:hover,.stagecard:hover{transform:none}
+}
+/* 세로 태블릿: 두 칸 배치는 한 칸으로 (좁은 두 칸보다 읽기 쉽다) */
+@media (max-width:900px){
+  .g2{grid-template-columns:1fr}
+  /* 상단 막대: 버튼은 한 줄, 학생 표시는 아래 작은 줄 → 고정 막대가 화면을 덜 가린다 */
+  header.top{padding:10px 12px;gap:8px 10px}
+  #btnLogout{margin-left:auto}
+  .who{order:5;flex-basis:100%;margin-left:0;font-size:.8rem;line-height:1.3}
+  .who:empty{display:none}
+}
+/* 넓은 화면(가로 태블릿·PC): 그림(위아래)은 왼쪽, 슬라이더·버튼은 오른쪽 —
+   슬라이더를 움직이며 두 그림을 한눈에 볼 수 있게 */
+@media (min-width:1000px){
+  .simlayout{display:grid;grid-template-columns:minmax(0,auto) minmax(280px,1fr);gap:22px;align-items:start}
+  .simlayout .simstack{width:min(600px,calc((100vh - 110px) * 0.9));max-width:none;margin:0}
+  .simctrl{position:sticky;top:96px}
+  .simctrl .g2{grid-template-columns:1fr}
+  .simctrl > .grid{margin-top:22px !important}
+}
 </style>
 </head>
 <body>
@@ -227,7 +283,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <p class="mini" style="margin:0 0 6px">문제 수준 (학습 중에도 바꿀 수 있어요)</p>
           <div class="row" style="margin-bottom:14px">
             <button type="button" class="btn small lvbtn on" data-lv="basic">기본 — 딱 떨어지는 수로 개념 익히기</button>
-            <button type="button" class="btn small lvbtn" data-lv="adv">발전 — 실제 관측값·복잡한 환산까지</button>
+            <button type="button" class="btn small lvbtn" data-lv="adv">도전 — 실제 관측값·복잡한 환산까지</button>
           </div>
           <div class="row">
             <button class="btn primary" id="btnStart">학습 시작</button>
@@ -258,7 +314,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
       <div class="row" style="margin-top:12px">
         <span class="mini">문제 수준</span>
         <button type="button" class="btn small lvbtn on" data-lv="basic">기본</button>
-        <button type="button" class="btn small lvbtn" data-lv="adv">발전</button>
+        <button type="button" class="btn small lvbtn" data-lv="adv">도전</button>
         <span class="pill">현재 <b class="lvNow">기본</b> 수준</span>
       </div>
     </div>
@@ -342,16 +398,19 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 
     <div class="card">
       <h3 style="margin-top:0">② 연주시차 시뮬레이터</h3>
-      <div class="grid g2">
+      <!-- 위: 우주 시점(지구·태양·별의 위치), 아래: 그때 지구에서 본 밤하늘 -->
+      <div class="simlayout">
+      <div class="simstack">
         <div>
-          <p class="mini">우주 시점 — 위에서 내려다본 지구 공전</p>
+          <p class="mini">우주 시점 — 지구 공전과 별의 방향</p>
           <canvas id="cvSpace" class="sim" width="560" height="360" aria-label="지구 공전과 별의 방향을 보여주는 우주 시점 그림"></canvas>
         </div>
         <div>
           <p class="mini">관측자 시점 — 지구에서 본 밤하늘</p>
-          <canvas id="cvSky" class="sim" width="560" height="360" aria-label="지구에서 본 밤하늘에서 별의 위치 변화"></canvas>
+          <canvas id="cvSky" class="sim" width="560" height="220" aria-label="지구에서 본 밤하늘에서 별의 위치 변화"></canvas>
         </div>
       </div>
+      <div class="simctrl">
       <div class="grid g2" style="margin-top:14px">
         <label class="fld"><b>별까지의 거리 <span id="lblDist">5.0</span> pc</b>
           <input type="range" id="rgDist" min="1" max="40" step="0.5" value="5">
@@ -367,7 +426,9 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
         <span class="pill">거리 d = <b id="valD">5.0 pc</b></span>
         <span class="pill">하늘에서의 흔들림 <b id="valWob">보통</b></span>
       </div>
-      <div class="note" id="basicHint">거리 슬라이더를 움직이며 오른쪽 밤하늘의 별이 <b>얼마나</b> 흔들리는지 비교해 보세요.</div>
+      <div class="note" id="basicHint">거리 슬라이더를 움직이며 아래 밤하늘의 별이 <b>얼마나</b> 흔들리는지 비교해 보세요.</div>
+      </div><!-- /simctrl -->
+      </div><!-- /simlayout -->
     </div>
 
     <div class="card">
@@ -777,7 +838,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
     <div id="teacherGate" class="card">
       <h2>교사 콘솔</h2>
       <p class="sub">교사용 PIN을 입력하세요. (콘솔의 <b>수업 설정</b>에서 언제든 바꿀 수 있습니다)</p>
-      <div class="numrow"><input id="inPin" type="password" inputmode="numeric" placeholder="PIN">
+      <div class="numrow"><input id="inPin" type="password" placeholder="PIN" autocomplete="off">
         <button class="btn primary" id="btnPin">입장</button></div>
       <div class="fb" id="pinFb"></div>
     </div>
@@ -919,7 +980,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <label class="fld"><b>방탈출 문제 수</b><input id="cfgQuizCount" type="number" min="3" max="15" value="6"></label>
           <label class="fld"><b>힌트 허용</b><select id="cfgHints"><option value="1">허용</option><option value="0">금지</option></select></label>
           <label class="fld"><b>계산 허용 오차(%)</b><input id="cfgTol" type="number" min="1" max="10" value="2"></label>
-          <label class="fld"><b>교사 PIN</b><input id="cfgPin" type="password" autocomplete="new-password" placeholder="숫자 4자리 권장"></label>
+          <label class="fld"><b>교사 PIN</b><input id="cfgPin" type="password" autocomplete="new-password" placeholder="예: 7777테스트"></label>
           <label class="fld"><b>수업 코드(모둠 열쇠 기준)</b><input id="cfgClassCode" maxlength="8" placeholder="0000"></label>
         <label class="fld"><b>자동 전송</b><select id="cfgAuto">
           <option value="1">켜기(권장)</option><option value="0">끄기</option></select></label>
@@ -1059,24 +1120,24 @@ const GRAPH_STARS = STARS.slice(0,5);   // 심화 단계 표에 쓰는 가까운
    1. 저장소 (localStorage)
    ========================================================= */
 const DB_KEY='parallax_lab_v1';
-const DEFAULT_CFG={teacherPin:'7777',quizCount:6,allowHints:1,tolPct:2,sheetUrl:'',
+const DEFAULT_CFG={teacherPin:'7777테스트',quizCount:6,allowHints:1,tolPct:2,sheetUrl:'',
                    teamLock:1,teamSize:3,autoSubmit:1,classCode:'0000',sheetCsvUrl:'',
                    aiOpen:0};                // AI 활용 활동: 기본 잠금, 교사가 열어 준다
 let DB, ME=null;                      // ME: 현재 학생 레코드
 
-/* 문제 수준: 'basic'(기본) | 'adv'(발전) — 학습자가 직접 고름 */
+/* 문제 수준: 'basic'(기본) | 'adv'(도전) — 학습자가 직접 고름 */
 let LV='basic';
 const isAdv=()=>LV==='adv';
 function setLevel(v){
   LV=(v==='adv')?'adv':'basic';
   if(ME){ ME.level=LV; saveDB(); }
-  $$('.lvbtn').forEach(b=>b.classList.toggle('on',b.dataset.lv===LV));
-  $$('.lvNow').forEach(n=>n.textContent = isAdv()?'발전':'기본');
+  $$('.lvbtn').forEach(b=>{ const on=b.dataset.lv===LV; b.classList.toggle('on',on); b.setAttribute('aria-pressed',on?'true':'false'); });
+  $$('.lvNow').forEach(n=>n.textContent = isAdv()?'도전':'기본');
 }
 
 /* 자동 전송 — 교사가 만든 학생용 링크(?sheet=…)를 열면 별도 조작 없이 기록이 시트로 올라간다 */
 let AUTO={timer:null,last:0,state:'off',msg:''};
-function autoSubmitReady(){ return !!(cfg().autoSubmit&&(cfg().sheetUrl||'').trim()&&ME); }
+function autoSubmitReady(){ return !!(cfg().autoSubmit&&(cfg().sheetUrl||'').trim()&&ME&&!isTester()); }
 function queueAutoSubmit(reason){
   if(!autoSubmitReady()) return;
   clearTimeout(AUTO.timer);
@@ -1136,11 +1197,12 @@ function loadDB(){
   DB.cfg={...DEFAULT_CFG,...(DB.cfg||{})};
   DB.students=DB.students||{};
   if(!DB.cfg.classCode) DB.cfg.classCode='0000';   // 기기마다 같아야 모둠 열쇠가 맞는다
-  if(DB.cfg.teacherPin==='1234'||DB.cfg.teacherPin==='1111') DB.cfg.teacherPin='7777';   // 이전 기본값 자동 이관
+  if(['1234','1111','7777'].includes(DB.cfg.teacherPin)) DB.cfg.teacherPin='7777테스트';   // 이전 기본값 자동 이관
   return DB;
 }
 function saveDB(){
   try{
+    if(ME) ME.updated=Date.now();         // 기기 간 비교용: 더 최근에 저장된 기록을 고른다
     const json=JSON.stringify(DB);
     localStorage.setItem(DB_KEY,'X1:'+encWith(deviceKey(),json)+'.'+hshFix(json));
   }catch(e){ console.warn('저장 실패'); }
@@ -1159,6 +1221,11 @@ function newStudent(name,klass){
     quiz:{runs:[],best:null},
     logs:[], mis:{}
   };
+}
+/* 교사용 테스트 계정(학급 7학년 7반 · 7번 · 별명 테스트): 모든 단계 잠금을 건너뛰고,
+   학생 통계를 흐리지 않도록 시트로 자동 전송하지 않는다 */
+function isTester(){
+  return !!ME && String(ME.klass||'').replace(/\s/g,'')==='7학년7반' && ME.name==='7번 테스트';
 }
 function enterStudent(name,klass){
   const id=(klass+'|'+name).trim();
@@ -1220,7 +1287,7 @@ let curScreen='login', screenEnterAt=Date.now();
 const STAGE_OF={basic:'basic',calc:'calc',graph:'graph'};
 
 function show(name){
-  if(name==='ai'&&!cfg().aiOpen){ toast('🔒 AI 활용 활동은 선생님이 열어 주시면 할 수 있어요.',true); return; }
+  if(name==='ai'&&!cfg().aiOpen&&!isTester()){ toast('🔒 AI 활용 활동은 선생님이 열어 주시면 할 수 있어요.',true); return; }
   // 떠나는 화면의 체류시간 기록
   if(STAGE_OF[curScreen]) addStageTime(STAGE_OF[curScreen],Date.now()-screenEnterAt);
   SCREENS.forEach(s=>$('#screen-'+s).classList.toggle('hidden',s!==name));
@@ -1235,7 +1302,7 @@ function show(name){
   if(name==='teacher') paintTeacher();
 }
 function paintWho(){
-  $('#whoami').textContent = ME ? `${ME.klass} · ${ME.name}` : '';
+  $('#whoami').textContent = ME ? `${ME.klass} · ${ME.name}${isTester()?' (교사 테스트 · 잠금 해제)':''}` : '';
   const lo=$('#btnLogout'); if(lo) lo.classList.toggle('hidden',!ME);
 }
 /* 로그아웃 — 한 기기를 여러 학생이 번갈아 쓸 때 앞 사람의 기록·화면 상태가 남지 않게 한다 */
@@ -2054,6 +2121,7 @@ function makeStepper(opts){
     if(l.indexOf(i)<0){ l.push(i); saveDB(); }
   };
   const readyOf=i=>{
+    if(isTester()) return true;            // 교사 테스트 계정은 관문 통과로 본다
     const r=steps[i].ready;
     if(!r) return seenList().indexOf(i)>=0;
     const v=r();
@@ -2300,8 +2368,7 @@ function paintRec(){
       +'<ol style="margin:6px 0 0;padding-left:20px;line-height:1.8">'
       +'<li>가장 가까운 별과 가장 먼 별의 거리는 약 몇 배 차이 나나요?</li>'
       +'<li>그때 연주시차는 커졌나요, 작아졌나요? 약 몇 배가 되었나요?</li>'
-      +'<li>각 줄마다 <b>거리 × 연주시차</b>를 계산해 보면 어떤 규칙이 보이나요?</li>'
-      +'<li>거리가 지금의 2배인 별이 있다면, 연주시차는 어떻게 될지 예상해 보세요. 그렇게 생각한 근거는?</li>'
+      +'<li>연주시차와 거리 사이에는 어떤 관계가 있나요?</li>'
       +'</ol>';
   }else if(basic.rec.length>=3){
     fb.className='fb';
@@ -2326,7 +2393,7 @@ function checkConcl(){
 function checkBasicDone(){
   if(basic.stepper) basic.stepper.refresh();
   const recOk=recSpreadOk();
-  const ok=recOk&&basic.concl&&basic.essayOk&&basic.solved>=4;
+  const ok=isTester()||(recOk&&basic.concl&&basic.essayOk&&basic.solved>=4);
   const b=$('#btnBasicDone'); if(!b) return;
   b.disabled=!ok;
   b.textContent = ok?'기초 단계 통과하기 ✓'
@@ -2465,7 +2532,7 @@ function initCalc(){
     ()=>calcS.unit>=4||'단위 환산 4문제를 모두 맞혀야 합니다.',
     ()=>calcS.calc>=5||'거리 계산 5문제를 모두 맞혀야 합니다.'
   ];
-  const okOf=i=>{ const v=calcReady[i](); return v===true; };
+  const okOf=i=>{ if(isTester()) return true; const v=calcReady[i](); return v===true; };
   let calcCur=0;
   function paintTabs(){
     tabs.forEach((t,i)=>{
@@ -2554,7 +2621,7 @@ function paintStarTable(){
 }
 function refreshCalcDone(){
   if(calcS.paintTabs) calcS.paintTabs();
-  const ok = calcS.calc>=5 && calcS.unit>=4;
+  const ok = isTester() || (calcS.calc>=5 && calcS.unit>=4);
   const b=$('#btnCalcDone'); if(!b) return;
   b.disabled=!ok;
   b.textContent = ok?'발전 단계 통과하기 ✓':`발전 단계 통과하기 (계산 ${calcS.calc}/5 · 환산 ${calcS.unit}/4)`;
@@ -2826,7 +2893,7 @@ function initGraph(){
 function refreshGraphDone(){
   if(graphS.stepper) graphS.stepper.refresh();
   const plotOk=(ME.stages.graph.plot||0)>=GRAPH_STARS.length;
-  const ok=plotOk&&graphS.solved>=4&&graphS.essayOk;
+  const ok=isTester()||(plotOk&&graphS.solved>=4&&graphS.essayOk);
   const b=$('#btnGraphDone'); if(!b) return;
   b.disabled=!ok;
   b.textContent= ok?'심화 단계 통과하기 ✓'
@@ -3322,7 +3389,7 @@ function showCert(rec){
       el('span',{class:'pill'},'문제 ',el('b',{},String(rec.total))),
       el('span',{class:'pill'},'오답 ',el('b',{},String(rec.wrong))),
       el('span',{class:'pill'},'힌트 ',el('b',{},String(rec.hints))),
-      el('span',{class:'pill'},'수준 ',el('b',{},rec.level==='adv'?'발전':'기본'))),
+      el('span',{class:'pill'},'수준 ',el('b',{},rec.level==='adv'?'도전':'기본'))),
     rec.team
       ? el('p',{class:'mini'},`🔐 모둠 협동 잠금 해제 — ${rec.team.team} · 열쇠 조각 ${rec.team.codes.join(' + ')} → 합계 ${rec.team.total} pc`)
       : el('span',{}),
@@ -3638,7 +3705,7 @@ function paintViz(list,allList){
   // KPI 타일
   const kp=$('#vizKpis'); kp.innerHTML='';
   const tiles=[
-    {lab:'학생 수',val:A.n+'명',sub:`기본 ${A.levels.basic} · 발전 ${A.levels.adv}`},
+    {lab:'학생 수',val:A.n+'명',sub:`기본 ${A.levels.basic} · 도전 ${A.levels.adv}`},
     {lab:'성취기준 도달',val:A.n?Math.round(A.reach/A.n*100)+'%':'—',
       sub:`${A.reach}/${A.n}명 (3단계+방탈출)`,col:A.n?statusColor(A.reach/A.n*100):null},
     {lab:'평균 정답률',val:A.rates.length?Math.round(A.rateAvg)+'%':'—',
@@ -4151,7 +4218,7 @@ function paintReport(){
        calc:'계산 절차가 몸에 익었어요.',graph:'자료를 읽어내는 힘이 좋아요.',
        express:'근거를 들어 설명하는 힘이 좋아요.',attit:'끈기 있게 참여했어요.'}[s.k]))));
   const wh=$('#repWeak'); wh.innerHTML='';
-  if(!weak.length) wh.append(el('p',{class:'mini'},'뚜렷한 약점이 없습니다. 발전 수준 문제에 도전해 보세요.'));
+  if(!weak.length) wh.append(el('p',{class:'mini'},'뚜렷한 약점이 없습니다. 도전 수준 문제를 풀어 보세요.'));
   weak.forEach(s=>wh.append(el('div',{class:'qbox'},
     el('b',{},`${s.n} · ${s.score===null?'기록 없음':s.score+'점'}`),
     el('div',{class:'mini',style:'margin-top:4px'},s.note),
@@ -4174,7 +4241,7 @@ function paintReport(){
   if((g('calc')||0)<80) acts.push({t:'계산 연습 더 하기',d:'d=1/p 문제를 새로 뽑아요',go:'calc',tab:3});
   if((g('graph')||0)<80) acts.push({t:'그래프 다시 그리기',d:'이론 곡선과 비교해요',go:'graph'});
   if(!S.best) acts.push({t:'방탈출 도전',d:'모든 문제를 맞혀 누리호를 발사!',go:'quiz'});
-  else acts.push({t:'기록 단축 도전',d:`현재 ${fmtTime(S.best.ms)} — 발전 수준으로!`,go:'quiz'});
+  else acts.push({t:'기록 단축 도전',d:`현재 ${fmtTime(S.best.ms)} — 도전 수준으로!`,go:'quiz'});
   acts.slice(0,6).forEach(a=>{
     nx.append(el('button',{class:'stagecard',onclick:()=>{
       if(a.go==='quiz'){ show('quiz'); startQuiz(); return; }
@@ -4289,7 +4356,7 @@ function studentDetail(s){
   b.append(el('div',{class:'row'},
     el('span',{class:'pill'},'모둠 ',el('b',{},s.team||'—')),
     el('span',{class:'pill'},'협동 잠금 ',el('b',{},S.teamRun?'해제':'미해제')),
-    el('span',{class:'pill'},'수준 ',el('b',{},S.level==='adv'?'발전':'기본')),
+    el('span',{class:'pill'},'수준 ',el('b',{},S.level==='adv'?'도전':'기본')),
     el('span',{class:'pill'},'정답률 ',el('b',{},(S.n?Math.round(S.rate*100):0)+'%')),
     el('span',{class:'pill'},'학습시간 ',el('b',{},Math.round(S.ms/60000)+'분')),
     el('span',{class:'pill'},'방탈출 ',el('b',{},S.best?fmtTime(S.best.ms):'미완'))));
@@ -4352,7 +4419,7 @@ function csvExport(){
     const S=summarize(s), e=S.essays;
     const items=(S.best&&S.best.items)||[], st=itemsStats(items);
     const tm=S.teamRun?S.teamRun.team&&S.teamRun:null;
-    rows.push([s.name,s.klass,s.team||'',S.level==='adv'?'발전':'기본',
+    rows.push([s.name,s.klass,s.team||'',S.level==='adv'?'도전':'기본',
       S.stages[0]?'통과':'진행중',S.stages[1]?'통과':'진행중',S.stages[2]?'통과':'진행중',
       S.best?'성공':'미완', S.best?Math.round(S.best.ms/1000):'', S.best?S.best.wrong:'', S.best?S.best.hints:'',
       tm?'해제':'', tm?tm.team.codes.join('+')+' = '+tm.team.total+' pc':'',
@@ -4384,7 +4451,7 @@ function makeNoteText(rec,opt){
   const S=summarize(rec);
   const tone=opt.tone==='detail';
   const E=x=>tone?x.replace(/함\.$/,'하였음.').replace(/음\.$/,'었음.'):x;
-  const lv=S.level==='adv'?'발전 수준(실제 관측값·복합 환산)':'기본 수준';
+  const lv=S.level==='adv'?'도전 수준(실제 관측값·복합 환산)':'기본 수준';
   const rate=S.n?Math.round(S.rate*100):0;
   const parts=[];
 
@@ -4473,7 +4540,7 @@ function makeFeedbackText(rec,tone){
   else if(!S.stages[1]) next.push('발전 단계의 계산 5문제와 환산 4문제에 도전해 보세요');
   else if(!S.stages[2]) next.push('심화 단계에서 표를 채워 점을 찍고 해석을 서술해 보세요');
   else if(!S.best) next.push('방탈출에 도전해 배운 것을 확인해 보세요');
-  else next.push(`발전 수준으로 난이도를 올려 방탈출 기록(${S.best.ms?fmtTime(S.best.ms):'현재 기록'})을 단축해 보세요`);
+  else next.push(`도전 수준으로 난이도를 올려 방탈출 기록(${S.best.ms?fmtTime(S.best.ms):'현재 기록'})을 단축해 보세요`);
 
   const head = warm ? `${rec.name} 학생에게` : `${rec.name} · 피드백`;
   const L = warm
@@ -4563,9 +4630,39 @@ function parseSheet(){
 const APPS_SCRIPT=`// ① 구글 시트 › 확장 프로그램 › Apps Script 에 붙여넣기
 // ② 배포 › 새 배포 › 유형: 웹 앱 / 액세스: 링크가 있는 모든 사용자
 // ③ 만들어진 /exec URL을 앱의 [수업 설정 › Apps Script 웹앱 URL]에 등록
+// ※ 코드를 바꾼 뒤에는 배포 › 배포 관리 › 수정 › 버전: 새 버전 으로 다시 배포하세요(URL은 그대로).
+// '학습기록' 탭: 다른 기기에서 같은 학생이 들어오면 이어서 할 수 있도록 앱 기록 전체를 보관
+function recSheet_(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var s = ss.getSheetByName('학습기록');
+  if (!s) { s = ss.insertSheet('학습기록', ss.getNumSheets()); s.appendRow(['학급','별명','저장시각','기록(앱 전용·수정 금지)']); }
+  return s;
+}
+function findRec_(s, klass, name){
+  var v = s.getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) if (String(v[i][0]) === String(klass) && String(v[i][1]) === String(name)) return i + 1;
+  return -1;
+}
+function doGet(e){
+  var p = e.parameter || {}, out = { rec: null };
+  if (p.action === 'get' && p.klass && p.name) {
+    var s = recSheet_(), r = findRec_(s, p.klass, p.name);
+    if (r > 0) out.rec = s.getRange(r, 4).getValue();
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
 function doPost(e){
+  var lock = LockService.getScriptLock(); lock.waitLock(10000);
+  try { return post_(e); } finally { lock.releaseLock(); }
+}
+function post_(e){
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   var d  = JSON.parse(e.postData.contents);
+  if (d.rec) {   // 전체 기록 보관(학급·별명당 한 줄)
+    var s2 = recSheet_(), r2 = findRec_(s2, d.klass, d.name);
+    var row = [d.klass, d.name, new Date(), String(d.rec).slice(0, 49000)];
+    if (r2 > 0) s2.getRange(r2, 1, 1, 4).setValues([row]); else s2.appendRow(row);
+  }
   if(sh.getLastRow()===0){
     sh.appendRow(['제출시각','학급','별명','모둠','수준','기초','발전','심화',
                   '방탈출','방탈출시간(초)','문항별해결시간','문항평균시간(초)','최장소요문항',
@@ -4586,12 +4683,35 @@ function doPost(e){
   else { sh.appendRow(line); }
   return ContentService.createTextOutput('ok');
 }`;
+/* 다른 기기에서 이어서 하기 — 학생 기록 전체를 시트 '학습기록' 탭에 보관하고 로그인 때 불러온다.
+   전송 크기 제한(keepalive 64KB) 안에 들도록 오래된 학습 로그부터 줄인다. */
+const SYNC_MAX_BYTES=38000;
+function recForSync(){
+  if(!ME) return '';
+  const r=JSON.parse(JSON.stringify(ME));
+  const size=o=>new TextEncoder().encode(JSON.stringify(o)).length;
+  while(size(r)>SYNC_MAX_BYTES&&r.logs&&r.logs.length) r.logs=r.logs.slice(Math.ceil(r.logs.length/4));
+  return size(r)>SYNC_MAX_BYTES?'':JSON.stringify(r);
+}
+async function fetchRemoteRec(klass,name){
+  const url=(cfg().sheetUrl||'').trim();
+  if(!url) return null;
+  const ac=new AbortController(), tm=setTimeout(()=>ac.abort(),6000);
+  try{
+    const q=new URLSearchParams({action:'get',klass,name}).toString();
+    const r=await fetch(url+(url.includes('?')?'&':'?')+q,{signal:ac.signal,redirect:'follow'});
+    const j=await r.json();
+    const rec=j&&j.rec?JSON.parse(j.rec):null;
+    return rec&&rec.stages&&rec.klass===klass&&rec.name===name?rec:null;
+  }catch(e){ return null; }       // 오프라인·이전 버전 스크립트면 이 기기 기록만 사용
+  finally{ clearTimeout(tm); }
+}
 function submitPayload(){
   const S=summarize(ME);
   const tm=S.teamRun||null;
   const body={klass:ME.klass,name:ME.name,team:ME.team||'',
     teamLock:tm?'해제':'',teamKeys:tm?tm.team.codes.join('+')+' = '+tm.team.total+' pc':'',
-    level:S.level==='adv'?'발전':'기본',
+    level:S.level==='adv'?'도전':'기본',
     basic:S.stages[0]?'통과':'진행중',calc:S.stages[1]?'통과':'진행중',graph:S.stages[2]?'통과':'진행중',
     quiz:S.best?'성공':'미완',quizSec:S.best?Math.round(S.best.ms/1000):'',
     items:itemsToText((S.best&&S.best.items)||[]),
@@ -4600,11 +4720,13 @@ function submitPayload(){
     rate:S.n?Math.round(S.rate*100):0,
     mis:S.mis.length?(MIS_LABEL[S.mis[0][0]]||''):'',
     e1:(S.essays.basic&&S.essays.basic.text)||'',
+    rec:recForSync(),
     e2:(S.essays.graph&&S.essays.graph.text)||'',
     e3:(S.essays.quiz&&S.essays.quiz.text)||''};
   return body;
 }
 function submitToSheet(){
+  if(isTester()){ toast('교사 테스트 계정은 시트로 제출하지 않습니다.',true); return; }
   const url=(cfg().sheetUrl||'').trim();
   if(!url){ toast('선생님이 아직 시트 URL을 등록하지 않았습니다.',true); return; }
   AUTO.state='pending'; paintAutoStatus();
@@ -4653,8 +4775,8 @@ function paintHome(){
 
   const defs=[
     {k:'basic',lv:'STEP 1 · 기초',t:'시차를 눈으로 확인',d:'시뮬레이터로 거리와 시차의 반비례를 관찰하고 관찰 내용을 서술합니다.',open:true},
-    {k:'calc', lv:'STEP 2 · 발전',t:'계산과 단위',d:'d = 1/p 계산, ″·pc·ly·AU 단위 환산을 익힙니다.',open:S.stages[0]},
-    {k:'graph',lv:'STEP 3 · 심화',t:'그래프 그리기·해석',d:'표를 채워 점을 찍고, 곡선의 의미를 해석해 서술합니다.',open:S.stages[1]}
+    {k:'calc', lv:'STEP 2 · 발전',t:'계산과 단위',d:'d = 1/p 계산, ″·pc·ly·AU 단위 환산을 익힙니다.',open:isTester()||S.stages[0]},
+    {k:'graph',lv:'STEP 3 · 심화',t:'그래프 그리기·해석',d:'표를 채워 점을 찍고, 곡선의 의미를 해석해 서술합니다.',open:isTester()||S.stages[1]}
   ];
   const host=$('#stageCards'); host.innerHTML='';
   defs.forEach(d=>{
@@ -4670,9 +4792,10 @@ function paintHome(){
   paintMyKey(); paintAutoStatus();
   // AI 활용 활동 버튼: 잠금 상태 표시
   const aiBtn=$('#btnAI');
-  aiBtn.textContent=cfg().aiOpen?'🤖 AI 활용 활동':'🔒 AI 활용 활동';
-  aiBtn.classList.toggle('locked',!cfg().aiOpen);
-  aiBtn.title=cfg().aiOpen?'':'선생님이 열어 주시면 할 수 있어요';
+  const aiOpen=cfg().aiOpen||isTester();
+  aiBtn.textContent=aiOpen?'🤖 AI 활용 활동':'🔒 AI 활용 활동';
+  aiBtn.classList.toggle('locked',!aiOpen);
+  aiBtn.title=aiOpen?'':'선생님이 열어 주시면 할 수 있어요';
   // 학습 코치
   const cb=$('#coachBody'); cb.innerHTML='';
   if(ME.feedback&&ME.feedback.text){
@@ -4708,21 +4831,40 @@ function boot(){
   document.addEventListener('click',e=>{
     const b=e.target.closest('.lvbtn'); if(!b) return;
     setLevel(b.dataset.lv);
-    toast(b.dataset.lv==='adv'?'발전 수준으로 바꿨습니다.':'기본 수준으로 바꿨습니다.');
+    toast(b.dataset.lv==='adv'?'도전 수준으로 바꿨습니다.':'기본 수준으로 바꿨습니다.');
   });
   // 로그인
-  $('#btnStart').addEventListener('click',()=>{
+  let starting=false;
+  $('#btnStart').addEventListener('click',async()=>{
+    if(starting) return;
     const nick=$('#inName').value.trim(), klass=$('#inKlass').value.trim();
     const noRaw=$('#inNo').value.trim(), no=+noRaw;
     if(!klass||!noRaw||!nick){ toast('학급, 번호, 별명을 모두 입력하세요.',true); return; }
     if(!/^\d{1,2}$/.test(noRaw)||no<1||no>60){ toast('번호는 1~60 사이 숫자로 입력하세요.',true); return; }
     // 번호를 앞에 붙여 저장 → 같은 반에서 별명이 겹쳐도 기록이 섞이지 않는다
     const name=`${no}번 ${nick}`;
+    const id=(klass+'|'+name).trim();
+    // 다른 기기에서 한 기록이 시트에 더 최근 것으로 있으면 그것을 이어받는다
+    let pulled=false;
+    if((cfg().sheetUrl||'').trim()){
+      starting=true;
+      const btn=$('#btnStart'), label=btn.textContent;
+      btn.disabled=true; btn.textContent='기록 확인 중…';
+      const remote=await fetchRemoteRec(klass,name);
+      btn.disabled=false; btn.textContent=label; starting=false;
+      const local=DB.students[id];
+      if(remote&&(!local||(remote.updated||0)>(local.updated||0))){ DB.students[id]=remote; pulled=true; }
+    }
     enterStudent(name,klass);
     ME.no=no; ME.nick=nick; saveDB();
     setLevel(ME.level||LV);
     paintAutoStatus(); queueAutoSubmit('학습 시작');
     show('home');
+    if(pulled) toast('다른 기기에서 한 기록을 불러왔습니다.');
+  });
+  // 화면을 떠날 때(탭 전환·기기 잠금) 최신 기록을 바로 시트에 보관 → 다른 기기에서 이어서 하기
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden'&&autoSubmitReady()){ clearTimeout(AUTO.timer); saveDB(); doAutoSubmit('화면 전환'); }
   });
   ['#inName','#inNo'].forEach(s=>$(s).addEventListener('keydown',e=>{ if(e.key==='Enter') $('#btnStart').click(); }));
   $('#btnLoginTeacher').addEventListener('click',()=>show('teacher'));
@@ -4730,7 +4872,7 @@ function boot(){
   $('#btnTeacher').addEventListener('click',()=>show('teacher'));
   // 허브
   $('#btnQuiz').addEventListener('click',()=>{
-    if(!ME.stages.basic.done){
+    if(!ME.stages.basic.done&&!isTester()){
       modal('먼저 학습을 해요',el('p',{},'기초 단계를 통과한 뒤 방탈출에 도전하면 훨씬 잘 풀립니다. 그래도 지금 들어갈까요?'),
         [{label:'그래도 도전',cls:'primary',fn:()=>{show('quiz');startQuiz();}},{label:'학습하러 가기',fn:()=>show('basic')}]);
       return;
@@ -4789,7 +4931,7 @@ function boot(){
   });
   // 교사 콘솔
   $('#btnPin').addEventListener('click',()=>{
-    if($('#inPin').value.trim()===String(cfg().teacherPin)){
+    if($('#inPin').value.trim().normalize('NFC')===String(cfg().teacherPin).normalize('NFC')){
       tUnlocked=true; $('#pinFb').textContent=''; paintTeacher();
     }else{ $('#pinFb').className='fb no'; $('#pinFb').textContent='PIN이 맞지 않습니다.'; }
   });
@@ -4833,7 +4975,7 @@ function boot(){
     DB.cfg.quizCount=clamp(+$('#cfgQuizCount').value||6,3,15);
     DB.cfg.allowHints=+$('#cfgHints').value;
     DB.cfg.tolPct=clamp(+$('#cfgTol').value||2,1,10);
-    DB.cfg.teacherPin=$('#cfgPin').value.trim()||'7777';
+    DB.cfg.teacherPin=$('#cfgPin').value.trim()||'7777테스트';
     DB.cfg.sheetUrl=$('#cfgSheet').value.trim();
     DB.cfg.teamLock=+$('#cfgTeam').value;
     DB.cfg.teamSize=clamp(+$('#cfgTeamSize').value||3,2,6);
