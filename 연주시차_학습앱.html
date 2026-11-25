@@ -202,6 +202,8 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 .lvbtn.on{opacity:1;background:linear-gradient(135deg,#5eead4,#7dd3fc);color:#06213a;border-color:transparent;
   box-shadow:0 0 0 2px rgba(94,234,212,.35)}
 .lvbtn.on::before{content:'✓ ';font-weight:900}
+/* PIN 칸: 한글 입력이 되도록 text 칸을 쓰고 글자는 점으로 가린다 */
+.pinmask{-webkit-text-security:disc}
 /* 시뮬레이터: 우주 시점(위) + 밤하늘(아래) */
 .simstack{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 
@@ -838,7 +840,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
     <div id="teacherGate" class="card">
       <h2>교사 콘솔</h2>
       <p class="sub">교사용 PIN을 입력하세요. (콘솔의 <b>수업 설정</b>에서 언제든 바꿀 수 있습니다)</p>
-      <div class="numrow"><input id="inPin" type="password" placeholder="PIN" autocomplete="off">
+      <div class="numrow"><input id="inPin" type="text" class="pinmask" placeholder="PIN" autocomplete="off" autocapitalize="off" spellcheck="false">
         <button class="btn primary" id="btnPin">입장</button></div>
       <div class="fb" id="pinFb"></div>
     </div>
@@ -980,7 +982,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
           <label class="fld"><b>방탈출 문제 수</b><input id="cfgQuizCount" type="number" min="3" max="15" value="6"></label>
           <label class="fld"><b>힌트 허용</b><select id="cfgHints"><option value="1">허용</option><option value="0">금지</option></select></label>
           <label class="fld"><b>계산 허용 오차(%)</b><input id="cfgTol" type="number" min="1" max="10" value="2"></label>
-          <label class="fld"><b>교사 PIN</b><input id="cfgPin" type="password" autocomplete="new-password" placeholder="예: 7777테스트"></label>
+          <label class="fld"><b>교사 PIN</b><input id="cfgPin" type="text" class="pinmask" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="예: 7777테스트"></label>
           <label class="fld"><b>수업 코드(모둠 열쇠 기준)</b><input id="cfgClassCode" maxlength="8" placeholder="0000"></label>
         <label class="fld"><b>자동 전송</b><select id="cfgAuto">
           <option value="1">켜기(권장)</option><option value="0">끄기</option></select></label>
@@ -1221,6 +1223,21 @@ function newStudent(name,klass){
     quiz:{runs:[],best:null},
     logs:[], mis:{}
   };
+}
+/* 교사 PIN 비교 — 한글이 든 PIN을 영문 자판 상태로 쳐도(예: 테스트 → xptmxm) 맞게 본다 */
+function hangulToQwerty(s){
+  const CHO='rRseEfaqQtTdwWczxvg'.split('');
+  const JUNG=['k','o','i','O','j','p','u','P','h','hk','ho','hl','y','n','nj','np','nl','b','m','ml','l'];
+  const JONG=['','r','R','rt','s','sw','sg','e','f','fr','fa','fq','ft','fx','fv','fg','a','q','qt','t','T','d','w','c','z','x','v','g'];
+  return [...String(s).normalize('NFC')].map(ch=>{
+    const c=ch.charCodeAt(0)-0xAC00;
+    if(c<0||c>11171) return ch;
+    return CHO[Math.floor(c/588)]+JUNG[Math.floor((c%588)/28)]+JONG[c%28];
+  }).join('');
+}
+function pinMatches(typed,pin){
+  const t=String(typed||'').trim().normalize('NFC'), p=String(pin||'').normalize('NFC');
+  return t===p || t.toLowerCase()===hangulToQwerty(p).toLowerCase();
 }
 /* 교사용 테스트 계정(학급 7학년 7반 · 7번 · 별명 테스트): 모든 단계 잠금을 건너뛰고,
    학생 통계를 흐리지 않도록 시트로 자동 전송하지 않는다 */
@@ -4931,7 +4948,7 @@ function boot(){
   });
   // 교사 콘솔
   $('#btnPin').addEventListener('click',()=>{
-    if($('#inPin').value.trim().normalize('NFC')===String(cfg().teacherPin).normalize('NFC')){
+    if(pinMatches($('#inPin').value,cfg().teacherPin)){
       tUnlocked=true; $('#pinFb').textContent=''; paintTeacher();
     }else{ $('#pinFb').className='fb no'; $('#pinFb').textContent='PIN이 맞지 않습니다.'; }
   });

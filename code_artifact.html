@@ -229,7 +229,7 @@
         <div class="glass-panel p-6 md:p-8 max-w-sm w-full text-center transform scale-95 transition-transform duration-300" id="login-content">
             <h3 class="text-xl font-bold mb-4 text-[#64ffda]">교사용 콘솔 접근</h3>
             <p class="text-sm text-gray-400 mb-4">접근 암호를 입력하세요.</p>
-            <input type="password" id="teacher-password" class="scifi-input w-full py-2 px-4 rounded mb-6 text-center" placeholder="비밀번호" onkeypress="if(event.key==='Enter') verifyTeacherLogin()">
+            <input type="text" id="teacher-password" autocomplete="off" autocapitalize="off" spellcheck="false" style="-webkit-text-security:disc" class="scifi-input w-full py-2 px-4 rounded mb-6 text-center" placeholder="비밀번호" onkeypress="if(event.key==='Enter') verifyTeacherLogin()">
             <div class="flex gap-4">
                 <button onclick="closeTeacherLogin()" class="flex-1 py-2 rounded font-bold border border-gray-500 text-gray-400 hover:bg-gray-800 transition">취소</button>
                 <button onclick="verifyTeacherLogin()" class="scifi-btn flex-1 py-2 rounded font-bold">확인</button>
@@ -934,8 +934,21 @@
             setTimeout(() => teacherLoginModal.classList.add('hidden'), 200);
         }
 
+        // 한글이 든 PIN을 영문 자판 상태로 쳐도(테스트 → xptmxm) 맞게 본다
+        function hangulToQwerty(s) {
+            const CHO = 'rRseEfaqQtTdwWczxvg'.split('');
+            const JUNG = ['k','o','i','O','j','p','u','P','h','hk','ho','hl','y','n','nj','np','nl','b','m','ml','l'];
+            const JONG = ['','r','R','rt','s','sw','sg','e','f','fr','fa','fq','ft','fx','fv','fg','a','q','qt','t','T','d','w','c','z','x','v','g'];
+            return [...String(s).normalize('NFC')].map(ch => {
+                const c = ch.charCodeAt(0) - 0xAC00;
+                if (c < 0 || c > 11171) return ch;
+                return CHO[Math.floor(c / 588)] + JUNG[Math.floor((c % 588) / 28)] + JONG[c % 28];
+            }).join('');
+        }
+        const TEACHER_PIN = '7777테스트';
         function verifyTeacherLogin() {
-            if (passwordInput.value.trim().normalize('NFC') === '7777테스트'.normalize('NFC')) {
+            const typed = passwordInput.value.trim().normalize('NFC');
+            if (typed === TEACHER_PIN.normalize('NFC') || typed.toLowerCase() === hangulToQwerty(TEACHER_PIN).toLowerCase()) {
                 closeTeacherLogin();
                 openTeacherConsole();
             } else {
