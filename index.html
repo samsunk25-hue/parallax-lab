@@ -204,7 +204,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 .lvbtn.on::before{content:'✓ ';font-weight:900}
 /* PIN 칸: 한글 입력이 되도록 text 칸을 쓰고 글자는 점으로 가린다 */
 .pinmask{-webkit-text-security:disc}
-/* 시뮬레이터: 우주 시점(위) + 밤하늘(아래) */
+/* 시뮬레이터: 밤하늘(위) + 우주 시점(아래) */
 .simstack{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 
 /* ---------- 태블릿·터치 화면 ----------
@@ -400,16 +400,16 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
 
     <div class="card">
       <h3 style="margin-top:0">② 연주시차 시뮬레이터</h3>
-      <!-- 위: 우주 시점(지구·태양·별의 위치), 아래: 그때 지구에서 본 밤하늘 -->
       <div class="simlayout">
+      <!-- 위: 지구에서 본 밤하늘, 아래: 우주 시점 — 지구가 별을 바라보는 방향(위쪽)에 밤하늘이 오도록 -->
       <div class="simstack">
         <div>
-          <p class="mini">우주 시점 — 지구 공전과 별의 방향</p>
-          <canvas id="cvSpace" class="sim" width="560" height="360" aria-label="지구 공전과 별의 방향을 보여주는 우주 시점 그림"></canvas>
+          <p class="mini">관측자 시점 — 지구에서 위쪽(별 방향)을 본 밤하늘</p>
+          <canvas id="cvSky" class="sim" width="560" height="220" aria-label="지구에서 본 밤하늘에서 별의 위치 변화"></canvas>
         </div>
         <div>
-          <p class="mini">관측자 시점 — 지구에서 본 밤하늘</p>
-          <canvas id="cvSky" class="sim" width="560" height="220" aria-label="지구에서 본 밤하늘에서 별의 위치 변화"></canvas>
+          <p class="mini">우주 시점 — 지구 공전과 별의 방향 (지구는 위쪽의 별을 바라봄)</p>
+          <canvas id="cvSpace" class="sim" width="560" height="360" aria-label="지구 공전과 별의 방향을 보여주는 우주 시점 그림"></canvas>
         </div>
       </div>
       <div class="simctrl">
@@ -428,7 +428,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
         <span class="pill">거리 d = <b id="valD">5.0 pc</b></span>
         <span class="pill">하늘에서의 흔들림 <b id="valWob">보통</b></span>
       </div>
-      <div class="note" id="basicHint">거리 슬라이더를 움직이며 아래 밤하늘의 별이 <b>얼마나</b> 흔들리는지 비교해 보세요.</div>
+      <div class="note" id="basicHint">거리 슬라이더를 움직이며 위 밤하늘의 별이 <b>얼마나</b> 흔들리는지 비교해 보세요.</div>
       </div><!-- /simctrl -->
       </div><!-- /simlayout -->
     </div>
