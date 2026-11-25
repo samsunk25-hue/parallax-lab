@@ -21,7 +21,7 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="태양을 도는 지구의 두 위치에서 같은 별을 바라볼 때 생기는 연주시차 각 p를 나타낸 그림과 앱 소개">
+<meta property="og:image:alt" content="태양 좌우의 두 지구 위치에서 같은 별을 볼 때 생기는 시차 2p와 그 절반인 연주시차 p를 나타낸 그림과 앱 소개">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="연주시차 탐구소 · 별까지의 거리">
 <meta name="twitter:description" content="관찰 → 계산(d = 1/p) → 그래프 해석 → 방탈출. 중학교 과학 ‘별과 우주’ 학습앱.">
@@ -208,6 +208,7 @@ footer.foot{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 0}
     <button class="btn small ghost" id="btnHome">학습 허브</button>
     <button class="btn small ghost" id="btnTeacher">교사 콘솔</button>
     <div class="who" id="whoami"></div>
+    <button class="btn small ghost hidden" id="btnLogout" title="기록을 저장하고 다음 사람이 쓸 수 있게 합니다">로그아웃</button>
   </header>
 
   <!-- ============ 로그인 ============ -->
@@ -1087,7 +1088,7 @@ function doAutoSubmit(reason){
   if(!autoSubmitReady()) return;
   const body=submitPayload();
   body.reason=reason||'자동';
-  fetch((cfg().sheetUrl||'').trim(),{method:'POST',mode:'no-cors',
+  fetch((cfg().sheetUrl||'').trim(),{method:'POST',mode:'no-cors',keepalive:true,
       headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(()=>{ AUTO.state='sent'; AUTO.last=Date.now(); paintAutoStatus(); })
     .catch(()=>{ AUTO.state='fail'; paintAutoStatus(); });
@@ -1235,6 +1236,23 @@ function show(name){
 }
 function paintWho(){
   $('#whoami').textContent = ME ? `${ME.klass} · ${ME.name}` : '';
+  const lo=$('#btnLogout'); if(lo) lo.classList.toggle('hidden',!ME);
+}
+/* 로그아웃 — 한 기기를 여러 학생이 번갈아 쓸 때 앞 사람의 기록·화면 상태가 남지 않게 한다 */
+function askLogout(){
+  if(!ME) return;
+  modal('로그아웃',el('p',{},`${ME.klass} · ${ME.name} 학생의 기록을 저장하고 로그아웃합니다. 다음 사람은 자기 학급·번호·별명으로 새로 들어오세요.`),
+    [{label:'로그아웃',cls:'primary',fn:doLogout},{label:'취소'}]);
+}
+function doLogout(){
+  if(!ME) return;
+  if(STAGE_OF[curScreen]) addStageTime(STAGE_OF[curScreen],Date.now()-screenEnterAt);
+  saveDB();
+  // 보내려고 모아 둔 자동 전송이 있으면 지금 바로 보낸다(keepalive로 새로고침 중에도 전송)
+  if(autoSubmitReady()){ clearTimeout(AUTO.timer); doAutoSubmit('로그아웃'); }
+  ME=null;
+  // 기록표·서술 입력칸·단계 진행 등 메모리에 남은 화면 상태를 모두 비우기 위해 새로 불러온다
+  setTimeout(()=>location.replace(location.pathname),250);
 }
 function modal(title,bodyNode,buttons){
   const root=$('#modalRoot'); root.innerHTML='';
@@ -2141,18 +2159,37 @@ function drawSpace(){
   x.fillStyle='#e8eefb';
   const sLab=`별 (d = ${fx(basic.dist,1)} pc)`, sw=x.measureText(sLab).width;
   x.fillText(sLab,clamp(sx+18,4,W-sw-4),sy+5);
-  // 시차각 표시 — 별에서 두 시선 사이의 각을 호로 그린다
+  // 각 표시 — 두 시선 사이 전체 각 = 시차(2p), 태양–별 기준선과 지구 시선 사이 = 연주시차 p
   const a1=Math.atan2(ey-sy,ex-sx), a2=Math.atan2(ey2-sy,ex2-sx);
-  const aLo=Math.min(a1,a2), aHi=Math.max(a1,a2);
+  const aSun=Math.atan2(cy-sy,cx-sx);                // 별→태양 기준선 방향
   const arcR=clamp(26+600/basic.dist,26,Math.max(30,(cy-RY-sy)*.5));
-  x.strokeStyle='rgba(251,191,36,.9)'; x.lineWidth=1.4;
-  x.beginPath(); x.arc(sx,sy,arcR,aLo,aHi); x.stroke();
-  x.fillStyle='#fbbf24'; x.font='bold 13px system-ui';
-  // 시차 라벨은 호의 오른쪽 끝 옆에 둔다
-  const pLab=`p = ${fx(pOf(basic.dist),3)}″`, pw=x.measureText(pLab).width;
-  x.fillText(pLab,clamp(sx+arcR*Math.cos(aLo)+8,4,W-pw-4),sy+arcR*Math.sin(aLo)+4);
+  const p=pOf(basic.dist);
+  // 태양–별 기준선(점선)과 태양–지구 1 AU
+  x.strokeStyle='rgba(255,207,92,.55)'; x.lineWidth=1; x.setLineDash([3,4]);
+  x.beginPath(); x.moveTo(cx,cy); x.lineTo(sx,sy); x.stroke();
+  x.beginPath(); x.moveTo(cx,cy); x.lineTo(ex,ey); x.stroke(); x.setLineDash([]);
+  x.font='11px system-ui'; x.fillStyle='#ffcf5c';
+  if(Math.abs(ex-cx)>40) x.fillText('1 AU',(cx+ex)/2-12,(cy+ey)/2-6);
+  // 바깥 호: 전체 시차 2p (얇게)
+  const R2=arcR+18;
+  x.strokeStyle='rgba(167,139,250,.85)'; x.lineWidth=1.2;
+  x.beginPath(); x.arc(sx,sy,R2,Math.min(a1,a2),Math.max(a1,a2)); x.stroke();
+  // 안쪽 호: 연주시차 p (굵게) — 태양 기준선과 현재 지구 시선 사이
+  x.strokeStyle='rgba(251,191,36,.95)'; x.lineWidth=3;
+  x.beginPath(); x.arc(sx,sy,arcR,Math.min(a1,aSun),Math.max(a1,aSun)); x.stroke();
+  // 라벨: p는 현재 지구 쪽, 2p는 반대쪽
+  const side=ex>=cx?1:-1;
+  x.font='bold 13px system-ui'; x.fillStyle='#fbbf24';
+  const pLab=`p = ${fx(p,3)}″ (연주시차)`, pw=x.measureText(pLab).width;
+  // 시선 바깥쪽, 호와 만나는 점보다 살짝 위에 써서 시선과 겹치지 않게 한다
+  const px1=sx+arcR*Math.cos(a1), py1=sy+arcR*Math.sin(a1);
+  x.fillText(pLab,clamp(side>0?px1+10:px1-pw-10,4,W-pw-4),py1-3);
+  x.font='12px system-ui'; x.fillStyle='#c4b5fd';
+  const qLab=`시차 2p = ${fx(2*p,3)}″`, qw=x.measureText(qLab).width;
+  const qx=sx+R2*Math.cos(a2), qy=sy+R2*Math.sin(a2);
+  x.fillText(qLab,clamp(side>0?qx-qw-10:qx+10,4,W-qw-4),qy-3);
   x.fillStyle='#93a3c4'; x.font='12px system-ui';
-  x.fillText('반년 뒤 지구는 태양 반대편(연한 점) — 두 위치에서 본 별의 방향 차이가 시차',12,H-12);
+  x.fillText('반년 간격 두 시선 사이 전체 각 = 시차(2p) · 그 절반 = 연주시차 p',12,H-12);
 }
 
 let skyBg=null;
@@ -2257,11 +2294,15 @@ function paintRec(){
   $('#recCount').textContent=basic.rec.length;
   const fb=$('#recFb');
   if(recSpreadOk()){
-    const a=basic.rec[0], b=basic.rec[basic.rec.length-1];   // 정렬돼 있으므로 최소·최대
-    const k=b.d/a.d;
+    // 해석은 학생 몫 — 결론을 알려 주지 않고, 표를 읽게 하는 질문만 제시한다
     fb.className='fb ok';
-    fb.innerHTML=`좋아요! 거리가 <b>${fx(a.d,1)} pc → ${fx(b.d,1)} pc</b> 로 약 <b>${fx(k,1)}배</b> 멀어지자 `+
-      `연주시차는 <b>${fx(a.p,3)}″ → ${fx(b.p,3)}″</b>, 즉 약 <b>${fx(1/k,2)}배</b>(≈ ${fx(k,1)}분의 1)로 작아졌습니다.`;
+    fb.innerHTML='기록 완료! 표를 보며 스스로 답해 보세요. (다음 관문에서 결론을 씁니다)'
+      +'<ol style="margin:6px 0 0;padding-left:20px;line-height:1.8">'
+      +'<li>가장 가까운 별과 가장 먼 별의 거리는 약 몇 배 차이 나나요?</li>'
+      +'<li>그때 연주시차는 커졌나요, 작아졌나요? 약 몇 배가 되었나요?</li>'
+      +'<li>각 줄마다 <b>거리 × 연주시차</b>를 계산해 보면 어떤 규칙이 보이나요?</li>'
+      +'<li>거리가 지금의 2배인 별이 있다면, 연주시차는 어떻게 될지 예상해 보세요. 그렇게 생각한 근거는?</li>'
+      +'</ol>';
   }else if(basic.rec.length>=3){
     fb.className='fb';
     fb.textContent='기록한 거리들이 서로 비슷합니다. 가장 먼 값이 가장 가까운 값의 2배 이상이 되도록 한 번 더 기록해 보세요.';
@@ -4813,6 +4854,10 @@ function boot(){
   setLevel('basic');
   openDevBridge();
   paintAutoStatus();
+  // 브라우저가 앞 사람 입력값을 되살려 놓지 않도록 로그인 칸을 비운다
+  ['#inKlass','#inNo','#inName'].forEach(s=>{ const n=$(s); if(n) n.value=''; });
+  $('#btnLogout').addEventListener('click',askLogout);
+  paintWho();
   show('login');
 }
 /* 개발·점검용 접근 지점 — 주소에 ?dev=<교사PIN> 이 있을 때만 열린다.

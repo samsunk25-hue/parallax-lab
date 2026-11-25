@@ -130,8 +130,10 @@
                 <span class="text-gray-400">STAGE: <span id="stage-display" class="neon-text font-bold text-lg">1 / 4</span></span>
                 <span class="text-gray-400">오류: <span id="mistake-display" class="text-red-400 font-bold">0</span></span>
             </div>
-            <div class="text-gray-400 text-sm md:text-base">
-                TIME: <span id="timer-display" class="scifi-font neon-text text-xl">00:00</span>
+            <div class="flex items-center gap-4 text-gray-400 text-sm md:text-base">
+                <span>TIME: <span id="timer-display" class="scifi-font neon-text text-xl">00:00</span></span>
+                <button onclick="logout()" title="기록을 저장하고 다음 사람이 쓸 수 있게 합니다"
+                        class="border border-gray-500 text-gray-300 hover:bg-gray-800 py-1 px-3 rounded text-xs">로그아웃</button>
             </div>
         </div>
 
@@ -207,8 +209,8 @@
                 <!-- 데이터 전송 상태 표시 -->
             </div>
 
-            <button onclick="location.reload()" class="scifi-btn py-2 px-6 rounded font-bold">
-                새 임무 시작 (초기화)
+            <button onclick="logout(true)" class="scifi-btn py-2 px-6 rounded font-bold">
+                로그아웃 · 처음 화면으로
             </button>
         </div>
     </div>
@@ -470,7 +472,7 @@
         }
         function pushRemoteEnv(slot, env) {
             if (!appsScriptUrl) return;
-            fetch(appsScriptUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            fetch(appsScriptUrl, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'put', slot, blob: JSON.stringify(env) }) }).catch(() => {});
         }
         async function getTeacherPub() {
@@ -878,6 +880,24 @@
             
             elements.answerInput.blur();
         }
+
+        /* 로그아웃 — 진행 상태를 암호화 저장·시트 전송한 뒤 페이지를 새로 불러와
+           앞 사람의 학번·별명·문제·타이머가 메모리와 화면에 남지 않게 한다 */
+        let loggingOut = false;
+        async function logout(skipConfirm) {
+            if (loggingOut) return;
+            const playing = session && session.data.progress;
+            if (!skipConfirm && !confirm(playing ? '지금까지 한 기록을 저장하고 로그아웃할까요? 같은 학번·비밀번호로 다시 들어오면 이어서 할 수 있습니다.' : '로그아웃할까요?')) return;
+            loggingOut = true;
+            clearInterval(gameState.timerInterval);
+            try {
+                if (playing) { await saveProgress(); await saveSlot(true); }   // 두 번째 저장이 시트로 즉시 전송
+            } catch (e) {}
+            session = null;
+            setTimeout(() => location.replace(location.pathname), 250);
+        }
+        // 브라우저가 앞 사람 입력값을 되살려 놓지 않도록 로그인 칸을 비운다
+        ['student-id', 'student-name', 'student-pw'].forEach(id => { const n = document.getElementById(id); if (n) n.value = ''; });
 
         function closeModal() {
             modalContent.classList.remove('scale-100');
